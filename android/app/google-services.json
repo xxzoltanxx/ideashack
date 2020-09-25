@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "518244384210",
+    "firebase_url": "https://ideaapp-7482b.firebaseio.com",
+    "project_id": "ideaapp-7482b",
+    "storage_bucket": "ideaapp-7482b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:518244384210:android:2e26977cdaf9dc6a4a5c0b",
+        "android_client_info": {
+          "package_name": "com.ricketman.ideashack"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "518244384210-lni3v4jdmaocacg1st2l1bcc8o0l4514.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQlWjyOqQzM1huKho3HBduJZGtr3HtABo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "518244384210-lni3v4jdmaocacg1st2l1bcc8o0l4514.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -220,8 +220,8 @@ class _MainPageState extends State<MainPage>
   }
 
   void IdeaAddCallback() {
-    GlobalController.get().dailyPosts = GlobalController.get().dailyPosts - 1;
     setState(() {
+      GlobalController.get().dailyPosts = GlobalController.get().dailyPosts - 1;
       GlobalController.get().selectedIndex = 1;
       fetchNum = 0;
     });

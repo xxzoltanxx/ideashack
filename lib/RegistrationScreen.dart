@@ -9,6 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:async';
 import 'CardList.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -17,6 +18,23 @@ class RegistrationScreen extends StatefulWidget {
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
   Future<FirebaseApp> firebaseFuture;
+
+  void initFirebaseMessaging() {
+    FirebaseMessaging _firebaseMessaging =
+        GlobalController.get().firebaseMessaging;
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> message) async {
+        print("onMessage: $message");
+      },
+      onBackgroundMessage: myBackgroundMessageHandler,
+      onLaunch: (Map<String, dynamic> message) async {
+        print("onLaunch: $message");
+      },
+      onResume: (Map<String, dynamic> message) async {
+        print("onResume: $message");
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -38,6 +56,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           if (snapshot.connectionState == ConnectionState.done) {
             var _auth = FirebaseAuth.instance;
             CardList.get().setInstance(Firestore.instance);
+            initFirebaseMessaging();
             return Scaffold(body: LoginScreen(_auth));
           }
           return Scaffold(body: Loading());
@@ -64,18 +83,32 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> secondaryFuture;
 
   Future<void> checkOrSetupNewUser(User user) async {
+    QuerySnapshot parametersArray =
+        await Firestore.instance.collection('parameters').get();
+    GlobalController.get().parameters = parametersArray.docs[0];
+    GlobalController.get().initParameters();
     QuerySnapshot possibleUser = await Firestore.instance
         .collection('users')
         .where('uid', isEqualTo: user.uid)
         .get();
+
+    var timestamp = await getCurrentTimestampServer();
+    var pushToken = await GlobalController.get().fetchPushToken();
     if (possibleUser.docs.length > 0) {
+      String docId = possibleUser.docs[0].id;
+      await Firestore.instance.collection('users').doc(docId).update({
+        'dailyPosts': BASE_DAILY_POSTS,
+        'lastSeen': timestamp,
+        'uid': user.uid,
+        'pushToken': pushToken
+      });
       return;
     }
-    var timestamp = await getCurrentTimestampServer();
     await Firestore.instance.collection('users').add({
       'dailyPosts': BASE_DAILY_POSTS,
       'lastSeen': timestamp,
-      'uid': user.uid
+      'uid': user.uid,
+      'pushToken': pushToken
     });
   }
 

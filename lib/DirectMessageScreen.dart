@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'Const.dart';
 
 class DmScreen extends StatefulWidget {
@@ -8,7 +9,7 @@ class DmScreen extends StatefulWidget {
   _DmScreenState createState() => _DmScreenState();
 }
 
-class _DmScreenState extends State<DmScreen> {
+class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   String postInitializer;
   String postId;
   String postAuthor;
@@ -23,12 +24,27 @@ class _DmScreenState extends State<DmScreen> {
   Future<void> fetchDmFuture;
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      if (postAuthor == GlobalController.get().currentUserUid)
+        setupTimestamps(true);
+      if (postInitializer == GlobalController.get().currentUserUid)
+        setupTimestamps(false);
+    }
+    super.didChangeAppLifecycleState(state);
+  }
+
+  @override
   void initState() {
+    WidgetsBinding.instance.addObserver(this);
     messageTextController = TextEditingController(text: messageText);
     super.initState();
   }
 
   void initialSendButtonCallback() {
+    if (messageText.length == 0) {
+      return;
+    }
     messageTextController.clear();
     setState(() {
       fetchDmFuture = initialize();
@@ -36,41 +52,50 @@ class _DmScreenState extends State<DmScreen> {
   }
 
   void sendNormal() async {
+    if (messageText.length == 0) {
+      return;
+    }
     messageTextController.clear();
     normalPostAsyncAction();
   }
 
   void normalPostAsyncAction() async {
     var time = await getCurrentTimestampServer();
-    Firestore.instance
-        .collection('directMessages')
-        .doc(thisDocumentReference)
-        .update({
-      'lastMessage': time,
-    });
-    Firestore.instance
-        .collection('directMessages')
-        .doc(thisDocumentReference)
-        .collection('messages')
-        .add({
-      'time': time,
-      'text': messageText,
-      'sender': GlobalController.get().currentUser.displayName,
-      'senderUid': GlobalController.get().currentUserUid,
-    });
+    try {
+      Firestore.instance
+          .collection('directMessages')
+          .doc(thisDocumentReference)
+          .update({
+        'lastMessage': time,
+      });
+      Firestore.instance
+          .collection('directMessages')
+          .doc(thisDocumentReference)
+          .collection('messages')
+          .add({
+        'time': time,
+        'text': messageText,
+        'sender': GlobalController.get().currentUser.displayName,
+        'senderUid': GlobalController.get().currentUserUid,
+      });
+      sendPush();
+    } catch (e) {
+      print(e);
+    }
+    messageText = "";
   }
 
-  void setupTimestamps(bool isPostAuthor) async {
+  Future<void> setupTimestamps(bool isPostAuthor) async {
     var timestamp = await getCurrentTimestampServer();
     if (isPostAuthor) {
-      Firestore.instance
+      await Firestore.instance
           .collection('directMessages')
           .doc(thisDocumentReference)
           .update({
         'lastSeenAuthor': timestamp,
       });
     } else {
-      Firestore.instance
+      await Firestore.instance
           .collection('directMessages')
           .doc(thisDocumentReference)
           .update({'lastSeenInitializer': timestamp});
@@ -79,6 +104,7 @@ class _DmScreenState extends State<DmScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (postAuthor == GlobalController.get().currentUserUid)
       setupTimestamps(true);
     if (postInitializer == GlobalController.get().currentUserUid)
@@ -105,9 +131,37 @@ class _DmScreenState extends State<DmScreen> {
         'senderUid': GlobalController.get().currentUserUid,
         'time': time
       });
+      sendPush();
     } catch (e) {
       print(e);
       return Future.error(CommentsErrorCode.FailedToInitialize);
+    }
+    messageText = "";
+  }
+
+  Future<void> sendPush() async {
+    try {
+      String otherUserPushId;
+      if (postAuthor == GlobalController.get().currentUserUid) {
+        var otherUser = await Firestore.instance
+            .collection('users')
+            .where('uid', isEqualTo: postInitializer)
+            .get();
+        otherUserPushId = otherUser.docs[0].get('pushToken');
+      } else {
+        var otherUser = await Firestore.instance
+            .collection('users')
+            .where('uid', isEqualTo: postAuthor)
+            .get();
+        otherUserPushId = otherUser.docs[0].get('pushToken');
+      }
+      GlobalController.get().callOnFcmApiSendPushNotifications(
+          [otherUserPushId],
+          'New direct message!',
+          'New chat message from ${GlobalController.get().getUserName()}',
+          GlobalController.get().currentUserUid);
+    } catch (e) {
+      print('could not send push');
     }
   }
 
@@ -174,11 +228,17 @@ class _DmScreenState extends State<DmScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: <Widget>[
                         Expanded(
-                          child: TextField(
-                            controller: messageTextController,
-                            onChanged: (value) {
-                              messageText = value;
-                            },
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight: 300,
+                            ),
+                            child: TextField(
+                              maxLines: null,
+                              controller: messageTextController,
+                              onChanged: (value) {
+                                messageText = value;
+                              },
+                            ),
                           ),
                         ),
                         FlatButton(
@@ -200,28 +260,31 @@ class _DmScreenState extends State<DmScreen> {
                     child: Container(
                         child: Center(
                             child: Text('Failed to initialize, try again!')))),
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Expanded(
+                Container(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Expanded(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: 300,
+                          ),
                           child: TextField(
+                            maxLines: null,
                             controller: messageTextController,
                             onChanged: (value) {
                               messageText = value;
                             },
                           ),
                         ),
-                        FlatButton(
-                          onPressed: initialSendButtonCallback,
-                          child: Text(
-                            'Send',
-                          ),
+                      ),
+                      FlatButton(
+                        onPressed: initialSendButtonCallback,
+                        child: Text(
+                          'Send',
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 )
               ]);
@@ -278,11 +341,17 @@ class _DmScreenState extends State<DmScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: <Widget>[
                         Expanded(
-                          child: TextField(
-                            controller: messageTextController,
-                            onChanged: (value) {
-                              messageText = value;
-                            },
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxHeight: 300,
+                            ),
+                            child: TextField(
+                              maxLines: null,
+                              controller: messageTextController,
+                              onChanged: (value) {
+                                messageText = value;
+                              },
+                            ),
                           ),
                         ),
                         FlatButton(

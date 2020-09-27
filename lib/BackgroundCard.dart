@@ -104,7 +104,10 @@ class BackgroundCard extends StatelessWidget {
                     Align(
                       alignment: Alignment(-0.8, 0.8),
                       child: RaisedButton(
-                        onPressed: () {},
+                        onPressed: GlobalController.get().currentUserUid ==
+                                cardData.posterId
+                            ? null
+                            : () {},
                         highlightColor: Colors.white,
                         disabledColor: Colors.redAccent,
                         color: Colors.white60,

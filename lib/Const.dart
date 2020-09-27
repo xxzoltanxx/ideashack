@@ -3,6 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bad_words/bad_words.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:encrypt/encrypt.dart';
 
 //GLOBAL LIFECYCLE VARIABLES, I KNOW ITS SHIT I JUST STARTED USING FLUTTER
 
@@ -75,6 +78,7 @@ const int MONTH = 2629743;
 
 class GlobalController {
   static GlobalController _instance;
+  final FirebaseMessaging firebaseMessaging = FirebaseMessaging();
 
   static GlobalController get() {
     if (_instance == null) {
@@ -83,12 +87,61 @@ class GlobalController {
     return _instance;
   }
 
+  QueryDocumentSnapshot parameters;
+
+  String encryptionKey;
   int selectedIndex = 1;
   String currentUserUid = "";
   int dailyPosts = 4;
   bool fetchingDailyPosts = false;
   String userDocUid = null;
   User currentUser = null;
+  String fetchToken;
+  String serverKey;
+
+  void initParameters() {
+    serverKey = parameters.get('serbian');
+  }
+
+  String getUserName() {
+    return currentUser.displayName;
+  }
+
+  Future<bool> callOnFcmApiSendPushNotifications(
+      List<String> userToken, String title, String body, String tag) async {
+    final postUrl = 'https://fcm.googleapis.com/fcm/send';
+    final data = {
+      "registration_ids": userToken,
+      "collapse_key": "type_a",
+      "tag": tag,
+      "notification": {"title": title, "body": body, "sound": "default"}
+    };
+
+    final headers = {
+      'content-type': 'application/json',
+      'Authorization': serverKey, // 'key=YOUR_SERVER_KEY'
+    };
+
+    final response = await http.post(postUrl,
+        body: json.encode(data),
+        encoding: Encoding.getByName('utf-8'),
+        headers: headers);
+
+    if (response.statusCode == 200) {
+      // on success do sth
+      print('test ok push CFM');
+      return true;
+    } else {
+      print(' CFM error');
+      // on failure do sth
+      return false;
+    }
+  }
+
+  Future<String> fetchPushToken() async {
+    fetchToken = await firebaseMessaging.getToken();
+    return fetchToken;
+  }
 
   void checkLastTimestampsAndUpdatePosts(Function callback) async {
     try {
@@ -148,3 +201,17 @@ Future<double> getCurrentTimestampServer() async {
 final spamFilter = Filter();
 
 enum CommentsErrorCode { DidntInitializeData, FailedToInitialize }
+
+Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) async {
+  if (message.containsKey('data')) {
+    // Handle data message
+    final dynamic data = message['data'];
+  }
+
+  if (message.containsKey('notification')) {
+    // Handle notification message
+    final dynamic notification = message['notification'];
+  }
+
+  // Or do other work.
+}

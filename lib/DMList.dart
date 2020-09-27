@@ -99,6 +99,8 @@ class _DMListState extends State<DMList> {
           } else if (snapshot.connectionState == ConnectionState.done) {
             List<Widget> widgetsToEmbed = [];
             for (var data in dmDataHighlighted) {
+              bool isPostAuthor =
+                  data.postAuthor == GlobalController.get().currentUserUid;
               widgetsToEmbed.add(Container(
                   child: Padding(
                 padding: const EdgeInsets.all(20.0),

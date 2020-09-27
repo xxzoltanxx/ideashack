@@ -319,11 +319,8 @@ class _MainPageState extends State<MainPage>
   void upvote() async {
     try {
       String id = currentCardData.id;
-      var snapshot = await Firestore.instance.collection('posts').doc(id).get();
-      int score = snapshot.get('score');
-      score = score + 1;
       await Firestore.instance.collection('posts').doc(id).update({
-        'score': score,
+        'score': FieldValue.increment(1),
         'postUpvoted': FieldValue.arrayUnion([user.uid])
       });
     } catch (e) {
@@ -334,11 +331,8 @@ class _MainPageState extends State<MainPage>
   void downvote() async {
     try {
       String id = currentCardData.id;
-      var snapshot = await Firestore.instance.collection('posts').doc(id).get();
-      int score = snapshot.get('score');
-      score = score - 1;
       await Firestore.instance.collection('posts').doc(id).update({
-        'score': score,
+        'score': FieldValue.increment(-1),
         'postDownvoted': FieldValue.arrayUnion([user.uid])
       });
     } catch (e) {
@@ -539,14 +533,19 @@ class _MainPageState extends State<MainPage>
                           Align(
                             alignment: Alignment(-0.8, 0.8),
                             child: RaisedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, '/message',
-                                    arguments: <dynamic>[
-                                      currentCardData.id,
-                                      GlobalController.get().currentUserUid,
-                                      currentCardData.posterId,
-                                    ]);
-                              },
+                              onPressed: GlobalController.get()
+                                          .currentUserUid ==
+                                      currentCardData.posterId
+                                  ? null
+                                  : () {
+                                      Navigator.pushNamed(context, '/message',
+                                          arguments: <dynamic>[
+                                            currentCardData.id,
+                                            GlobalController.get()
+                                                .currentUserUid,
+                                            currentCardData.posterId,
+                                          ]);
+                                    },
                               highlightColor: Colors.white,
                               disabledColor: Colors.redAccent,
                               color: Colors.white60,

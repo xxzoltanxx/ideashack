@@ -96,12 +96,8 @@ class _LoginScreenState extends State<LoginScreen> {
     var pushToken = await GlobalController.get().fetchPushToken();
     if (possibleUser.docs.length > 0) {
       String docId = possibleUser.docs[0].id;
-      await Firestore.instance.collection('users').doc(docId).update({
-        'dailyPosts': BASE_DAILY_POSTS,
-        'lastSeen': timestamp,
-        'uid': user.uid,
-        'pushToken': pushToken
-      });
+      await Firestore.instance.collection('users').doc(docId).update(
+          {'lastSeen': timestamp, 'uid': user.uid, 'pushToken': pushToken});
       return;
     }
     await Firestore.instance.collection('users').add({

@@ -113,8 +113,12 @@ class GlobalController {
     final data = {
       "registration_ids": userToken,
       "collapse_key": "type_a",
-      "tag": tag,
-      "notification": {"title": title, "body": body, "sound": "default"}
+      "notification": {
+        "title": title,
+        "body": body,
+        "sound": "default",
+        "tag": tag,
+      }
     };
 
     final headers = {

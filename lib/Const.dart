@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bad_words/bad_words.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 //GLOBAL LIFECYCLE VARIABLES, I KNOW ITS SHIT I JUST STARTED USING FLUTTER
 
@@ -29,6 +31,8 @@ const double MAX_POST_DAILY_LIMIT = 4;
 const double BASE_DAILY_POSTS = 3;
 const int TRENDING_CARD_LIMIT = 90;
 
+const Color spinnerColor = Color(0xBFFFFFFF);
+
 String formatedNumberString(int num) {
   if (num > 1000000) {
     return '${(num / 1000000)}m';
@@ -55,7 +59,8 @@ class CardData {
       @required this.id,
       this.comments,
       this.status,
-      this.commented});
+      this.commented,
+      this.posterId});
   String text;
   int score;
   String author;
@@ -63,6 +68,7 @@ class CardData {
   List<dynamic> comments;
   UpvotedStatus status;
   bool commented;
+  String posterId;
 }
 
 const int MONTH = 2629743;
@@ -82,6 +88,7 @@ class GlobalController {
   int dailyPosts = 4;
   bool fetchingDailyPosts = false;
   String userDocUid = null;
+  User currentUser = null;
 
   void checkLastTimestampsAndUpdatePosts(Function callback) async {
     try {
@@ -139,3 +146,5 @@ Future<double> getCurrentTimestampServer() async {
 }
 
 final spamFilter = Filter();
+
+enum CommentsErrorCode { DidntInitializeData, FailedToInitialize }

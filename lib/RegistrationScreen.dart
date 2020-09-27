@@ -59,12 +59,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   GoogleSignIn googleSignIn = GoogleSignIn();
   GoogleSignInAccount account;
-  bool loggingInWithGoogle = false;
-  bool failedLogin = false;
-  bool checkingForSignIn = false;
-  bool readyForSignIn = false;
-  bool finishWithBuild = false;
   User user;
+  Future<void> initialFuture;
+  Future<void> secondaryFuture;
 
   Future<void> checkOrSetupNewUser(User user) async {
     QuerySnapshot possibleUser = await Firestore.instance
@@ -83,20 +80,11 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> checkForSignIn() async {
-    checkingForSignIn = true;
     var signedIn = await googleSignIn.isSignedIn();
     if (!signedIn) {
-      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-        setState(() {
-          checkingForSignIn = false;
-        });
-      });
+      return Future.error("NOT SIGNED IN");
     } else {
       try {
-        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {
-              loggingInWithGoogle = true;
-            }));
-
         account = await googleSignIn.signIn();
         GoogleSignInAuthentication googleSignInAuthentication =
             await account.authentication;
@@ -115,25 +103,52 @@ class _LoginScreenState extends State<LoginScreen> {
         User currentUser = widget.auth.currentUser;
         assert(user.uid == currentUser.uid);
         GlobalController.get().currentUserUid = user.uid;
+        GlobalController.get().currentUser = user;
         await checkOrSetupNewUser(currentUser);
-        WidgetsBinding.instance.addPostFrameCallback((_) => setState(() {
-              readyForSignIn = true;
-            }));
-        WidgetsBinding.instance.addPostFrameCallback((duration) =>
-            Navigator.popAndPushNamed(context, '/main', arguments: user));
       } catch (e) {
         print(e);
-        checkingForSignIn = false;
-        failedLogin = true;
-        loggingInWithGoogle = false;
+        return Future.error("COULDN'T LOG IN");
       }
+    }
+  }
+
+  void signInButtonCallback() {
+    setState(() {
+      secondaryFuture = signIn();
+    });
+  }
+
+  Future<void> signIn() async {
+    try {
+      account = await googleSignIn.signIn();
+      GoogleSignInAuthentication googleSignInAuthentication =
+          await account.authentication;
+
+      AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleSignInAuthentication.accessToken,
+        idToken: googleSignInAuthentication.idToken,
+      );
+      UserCredential authResult =
+          await widget.auth.signInWithCredential(credential);
+      user = authResult.user;
+
+      if (user != null) assert(!user.isAnonymous);
+      assert(await user.getIdToken() != null);
+
+      User currentUser = widget.auth.currentUser;
+      assert(user.uid == currentUser.uid);
+      GlobalController.get().currentUserUid = user.uid;
+      GlobalController.get().currentUser = user;
+      await checkOrSetupNewUser(currentUser);
+    } catch (e) {
+      return Future.error("FAILED TO SIGN IN CONVENTIONALLY!");
     }
   }
 
   @override
   void initState() {
     super.initState();
-    var future = checkForSignIn();
+    initialFuture = checkForSignIn();
   }
 
   @override
@@ -143,161 +158,129 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (readyForSignIn) {
-      return Container(child: Center(child: Text('You\'re logged in!')));
-    }
-    if (checkingForSignIn) {
-      return Container(
-          child: Center(
-        child: SpinKitFadingCircle(size: 100, color: Colors.white),
-      ));
-    }
-    if (failedLogin) {
-      return Container(
-          child: Center(
-              child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(FontAwesomeIcons.solidLightbulb,
-              size: 100, color: Colors.white60),
-          SizedBox(height: 50),
-          TypewriterAnimatedTextKit(
-            text: ['Spark'],
-            repeatForever: true,
-            textStyle: SPLASH_TEXT_STYLE,
-            speed: Duration(seconds: 1),
-          ),
-          SizedBox(height: 80),
-          Container(
-            width: 200,
-            height: 70,
-            child: RaisedButton(
-                onPressed: loggingInWithGoogle
-                    ? null
-                    : () async {
-                        try {
-                          setState(() {
-                            loggingInWithGoogle = true;
-                          });
-                          account = await googleSignIn.signInSilently(
-                              suppressErrors: false);
-                          GoogleSignInAuthentication
-                              googleSignInAuthentication =
-                              await account.authentication;
-
-                          AuthCredential credential =
-                              GoogleAuthProvider.credential(
-                            accessToken: googleSignInAuthentication.accessToken,
-                            idToken: googleSignInAuthentication.idToken,
-                          );
-                          UserCredential authResult = await widget.auth
-                              .signInWithCredential(credential);
-                          user = authResult.user;
-
-                          if (user != null) assert(!user.isAnonymous);
-                          assert(await user.getIdToken() != null);
-
-                          User currentUser = widget.auth.currentUser;
-                          assert(user.uid == currentUser.uid);
-                          GlobalController.get().currentUserUid = user.uid;
-                          await checkOrSetupNewUser(currentUser);
+    return FutureBuilder(
+        // Initialize FlutterFire
+        future: initialFuture,
+        builder: (context, snapshot) {
+          // Check for errors
+          if (snapshot.hasError) {
+            return FutureBuilder(
+                future: secondaryFuture,
+                builder: (context, snapshot) {
+                  print("INNER BUILDER");
+                  if (snapshot.connectionState == ConnectionState.none) {
+                    return Container(
+                        child: Center(
+                            child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(FontAwesomeIcons.solidLightbulb,
+                            size: 100, color: Colors.white60),
+                        SizedBox(height: 50),
+                        TypewriterAnimatedTextKit(
+                          text: ['Spark'],
+                          repeatForever: true,
+                          textStyle: SPLASH_TEXT_STYLE,
+                          speed: Duration(seconds: 1),
+                        ),
+                        SizedBox(height: 80),
+                        Container(
+                          width: 200,
+                          height: 70,
+                          child: RaisedButton(
+                              onPressed: signInButtonCallback,
+                              color: Colors.white,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    FontAwesomeIcons.googlePlusSquare,
+                                    color: Colors.black,
+                                  ),
+                                  SizedBox(width: 20),
+                                  Text('Google login', style: LOGINTEXTSTYLE)
+                                ],
+                              )),
+                        ),
+                      ],
+                    )));
+                  }
+                  if (snapshot.connectionState == ConnectionState.active ||
+                      snapshot.connectionState == ConnectionState.waiting) {
+                    print("ONGOING");
+                    return Container(
+                        child: Center(
+                      child: SpinKitRing(size: 100, color: spinnerColor),
+                    ));
+                  }
+                  if (snapshot.hasError) {
+                    print("SNAPSHOT ERROR");
+                    return Container(
+                        child: Center(
+                            child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(FontAwesomeIcons.solidLightbulb,
+                            size: 100, color: Colors.white60),
+                        SizedBox(height: 50),
+                        TypewriterAnimatedTextKit(
+                          text: ['Spark'],
+                          repeatForever: true,
+                          textStyle: SPLASH_TEXT_STYLE,
+                          speed: Duration(seconds: 1),
+                        ),
+                        SizedBox(height: 80),
+                        Container(
+                          width: 200,
+                          height: 70,
+                          child: RaisedButton(
+                              onPressed: signInButtonCallback,
+                              color: Colors.white,
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    FontAwesomeIcons.googlePlusSquare,
+                                    color: Colors.black,
+                                  ),
+                                  SizedBox(width: 20),
+                                  Text('Google login', style: LOGINTEXTSTYLE)
+                                ],
+                              )),
+                        ),
+                        SizedBox(height: 20),
+                        Text("Failed to sign in, try again!"),
+                      ],
+                    )));
+                  }
+                  if (snapshot.connectionState == ConnectionState.done) {
+                    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                      WidgetsBinding.instance.addPostFrameCallback((duration) =>
                           Navigator.popAndPushNamed(context, '/main',
-                              arguments: user);
-                        } catch (e) {
-                          setState(() {
-                            failedLogin = true;
-                            loggingInWithGoogle = false;
-                          });
-                        }
-                      },
-                color: Colors.white,
-                child: Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.googlePlusSquare,
-                      color: Colors.black,
-                    ),
-                    SizedBox(width: 20),
-                    Text('Google login', style: LOGINTEXTSTYLE)
-                  ],
-                )),
-          ),
-          SizedBox(height: 20),
-          Text('Failed to login, try again!', style: AUTHOR_CARD_TEXT_STYLE)
-        ],
-      )));
-    } else {
-      return Container(
-          child: Center(
-              child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(FontAwesomeIcons.solidLightbulb,
-              size: 100, color: Colors.white60),
-          SizedBox(height: 50),
-          TypewriterAnimatedTextKit(
-            text: ['Spark'],
-            repeatForever: true,
-            textStyle: SPLASH_TEXT_STYLE,
-            speed: Duration(seconds: 1),
-          ),
-          SizedBox(height: 80),
-          Container(
-            width: 200,
-            height: 70,
-            child: RaisedButton(
-                onPressed: loggingInWithGoogle
-                    ? null
-                    : () async {
-                        try {
-                          setState(() {
-                            loggingInWithGoogle = true;
-                          });
-                          account = await googleSignIn.signIn();
-                          GoogleSignInAuthentication
-                              googleSignInAuthentication =
-                              await account.authentication;
-
-                          AuthCredential credential =
-                              GoogleAuthProvider.credential(
-                            accessToken: googleSignInAuthentication.accessToken,
-                            idToken: googleSignInAuthentication.idToken,
-                          );
-                          UserCredential authResult = await widget.auth
-                              .signInWithCredential(credential);
-                          user = authResult.user;
-
-                          if (user != null) assert(!user.isAnonymous);
-                          assert(await user.getIdToken() != null);
-
-                          User currentUser = widget.auth.currentUser;
-                          assert(user.uid == currentUser.uid);
-                          GlobalController.get().currentUserUid = user.uid;
-                          await checkOrSetupNewUser(currentUser);
-                          Navigator.popAndPushNamed(context, '/main',
-                              arguments: user);
-                        } catch (e) {
-                          setState(() {
-                            failedLogin = true;
-                            loggingInWithGoogle = false;
-                          });
-                        }
-                      },
-                color: Colors.white,
-                child: Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.googlePlusSquare,
-                      color: Colors.black,
-                    ),
-                    SizedBox(width: 20),
-                    Text('Google login', style: LOGINTEXTSTYLE)
-                  ],
-                )),
-          ),
-        ],
-      )));
-    }
+                              arguments: user));
+                    });
+                    return Container(
+                        child: Center(child: Text('You\'re logged in!')));
+                  }
+                  print("REACHED HERE");
+                  return Container(
+                      child: Center(
+                    child: SpinKitRing(size: 100, color: spinnerColor),
+                  ));
+                  ;
+                });
+          }
+          // Once complete, show your application
+          if (snapshot.connectionState == ConnectionState.done) {
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+              WidgetsBinding.instance.addPostFrameCallback((duration) =>
+                  Navigator.popAndPushNamed(context, '/main', arguments: user));
+            });
+            return Container(child: Center(child: Text('You\'re logged in!')));
+          }
+          return Container(
+              child: Center(
+            child: SpinKitRing(size: 100, color: spinnerColor),
+          ));
+        });
   }
 }
 

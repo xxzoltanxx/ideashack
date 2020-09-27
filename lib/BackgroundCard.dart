@@ -100,6 +100,21 @@ class BackgroundCard extends StatelessWidget {
                         child: Icon(FontAwesomeIcons.comments,
                             size: 50, color: Colors.black45),
                       ),
+                    ),
+                    Align(
+                      alignment: Alignment(-0.8, 0.8),
+                      child: RaisedButton(
+                        onPressed: () {},
+                        highlightColor: Colors.white,
+                        disabledColor: Colors.redAccent,
+                        color: Colors.white60,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20.0),
+                          side: BorderSide(color: Colors.red, width: 3),
+                        ),
+                        child: Icon(Icons.message,
+                            size: 50, color: Colors.black45),
+                      ),
                     )
                   ],
                 ),

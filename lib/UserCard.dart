@@ -54,7 +54,7 @@ class _UserCardState extends State<UserCard> {
               style: AUTHOR_CARD_TEXT_STYLE));
     } else {
       widgetToEmbed =
-          Center(child: SpinKitFadingCircle(size: 100, color: Colors.white));
+          Center(child: SpinKitRing(size: 100, color: spinnerColor));
     }
 
     return SafeArea(
@@ -67,7 +67,7 @@ class _UserCardState extends State<UserCard> {
               child: Center(
                   child: Text('Your Ideas', style: MAIN_CARD_TEXT_STYLE))),
         ),
-        Expanded(flex: 2, child: widgetToEmbed),
+        Expanded(flex: 5, child: widgetToEmbed),
       ],
     )));
   }

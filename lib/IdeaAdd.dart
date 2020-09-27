@@ -21,10 +21,11 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
   String inputText = "";
   bool postEnabled = false;
   int indexOfPage = 0;
-  bool spinner = false;
-  bool error = false;
   bool anonimous = false;
+
   TextEditingController controller;
+
+  Future<void> postingFuture = null;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -50,18 +51,16 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  void Post() async {
-    if (spamFilter.isProfane(inputText)) {
-      setState(() {
-        error = true;
-      });
-      ;
-      return;
-    }
+  void buttonCallack() {
     setState(() {
-      spinner = true;
-      error = false;
+      postingFuture = Post();
     });
+  }
+
+  Future<void> Post() async {
+    if (spamFilter.isProfane(inputText)) {
+      return Future.error("SPAM");
+    }
     try {
       var timestamp = await getCurrentTimestampServer();
       var result = await _firestore.collection('posts').add({
@@ -80,150 +79,289 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
           .doc(GlobalController.get().userDocUid)
           .update({'dailyPosts': GlobalController.get().dailyPosts - 1});
     } catch (e) {
-      setState(() {
-        spinner = false;
-        error = true;
-        return;
-      });
+      return Future.error("ERROR");
     }
-
-    widget.onEnd();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (spinner || widget.fetchingDailyPosts) {
+    if (widget.fetchingDailyPosts) {
       return Container(
           child: Center(
-              child: SpinKitFadingCircle(
-        color: Colors.white,
+              child: SpinKitRing(
+        color: spinnerColor,
         size: 100,
       )));
-    }
-    return GestureDetector(
-      behavior: HitTestBehavior.translucent,
-      onTap: () {
-        FocusScope.of(context).requestFocus(new FocusNode());
-      },
-      child: SafeArea(
-          child: Column(
-        children: [
-          Expanded(
-            flex: 1,
-            child: Container(),
-          ),
-          Center(
-              child: Text(
-                  error
-                      ? 'Your post is either spam, profane, or an error occured!'
-                      : 'Add your idea, keep it short! 😀',
-                  style: error
-                      ? TextStyle(
-                          color: Colors.red,
-                          fontSize: 12,
-                        )
-                      : TextStyle())),
-          Container(
-            height: maxLines * 24,
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Container(
-                child: TextField(
-                  controller: controller,
-                  onChanged: (string) {
-                    inputText = string;
-                    if (inputText.length > minimumCharactersForPost &&
-                        GlobalController.get().dailyPosts > 0) {
-                      setState(() {
-                        postEnabled = true;
-                      });
-                    } else {
-                      setState(() {
-                        postEnabled = false;
-                      });
-                    }
-                  },
-                  onEditingComplete: () {},
-                  maxLines: maxLines.toInt(),
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 20,
-                  ),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                  maxLength: 245,
-                ),
-              ),
-            ),
-          ),
-          Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('Remain anonymous'),
-                SizedBox(width: 20),
-                Switch(
-                  onChanged: (bool val) {
-                    setState(() {
-                      anonimous = val;
-                    });
-                  },
-                  value: anonimous,
-                  activeColor: Colors.green,
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Container(),
-          ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                GlobalController.get().dailyPosts > 0
-                    ? 'You may still post ideas today! 💡'
-                    : 'That\'s it for today, check in tomorrow!',
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Container(
-              child: FAProgressBar(
-                backgroundColor: Colors.white,
-                size: 20,
-                borderRadius: 10.0,
-                maxValue: MAX_POST_DAILY_LIMIT.toInt(),
-                currentValue: GlobalController.get().dailyPosts,
-                progressColor: Colors.blue,
-                changeProgressColor: Colors.red,
-                direction: Axis.horizontal,
-                displayText: '/${MAX_POST_DAILY_LIMIT.toInt()} ',
-              ),
-            ),
-          ),
-          Container(
-            child: FlatButton(
-              onPressed: postEnabled ? Post : null,
-              disabledColor: Colors.red,
-              color: Colors.green,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Icon(FontAwesomeIcons.comment),
-                  SizedBox(width: 20),
-                  Text('SUBMIT'),
-                ],
-              ),
-            ),
-          )
-        ],
-      )),
-    );
+    } else
+      return FutureBuilder(
+          future: postingFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.none) {
+              print("NO CONNECTION");
+              return GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  FocusScope.of(context).requestFocus(new FocusNode());
+                },
+                child: SafeArea(
+                    child: Column(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: Container(),
+                    ),
+                    Center(child: Text('Enter your idea, keep it short!')),
+                    Container(
+                      height: maxLines * 24,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Container(
+                          child: TextField(
+                            controller: controller,
+                            onChanged: (string) {
+                              inputText = string;
+                              if (inputText.length > minimumCharactersForPost &&
+                                  GlobalController.get().dailyPosts > 0) {
+                                setState(() {
+                                  postEnabled = true;
+                                });
+                              } else {
+                                setState(() {
+                                  postEnabled = false;
+                                });
+                              }
+                            },
+                            onEditingComplete: () {},
+                            maxLines: maxLines.toInt(),
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 20,
+                            ),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            maxLength: 245,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Remain anonymous'),
+                          SizedBox(width: 20),
+                          Switch(
+                            onChanged: (bool val) {
+                              setState(() {
+                                anonimous = val;
+                              });
+                            },
+                            value: anonimous,
+                            activeColor: Colors.green,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 4,
+                      child: Container(),
+                    ),
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          GlobalController.get().dailyPosts > 0
+                              ? 'You may still post ideas today! 💡'
+                              : 'That\'s it for today, check in tomorrow!',
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Container(
+                        child: FAProgressBar(
+                          backgroundColor: Colors.white,
+                          size: 20,
+                          borderRadius: 10.0,
+                          maxValue: MAX_POST_DAILY_LIMIT.toInt(),
+                          currentValue: GlobalController.get().dailyPosts,
+                          progressColor: Colors.blue,
+                          changeProgressColor: Colors.red,
+                          direction: Axis.horizontal,
+                          displayText: '/${MAX_POST_DAILY_LIMIT.toInt()} ',
+                        ),
+                      ),
+                    ),
+                    Container(
+                      child: FlatButton(
+                        onPressed: postEnabled ? buttonCallack : null,
+                        disabledColor: Colors.red,
+                        color: Colors.green,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Icon(FontAwesomeIcons.comment),
+                            SizedBox(width: 20),
+                            Text('SUBMIT'),
+                          ],
+                        ),
+                      ),
+                    )
+                  ],
+                )),
+              );
+            }
+            if (snapshot.hasError) {
+              print(snapshot.error);
+              print("ERROR");
+              return GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  FocusScope.of(context).requestFocus(new FocusNode());
+                },
+                child: SafeArea(
+                    child: Column(
+                  children: [
+                    Expanded(
+                      flex: 1,
+                      child: Container(),
+                    ),
+                    Center(
+                        child: Text(
+                            'Your post is either spam, profane, or an error occured!',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
+                            ))),
+                    Container(
+                      height: maxLines * 24,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Container(
+                          child: TextField(
+                            controller: controller,
+                            onChanged: (string) {
+                              inputText = string;
+                              if (inputText.length > minimumCharactersForPost &&
+                                  GlobalController.get().dailyPosts > 0) {
+                                setState(() {
+                                  postEnabled = true;
+                                });
+                              } else {
+                                setState(() {
+                                  postEnabled = false;
+                                });
+                              }
+                            },
+                            onEditingComplete: () {},
+                            maxLines: maxLines.toInt(),
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 20,
+                            ),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                            maxLength: 245,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('Remain anonymous'),
+                          SizedBox(width: 20),
+                          Switch(
+                            onChanged: (bool val) {
+                              setState(() {
+                                anonimous = val;
+                              });
+                            },
+                            value: anonimous,
+                            activeColor: Colors.green,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 4,
+                      child: Container(),
+                    ),
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          GlobalController.get().dailyPosts > 0
+                              ? 'You may still post ideas today! 💡'
+                              : 'That\'s it for today, check in tomorrow!',
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Container(
+                        child: FAProgressBar(
+                          backgroundColor: Colors.white,
+                          size: 20,
+                          borderRadius: 10.0,
+                          maxValue: MAX_POST_DAILY_LIMIT.toInt(),
+                          currentValue: GlobalController.get().dailyPosts,
+                          progressColor: Colors.blue,
+                          changeProgressColor: Colors.red,
+                          direction: Axis.horizontal,
+                          displayText: '/${MAX_POST_DAILY_LIMIT.toInt()} ',
+                        ),
+                      ),
+                    ),
+                    Container(
+                      child: FlatButton(
+                        onPressed: postEnabled ? buttonCallack : null,
+                        disabledColor: Colors.red,
+                        color: Colors.green,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            Icon(FontAwesomeIcons.comment),
+                            SizedBox(width: 20),
+                            Text('SUBMIT'),
+                          ],
+                        ),
+                      ),
+                    )
+                  ],
+                )),
+              );
+            }
+            // Once complete, show your application
+            if (snapshot.connectionState == ConnectionState.done) {
+              print("ENDED");
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                widget.onEnd();
+                return Container(
+                    child: Center(
+                        child: SpinKitRing(
+                  color: spinnerColor,
+                  size: 100,
+                )));
+              });
+            }
+            return Container(
+                child: Center(
+                    child: SpinKitRing(
+              color: spinnerColor,
+              size: 100,
+            )));
+            ;
+          }
+
+          // Otherwise, show something whilst waiting for initialization to complete
+          );
   }
 }

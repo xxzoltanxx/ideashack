@@ -14,6 +14,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'UserCard.dart';
 import 'CommentsScreen.dart';
+import 'DirectMessageScreen.dart';
+import 'DMList.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +37,9 @@ class MyApp extends StatelessWidget {
       routes: {
         '/main': (context) => MainPage(),
         '/auth': (context) => RegistrationScreen(),
-        '/comments': (context) => CommentsScreen()
+        '/comments': (context) => CommentsScreen(),
+        '/message': (context) => DmScreen(),
+        '/feed': (context) => DMList()
       },
       initialRoute: '/auth',
     );
@@ -74,6 +78,7 @@ class _MainPageState extends State<MainPage>
   User user;
   bool firstBuild = true;
   List<int> selectedIndexes = [];
+  Future<void> batchFuture;
 
   final AlignmentSt defaultFrontCardAlign = AlignmentSt(0.0, 0.0);
   AlignmentSt frontCardAlign;
@@ -137,8 +142,11 @@ class _MainPageState extends State<MainPage>
     }
   }
 
-  void commentsCallbackUserPanel() {
-    _settingModalBottomSheet(context, InfoSheet.Commented);
+  void commentsCallbackUserPanel(bool profane) {
+    if (profane)
+      _settingModalBottomSheet(context, InfoSheet.Profane);
+    else
+      _settingModalBottomSheet(context, InfoSheet.Commented);
   }
 
   @override
@@ -409,8 +417,10 @@ class _MainPageState extends State<MainPage>
       currentCardData = null;
       nextCardData = null;
       fetchingData = true;
-      CardList.get()
-          .getNextBatch(lambda: FetchedData, trending: trendingSelect);
+      setState(() {
+        batchFuture = CardList.get()
+            .getNextBatch(lambda: FetchedData, trending: trendingSelect);
+      });
     } else if (currentCardData != null && stackCards.length > 1) {
       stackCards[1] = (Container(
         width: MediaQuery.of(context).size.width,
@@ -525,6 +535,28 @@ class _MainPageState extends State<MainPage>
                               child: Icon(FontAwesomeIcons.comments,
                                   size: 50, color: Colors.black45),
                             ),
+                          ),
+                          Align(
+                            alignment: Alignment(-0.8, 0.8),
+                            child: RaisedButton(
+                              onPressed: () {
+                                Navigator.pushNamed(context, '/message',
+                                    arguments: <dynamic>[
+                                      currentCardData.id,
+                                      GlobalController.get().currentUserUid,
+                                      currentCardData.posterId,
+                                    ]);
+                              },
+                              highlightColor: Colors.white,
+                              disabledColor: Colors.redAccent,
+                              color: Colors.white60,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20.0),
+                                side: BorderSide(color: Colors.red, width: 3),
+                              ),
+                              child: Icon(Icons.message,
+                                  size: 50, color: Colors.black45),
+                            ),
                           )
                         ],
                       ),
@@ -552,8 +584,7 @@ class _MainPageState extends State<MainPage>
     } else if ((fetchingData || stackCards.length < 1) &&
         GlobalController.get().selectedIndex == 1) {
       bodyWidget = Container(
-          child: Center(
-              child: SpinKitFadingCircle(size: 100, color: Colors.white)));
+          child: Center(child: SpinKitRing(size: 100, color: spinnerColor)));
     } else {
       bodyWidget = SafeArea(
         child: Stack(
@@ -598,8 +629,76 @@ class _MainPageState extends State<MainPage>
         ),
         body: WillPopScope(
           onWillPop: _backButtonPressed,
-          child: Opacity(
-              child: bodyWidget, opacity: fadingIn ? animation.value : 1),
+          child: Stack(children: [
+            Opacity(child: bodyWidget, opacity: fadingIn ? animation.value : 1),
+            FeedOverlay()
+          ]),
         ));
+  }
+}
+
+class FeedOverlay extends StatefulWidget {
+  @override
+  _FeedOverlayState createState() => _FeedOverlayState();
+}
+
+class _FeedOverlayState extends State<FeedOverlay> {
+  Stream<QuerySnapshot> authorStream;
+  @override
+  void initState() {
+    authorStream = Firestore.instance
+        .collection('directMessages')
+        .where('posters', arrayContains: GlobalController.get().currentUserUid)
+        .snapshots();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox.expand(
+        child: Container(
+            child: Align(
+                alignment: Alignment(1, -0.5),
+                child: GestureDetector(
+                    child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white60,
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(context, '/feed');
+                    },
+                    child: StreamBuilder(
+                        stream: authorStream,
+                        builder: (context, snapshot) {
+                          if (snapshot.data == null) {
+                            return Icon(Icons.notifications, size: 40);
+                          } else {
+                            List<QueryDocumentSnapshot> commentHolderList =
+                                snapshot.data.docs;
+
+                            for (var snapshotDoc in commentHolderList) {
+                              double relevantTimestamp = 0;
+                              if (snapshotDoc.get('initializerId') ==
+                                  GlobalController.get().currentUserUid) {
+                                relevantTimestamp =
+                                    snapshotDoc.get('lastSeenInitializer');
+                              } else {
+                                relevantTimestamp =
+                                    snapshotDoc.get('lastSeenAuthor');
+                              }
+                              if (snapshotDoc.get('lastMessage') >
+                                  relevantTimestamp) {
+                                return Icon(Icons.notifications_active,
+                                    size: 40, color: Colors.red);
+                              }
+                            }
+                            return Icon(Icons.notifications,
+                                size: 40, color: Colors.white);
+                          }
+                        }),
+                  ),
+                )))));
   }
 }

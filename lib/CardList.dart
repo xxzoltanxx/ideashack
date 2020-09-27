@@ -47,6 +47,7 @@ class CardList {
             score: doc.get('score'),
             text: doc.get('body'),
             comments: doc.get('comments'),
+            posterId: doc.get('userid'),
             commented: commented));
       }
     } catch (e) {
@@ -105,6 +106,7 @@ class CardList {
               .toSet()
               .contains(GlobalController.get().currentUserUid);
           cardsData.add(CardData(
+              posterId: doc.get('userid'),
               id: doc.id,
               author: doc.get('author'),
               score: doc.get('score'),

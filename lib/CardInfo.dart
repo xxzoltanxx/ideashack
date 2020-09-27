@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:ideashack/Const.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'DMList.dart';
 
-class CardInfo extends StatelessWidget {
+class CardInfo extends StatefulWidget {
   CardInfo(this.cardData, this.modalCallback);
-  CardData cardData;
-  Function modalCallback;
+  final CardData cardData;
+  final Function modalCallback;
 
-  void callback(CardData data) {
+  @override
+  _CardInfoState createState() => _CardInfoState();
+}
+
+class _CardInfoState extends State<CardInfo> {
+  CardData cardData;
+  @override
+  void initState() {
+    cardData = widget.cardData;
+    super.initState();
+  }
+
+  void callback(CardData data, profane) {
     cardData = data;
-    modalCallback();
+    widget.modalCallback(profane);
   }
 
   @override
@@ -20,7 +33,8 @@ class CardInfo extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(child: Text(cardData.text, style: AUTHOR_CARD_TEXT_STYLE)),
+          Expanded(
+              child: Text(widget.cardData.text, style: AUTHOR_CARD_TEXT_STYLE)),
           Container(
             decoration: BoxDecoration(
                 shape: BoxShape.circle,
@@ -28,12 +42,15 @@ class CardInfo extends StatelessWidget {
                 boxShadow: [BoxShadow(blurRadius: 9.0, color: Colors.black)]),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text(formatedNumberString(cardData.score),
+              child: Text(formatedNumberString(widget.cardData.score),
                   style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 30,
-                      color: Color.fromARGB(200, cardData.score < 0 ? 170 : 0,
-                          cardData.score >= 0 ? 170 : 0, 0))),
+                      color: Color.fromARGB(
+                          200,
+                          widget.cardData.score < 0 ? 170 : 0,
+                          widget.cardData.score >= 0 ? 170 : 0,
+                          0))),
             ),
           ),
           Padding(
@@ -41,19 +58,19 @@ class CardInfo extends StatelessWidget {
             child: RaisedButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/comments',
-                    arguments: <dynamic>[cardData, callback]);
+                    arguments: <dynamic>[widget.cardData, callback]);
               },
               highlightColor: Colors.white,
               disabledColor: Colors.redAccent,
               color: Colors.white60,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20.0),
+                borderRadius: BorderRadius.circular(10.0),
                 side: BorderSide(color: Colors.red, width: 3),
               ),
               child: Icon(FontAwesomeIcons.comments,
-                  size: 50, color: Colors.black45),
+                  size: 20, color: Colors.black45),
             ),
-          )
+          ),
         ],
       ),
     ));

@@ -22,7 +22,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
 
   void postComment() async {
     try {
-      cardData.commented = true;
       await Firestore.instance.collection('posts').doc(cardData.id).update({
         'comments': FieldValue.arrayUnion([inputText]),
         'commented':
@@ -39,10 +38,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
       profane = true;
     }
     if (!profane) {
+      cardData.commented = true;
+      cardData.comments.add(inputText);
       postComment();
     }
+    print(cardData.commented);
     Navigator.pop(context);
-    commentsCallback(cardData, profane: profane);
+    commentsCallback(cardData, profane);
   }
 
   @override
@@ -95,7 +97,9 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         height: 20.0 * 24,
                         child: TextField(
                           onChanged: (string) {
-                            inputText = string;
+                            setState(() {
+                              inputText = string;
+                            });
                           },
                           onEditingComplete: () {},
                           maxLines: 20.toInt(),
@@ -116,7 +120,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       child: RaisedButton(
                           child: Center(child: Text('Post')),
                           onPressed:
-                              (cardData.commented && inputText.length > 15)
+                              (cardData.commented || inputText.length < 15)
                                   ? null
                                   : buttonCallback),
                     )

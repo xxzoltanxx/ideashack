@@ -37,6 +37,7 @@ dependencies:
   flutter_spinkit: ^4.1.2
   flutter_animation_progress_bar: ^1.0.5
   bad_words: ^0.1.0
+  firebase_messaging: ^7.0.0
 
 dev_dependencies:
   flutter_test:

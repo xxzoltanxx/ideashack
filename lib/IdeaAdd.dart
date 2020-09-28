@@ -88,16 +88,22 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
     if (widget.fetchingDailyPosts) {
       return Container(
           child: Center(
-              child: SpinKitRing(
-        color: spinnerColor,
-        size: 100,
+              child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset('Assets/logo.png', width: 200),
+          SizedBox(height: 30),
+          SpinKitThreeBounce(
+            color: spinnerColor,
+            size: 60,
+          ),
+        ],
       )));
     } else
       return FutureBuilder(
           future: postingFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.none) {
-              print("NO CONNECTION");
               return GestureDetector(
                 behavior: HitTestBehavior.translucent,
                 onTap: () {
@@ -346,17 +352,31 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                 widget.onEnd();
                 return Container(
                     child: Center(
-                        child: SpinKitRing(
-                  color: spinnerColor,
-                  size: 100,
+                        child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('Assets/logo.png', width: 200),
+                    SizedBox(height: 30),
+                    SpinKitThreeBounce(
+                      color: spinnerColor,
+                      size: 60,
+                    ),
+                  ],
                 )));
               });
             }
             return Container(
                 child: Center(
-                    child: SpinKitRing(
-              color: spinnerColor,
-              size: 100,
+                    child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('Assets/logo.png', width: 200),
+                SizedBox(height: 30),
+                SpinKitThreeBounce(
+                  color: spinnerColor,
+                  size: 60,
+                ),
+              ],
             )));
             ;
           }

@@ -18,6 +18,8 @@ import 'DirectMessageScreen.dart';
 import 'DMList.dart';
 
 void main() {
+  SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light
+      .copyWith(systemNavigationBarColor: Colors.white));
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setEnabledSystemUIOverlays(
       [SystemUiOverlay.top, SystemUiOverlay.bottom]).then((_) {
@@ -32,8 +34,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
-          primaryColor: Color(0xFF212121), cardColor: Color(0xFF444444)),
+          primaryColor: Color(0xFF212121),
+          cardColor: Color(0xFF444444),
+          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+            backgroundColor: Colors.white,
+            selectedItemColor: Color(0xFFEABD00),
+            unselectedItemColor: Color(0xFF666666),
+          )),
       routes: {
         '/main': (context) => MainPage(),
         '/auth': (context) => RegistrationScreen(),
@@ -77,37 +86,11 @@ class _MainPageState extends State<MainPage>
   Widget bodyWidget;
   User user;
   bool firstBuild = true;
-  List<int> selectedIndexes = [];
   Future<void> batchFuture;
 
   final AlignmentSt defaultFrontCardAlign = AlignmentSt(0.0, 0.0);
   AlignmentSt frontCardAlign;
   double frontCardRot = 0.0;
-
-  Future<bool> _backButtonPressed() async {
-    setState(() {});
-    if (selectedIndexes.length == 0) {
-      SystemNavigator.pop(animated: true);
-      return false;
-    } else {
-      var indexToGo = selectedIndexes[selectedIndexes.length - 1];
-      selectedIndexes.removeLast();
-
-      setState(() {
-        fadingIn = true;
-        controller.forward(from: 0.0);
-        if (indexToGo == 1) {
-          fetchNum = 0;
-        }
-        if (indexToGo == 0) {
-          GlobalController.get()
-              .checkLastTimestampsAndUpdatePosts(onFetchUserTimestampsCallback);
-        }
-        GlobalController.get().selectedIndex = indexToGo;
-      });
-    }
-    return false;
-  }
 
   void onFetchUserTimestampsCallback(int newPosts) {
     setState(() {
@@ -263,17 +246,11 @@ class _MainPageState extends State<MainPage>
     } else {
       stackCards.add(
           Container(child: Center(child: Text('No more ideas currently'))));
-      stackCards.add(OverlayWidget(
-          noCards: true,
-          setTrendingFunc: setTrendingFunc,
-          trending: trendingSelect));
     }
+    stackCards.add(Container());
+    stackCards.add(Container());
     if (currentCardData != null) {
       stackCards.add(Container());
-      stackCards.add(OverlayWidget(
-          setTrendingFunc: setTrendingFunc,
-          noCards: currentCardData == null,
-          trending: trendingSelect));
       stackCards.add(SizedBox(
           child: GestureDetector(onPanUpdate: (thang) {
         if (isLockedSwipe) return;
@@ -417,162 +394,226 @@ class _MainPageState extends State<MainPage>
       });
     } else if (currentCardData != null && stackCards.length > 1) {
       stackCards[1] = (Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height -
-            0.08 * MediaQuery.of(context).size.height,
         child: Transform.rotate(
           angle: frontCardRot * 3.14 / 180,
           child: Transform.translate(
             offset:
                 Offset(frontCardAlign.x * 20, (frontCardAlign.x.abs()) * 10),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Container(
-                decoration: BoxDecoration(boxShadow: [
-                  BoxShadow(
-                    blurRadius: 20.0,
-                    color: Color.fromARGB(boxColor.toInt(), 0, 0, 0),
-                  )
-                ]),
-                child: Card(
-                    color: Color.lerp(
-                        Color(0xFF68482B),
-                        Color(0xFFFFD200),
-                        (currentCardData.score.toDouble() / MAX_SCORE)
-                            .clamp(0.0, 1.0)),
-                    child: Center(
-                        child: Padding(
-                      padding: const EdgeInsets.all(10.0),
-                      child: Stack(
-                        children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Align(
-                                alignment: Alignment(0.7, -3),
-                                child: Transform.rotate(
-                                  angle: 170,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      boxShadow: [
-                                        BoxShadow(
-                                            blurRadius: 9.0,
-                                            color: Colors.black)
-                                      ],
-                                      shape: BoxShape.circle,
-                                      color: Colors.white,
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                          formatedNumberString(
-                                              currentCardData.score),
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              fontSize: 30,
-                                              color: Color.fromARGB(
-                                                  200,
-                                                  currentCardData.score < 0
-                                                      ? 170
-                                                      : 0,
-                                                  currentCardData.score >= 0
-                                                      ? 170
-                                                      : 0,
-                                                  0))),
-                                    ),
-                                  ),
-                                ),
+            child: Container(
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      begin: FractionalOffset.bottomLeft,
+                      end: FractionalOffset.topRight,
+                      colors: [
+                        Color.lerp(
+                            bottomLeftStart,
+                            bottomLeftEnd,
+                            (currentCardData.score.toDouble() / MAX_SCORE)
+                                .clamp(0.0, 1.0)),
+                        Color.lerp(
+                            topRightStart,
+                            topRightEnd,
+                            (currentCardData.score.toDouble() / MAX_SCORE)
+                                .clamp(0.0, 1.0)),
+                      ]),
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 20.0,
+                      color: Color.fromARGB(boxColor.toInt(), 0, 0, 0),
+                    )
+                  ]),
+              child: Center(
+                  child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Stack(
+                  children: [
+                    Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: cardthingspadding),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.thumb_up,
+                                      color: cardThingsTextStyle.color,
+                                      size: 30),
+                                  SizedBox(width: 10),
+                                  Text(currentCardData.score.toString(),
+                                      style: cardThingsTextStyle),
+                                ],
                               ),
-                              Text(currentCardData.text,
-                                  style: MAIN_CARD_TEXT_STYLE),
-                              SizedBox(height: 20),
-                              Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text('- ${currentCardData.author}',
-                                        style: AUTHOR_CARD_TEXT_STYLE),
-                                  ))
+                            ),
+                            Expanded(child: Container()),
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  right: cardthingspadding),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.comment,
+                                          color: cardThingsTextStyle.color,
+                                          size: 30),
+                                      SizedBox(width: 10),
+                                      Text(
+                                          currentCardData.comments.length
+                                              .toString(),
+                                          style: cardThingsTextStyle),
+                                    ],
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        Expanded(
+                            child: Center(
+                          child: Text(currentCardData.text,
+                              style: MAIN_CARD_TEXT_STYLE,
+                              textAlign: TextAlign.center),
+                        )),
+                        SizedBox(height: 20),
+                        Padding(
+                          padding: const EdgeInsets.all(cardthingspadding),
+                          child: Divider(
+                            color: cardThingsTextStyle.color,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: cardthingspadding,
+                              right: cardthingspadding),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              InkWell(
+                                  child: Text('Message',
+                                      style: cardThingsBelowTextStyle),
+                                  onTap: () {
+                                    Navigator.pushNamed(context, '/message',
+                                        arguments: <dynamic>[
+                                          currentCardData.id,
+                                          GlobalController.get().currentUserUid,
+                                          currentCardData.posterId,
+                                        ]);
+                                  }),
+                              InkWell(
+                                  onTap: () {
+                                    Navigator.pushNamed(context, '/comments',
+                                        arguments: <dynamic>[
+                                          currentCardData,
+                                          commentsCallback
+                                        ]);
+                                  },
+                                  child: Text('Comment',
+                                      style: cardThingsBelowTextStyle)),
+                              InkWell(
+                                  child: Text('Share',
+                                      style: cardThingsBelowTextStyle))
                             ],
                           ),
-                          Align(
-                            alignment: Alignment(-0.4, -0.4),
-                            child: Icon(FontAwesomeIcons.solidThumbsUp,
-                                size: 50,
-                                color: Color.fromARGB(
-                                    thumbsUpOpacity.toInt(), 0, 255, 0)),
-                          ),
-                          Align(
-                            alignment: Alignment(0.4, -0.4),
-                            child: Icon(FontAwesomeIcons.solidThumbsDown,
-                                size: 50,
-                                color: Color.fromARGB(
-                                    thumbsDownOpacity.toInt(), 255, 0, 0)),
-                          ),
-                          Align(
-                            alignment: Alignment(0.8, 0.8),
-                            child: RaisedButton(
-                              onPressed: () {
-                                Navigator.pushNamed(context, '/comments',
-                                    arguments: <dynamic>[
-                                      currentCardData,
-                                      commentsCallback
-                                    ]);
-                              },
-                              highlightColor: Colors.white,
-                              disabledColor: Colors.redAccent,
-                              color: Colors.white60,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                                side: BorderSide(color: Colors.red, width: 3),
-                              ),
-                              child: Icon(FontAwesomeIcons.comments,
-                                  size: 50, color: Colors.black45),
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment(-0.8, 0.8),
-                            child: RaisedButton(
-                              onPressed: GlobalController.get()
-                                          .currentUserUid ==
-                                      currentCardData.posterId
-                                  ? null
-                                  : () {
-                                      Navigator.pushNamed(context, '/message',
-                                          arguments: <dynamic>[
-                                            currentCardData.id,
-                                            GlobalController.get()
-                                                .currentUserUid,
-                                            currentCardData.posterId,
-                                          ]);
-                                    },
-                              highlightColor: Colors.white,
-                              disabledColor: Colors.redAccent,
-                              color: Colors.white60,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                                side: BorderSide(color: Colors.red, width: 3),
-                              ),
-                              child: Icon(Icons.message,
-                                  size: 50, color: Colors.black45),
-                            ),
-                          )
-                        ],
-                      ),
-                    ))),
-              ),
+                        )
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment(-0.4, -0.9),
+                      child: Icon(Icons.person,
+                          size: 100,
+                          color: currentCardData.status == UpvotedStatus.Upvoted
+                              ? Color(0x80FFFFFF)
+                              : Color(0x00000000)),
+                    ),
+                    Align(
+                      alignment: Alignment(0.4, -0.9),
+                      child: Icon(Icons.pool,
+                          size: 100,
+                          color:
+                              currentCardData.status == UpvotedStatus.Downvoted
+                                  ? Color(0x80FFFFFF)
+                                  : Color(0x00000000)),
+                    )
+                  ],
+                ),
+              )),
             ),
           ),
         ),
       ));
+      if (currentCardData.status == UpvotedStatus.DidntVote) {
+        stackCards[2] =
+            LikeIndicator(controller.value, deletingCard, thumbsUpOpacity);
+        stackCards[3] =
+            DislikeIndicator(controller.value, deletingCard, thumbsDownOpacity);
+      }
     }
 
     if (GlobalController.get().selectedIndex == 1 &&
         !fetchingData &&
         stackCards.length > 1) {
       bodyWidget = SafeArea(
-        child: Stack(
-          children: stackCards,
+        child: Column(
+          children: [
+            Container(
+                color: Colors.white,
+                child: IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          setTrendingFunc(false);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Text('New',
+                              style: !currentlyTrending
+                                  ? enabledUpperBarStyle
+                                  : disabledUpperBarStyle),
+                        ),
+                      ),
+                      VerticalDivider(
+                        color: Colors.grey,
+                        thickness: 1,
+                        indent: 2,
+                        endIndent: 2,
+                      ),
+                      InkWell(
+                        onTap: () {
+                          setTrendingFunc(true);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Text('Trending',
+                              style: currentlyTrending
+                                  ? enabledUpperBarStyle
+                                  : disabledUpperBarStyle),
+                        ),
+                      ),
+                      VerticalDivider(
+                        color: Colors.grey,
+                        thickness: 1,
+                        indent: 2,
+                        endIndent: 2,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Text(
+                          'Search',
+                          style: TextStyle(
+                            color: disabledUpperBarColor,
+                          ),
+                        ),
+                      ),
+                      Expanded(child: Container()),
+                      FeedOverlay(),
+                    ],
+                  ),
+                )),
+            Expanded(child: Stack(children: stackCards)),
+          ],
         ),
       );
     } else if (GlobalController.get().selectedIndex == 0) {
@@ -582,12 +623,135 @@ class _MainPageState extends State<MainPage>
       bodyWidget = UserCard(commentsCallbackUserPanel);
     } else if ((fetchingData || stackCards.length < 1) &&
         GlobalController.get().selectedIndex == 1) {
-      bodyWidget = Container(
-          child: Center(child: SpinKitRing(size: 100, color: spinnerColor)));
+      bodyWidget = SafeArea(
+        child: Column(
+          children: [
+            Container(
+                color: Colors.white,
+                child: IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: null,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Text('New',
+                              style: !currentlyTrending
+                                  ? enabledOnReloadStyle
+                                  : disabledOnReloadStyle),
+                        ),
+                      ),
+                      VerticalDivider(
+                        color: Colors.grey,
+                        thickness: 1,
+                        indent: 2,
+                        endIndent: 2,
+                      ),
+                      InkWell(
+                        onTap: null,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Text('Trending',
+                              style: currentlyTrending
+                                  ? enabledOnReloadStyle
+                                  : disabledOnReloadStyle),
+                        ),
+                      ),
+                      VerticalDivider(
+                        color: Colors.grey,
+                        thickness: 1,
+                        indent: 2,
+                        endIndent: 2,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: Text('Search', style: disabledOnReloadStyle),
+                      ),
+                      Expanded(child: Container()),
+                      FeedOverlay(),
+                    ],
+                  ),
+                )),
+            Expanded(
+                child: Container(
+                    child: Center(
+                        child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('Assets/logo.png', width: 200),
+                SizedBox(height: 30),
+                SpinKitThreeBounce(
+                  color: spinnerColor,
+                  size: 60,
+                ),
+              ],
+            ))))
+          ],
+        ),
+      );
     } else {
       bodyWidget = SafeArea(
-        child: Stack(
-          children: stackCards,
+        child: SizedBox.expand(
+          child: Column(
+            children: [
+              Container(
+                  color: Colors.white,
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            setTrendingFunc(false);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Text('New',
+                                style: !currentlyTrending
+                                    ? enabledUpperBarStyle
+                                    : disabledUpperBarStyle),
+                          ),
+                        ),
+                        VerticalDivider(
+                          color: Colors.grey,
+                          thickness: 1,
+                          indent: 2,
+                          endIndent: 2,
+                        ),
+                        InkWell(
+                          onTap: () {
+                            setTrendingFunc(true);
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Text('Trending',
+                                style: currentlyTrending
+                                    ? enabledUpperBarStyle
+                                    : disabledUpperBarStyle),
+                          ),
+                        ),
+                        VerticalDivider(
+                          color: Colors.grey,
+                          thickness: 1,
+                          indent: 2,
+                          endIndent: 2,
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Text(
+                            'Search',
+                            style: TextStyle(
+                              color: disabledUpperBarColor,
+                            ),
+                          ),
+                        ),
+                        Expanded(child: Container()),
+                        FeedOverlay(),
+                      ],
+                    ),
+                  )),
+              Expanded(child: Stack(children: stackCards)),
+            ],
+          ),
         ),
       );
     }
@@ -611,7 +775,6 @@ class _MainPageState extends State<MainPage>
                     onFetchUserTimestampsCallback);
               }
               setState(() {
-                selectedIndexes.add(GlobalController.get().selectedIndex);
                 GlobalController.get().selectedIndex = number;
               });
             }
@@ -626,12 +789,15 @@ class _MainPageState extends State<MainPage>
                 icon: Icon(Icons.person), title: Text('User Panel'))
           ],
         ),
-        body: WillPopScope(
-          onWillPop: _backButtonPressed,
-          child: Stack(children: [
-            Opacity(child: bodyWidget, opacity: fadingIn ? animation.value : 1),
-            FeedOverlay()
-          ]),
+        body: SafeArea(
+          child: Container(
+              decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                      colors: splashScreenColors,
+                      begin: Alignment.bottomLeft,
+                      end: Alignment.topRight)),
+              child: Opacity(
+                  opacity: fadingIn ? animation.value : 1, child: bodyWidget)),
         ));
   }
 }
@@ -654,50 +820,95 @@ class _FeedOverlayState extends State<FeedOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.expand(
-        child: Container(
-            child: Align(
-                alignment: Alignment(1, -0.5),
-                child: GestureDetector(
-                    child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white60,
-                  ),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/feed');
-                    },
-                    child: StreamBuilder(
-                        stream: authorStream,
-                        builder: (context, snapshot) {
-                          if (snapshot.data == null) {
-                            return Icon(Icons.notifications, size: 40);
-                          } else {
-                            List<QueryDocumentSnapshot> commentHolderList =
-                                snapshot.data.docs;
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white60,
+      ),
+      child: GestureDetector(
+        onTap: () {
+          Navigator.pushNamed(context, '/feed');
+        },
+        child: StreamBuilder(
+            stream: authorStream,
+            builder: (context, snapshot) {
+              if (snapshot.data == null) {
+                return Icon(Icons.notifications, size: 20, color: Colors.grey);
+              } else {
+                List<QueryDocumentSnapshot> commentHolderList =
+                    snapshot.data.docs;
 
-                            for (var snapshotDoc in commentHolderList) {
-                              double relevantTimestamp = 0;
-                              if (snapshotDoc.get('initializerId') ==
-                                  GlobalController.get().currentUserUid) {
-                                relevantTimestamp =
-                                    snapshotDoc.get('lastSeenInitializer');
-                              } else {
-                                relevantTimestamp =
-                                    snapshotDoc.get('lastSeenAuthor');
-                              }
-                              if (snapshotDoc.get('lastMessage') >
-                                  relevantTimestamp) {
-                                return Icon(Icons.notifications_active,
-                                    size: 40, color: Colors.red);
-                              }
-                            }
-                            return Icon(Icons.notifications,
-                                size: 40, color: Colors.white);
-                          }
-                        }),
-                  ),
-                )))));
+                for (var snapshotDoc in commentHolderList) {
+                  double relevantTimestamp = 0;
+                  if (snapshotDoc.get('initializerId') ==
+                      GlobalController.get().currentUserUid) {
+                    relevantTimestamp = snapshotDoc.get('lastSeenInitializer');
+                  } else {
+                    relevantTimestamp = snapshotDoc.get('lastSeenAuthor');
+                  }
+                  if (snapshotDoc.get('lastMessage') > relevantTimestamp) {
+                    return Icon(Icons.notifications_active,
+                        size: 20, color: Colors.red);
+                  }
+                }
+                return Icon(Icons.notifications, size: 20, color: Colors.grey);
+              }
+            }),
+      ),
+    );
+  }
+}
+
+class DislikeIndicator extends StatelessWidget {
+  DislikeIndicator(this.animationProgress, this.didSwipe, this.opacity);
+
+  double opacity;
+  double animationProgress;
+  bool didSwipe;
+  @override
+  Widget build(BuildContext context) {
+    if (!didSwipe) {
+      animationProgress = opacity / 255.0;
+    }
+    if (didSwipe && opacity == 0) {
+      animationProgress = 0;
+    }
+    return Center(
+      child: Transform.scale(
+        scale: (didSwipe && opacity != 0) ? 1 : animationProgress,
+        child: Icon(Icons.thumb_down,
+            size: 100,
+            color: didSwipe
+                ? Color.lerp(Colors.white, Colors.red, animationProgress)
+                : Colors.white),
+      ),
+    );
+  }
+}
+
+class LikeIndicator extends StatelessWidget {
+  LikeIndicator(this.animationProgress, this.didSwipe, this.opacity);
+
+  double animationProgress;
+  bool didSwipe;
+  double opacity;
+  @override
+  Widget build(BuildContext context) {
+    if (!didSwipe) {
+      animationProgress = opacity / 255.0;
+    }
+    if (didSwipe && opacity == 0) {
+      animationProgress = 0;
+    }
+    return Center(
+      child: Transform.scale(
+        scale: (didSwipe && opacity != 0) ? 1 : animationProgress,
+        child: Icon(Icons.thumb_up,
+            size: 100,
+            color: didSwipe
+                ? Color.lerp(Colors.white, Colors.green, animationProgress)
+                : Colors.white),
+      ),
+    );
   }
 }

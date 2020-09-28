@@ -53,8 +53,19 @@ class _UserCardState extends State<UserCard> {
           child: Text('You have no ideas on display!',
               style: AUTHOR_CARD_TEXT_STYLE));
     } else {
-      widgetToEmbed =
-          Center(child: SpinKitRing(size: 100, color: spinnerColor));
+      widgetToEmbed = Container(
+          child: Center(
+              child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset('Assets/logo.png', width: 200),
+          SizedBox(height: 30),
+          SpinKitThreeBounce(
+            color: spinnerColor,
+            size: 60,
+          ),
+        ],
+      )));
     }
 
     return SafeArea(

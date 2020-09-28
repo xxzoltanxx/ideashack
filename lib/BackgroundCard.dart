@@ -4,125 +4,121 @@ import 'Const.dart';
 
 class BackgroundCard extends StatelessWidget {
   BackgroundCard({this.cardData});
+
   final CardData cardData;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: MediaQuery.of(context).size.width,
-      height: MediaQuery.of(context).size.height -
-          0.08 * MediaQuery.of(context).size.height,
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Container(
-          decoration: BoxDecoration(boxShadow: [
-            BoxShadow(
-              color: Colors.black45,
-              blurRadius: 20.0,
-            )
-          ]),
-          child: Card(
-              color: Color.lerp(Color(0xFF68482B), Color(0xFFFFD200),
-                  (cardData.score.toDouble() / MAX_SCORE).clamp(0.0, 1.0)),
-              child: Center(
-                  child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Stack(
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Align(
-                          alignment: Alignment(0.7, -3),
-                          child: Transform.rotate(
-                            angle: 170,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                  boxShadow: [
-                                    BoxShadow(
-                                        blurRadius: 9.0, color: Colors.black)
-                                  ]),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                    formatedNumberString(cardData.score),
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 30,
-                                        color: Color.fromARGB(
-                                            200,
-                                            cardData.score < 0 ? 170 : 0,
-                                            cardData.score >= 0 ? 170 : 0,
-                                            0))),
-                              ),
-                            ),
-                          ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+              begin: FractionalOffset.bottomLeft,
+              end: FractionalOffset.topRight,
+              colors: [
+                Color.lerp(bottomLeftStart, bottomLeftEnd,
+                    (cardData.score.toDouble() / MAX_SCORE).clamp(0.0, 1.0)),
+                Color.lerp(topRightStart, topRightEnd,
+                    (cardData.score.toDouble() / MAX_SCORE).clamp(0.0, 1.0)),
+              ]),
+        ),
+        child: Center(
+            child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: cardthingspadding),
+                        child: Row(
+                          children: [
+                            Icon(Icons.thumb_up,
+                                color: cardThingsTextStyle.color, size: 30),
+                            SizedBox(width: 10),
+                            Text(cardData.score.toString(),
+                                style: cardThingsTextStyle),
+                          ],
                         ),
-                        Text(cardData.text, style: MAIN_CARD_TEXT_STYLE),
-                        SizedBox(height: 20),
-                        Align(
-                            alignment: Alignment.bottomRight,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text('- ${cardData.author}',
-                                  style: AUTHOR_CARD_TEXT_STYLE),
-                            ))
+                      ),
+                      Expanded(child: Container()),
+                      Padding(
+                        padding:
+                            const EdgeInsets.only(right: cardthingspadding),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.comment,
+                                    color: cardThingsTextStyle.color, size: 30),
+                                SizedBox(width: 10),
+                                Text(cardData.comments.length.toString(),
+                                    style: cardThingsTextStyle),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                      child: Center(
+                    child: Text(cardData.text,
+                        style: MAIN_CARD_TEXT_STYLE,
+                        textAlign: TextAlign.center),
+                  )),
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.all(cardthingspadding),
+                    child: Divider(
+                      color: cardThingsTextStyle.color,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                        left: cardthingspadding, right: cardthingspadding),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        InkWell(
+                            child: Text('Message',
+                                style: cardThingsBelowTextStyle),
+                            onTap: null),
+                        InkWell(
+                            onTap: null,
+                            child: Text('Comment',
+                                style: cardThingsBelowTextStyle)),
+                        InkWell(
+                            child:
+                                Text('Share', style: cardThingsBelowTextStyle))
                       ],
                     ),
-                    Align(
-                      alignment: Alignment(-0.4, -0.4),
-                      child: Icon(FontAwesomeIcons.solidThumbsUp,
-                          size: 50,
-                          color: cardData.status == UpvotedStatus.Upvoted
-                              ? Color(0xFF00FF00)
-                              : Color(0x00000000)),
-                    ),
-                    Align(
-                      alignment: Alignment(0.4, -0.4),
-                      child: Icon(FontAwesomeIcons.solidThumbsDown,
-                          size: 50,
-                          color: cardData.status == UpvotedStatus.Downvoted
-                              ? Color(0xFFFF0000)
-                              : Color(0x00000000)),
-                    ),
-                    Align(
-                      alignment: Alignment(0.8, 0.8),
-                      child: RaisedButton(
-                        onPressed: () {},
-                        highlightColor: Colors.white,
-                        disabledColor: Colors.redAccent,
-                        color: Colors.white60,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20.0),
-                          side: BorderSide(color: Colors.red, width: 3),
-                        ),
-                        child: Icon(FontAwesomeIcons.comments,
-                            size: 50, color: Colors.black45),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment(-0.8, 0.8),
-                      child: RaisedButton(
-                        onPressed: GlobalController.get().currentUserUid ==
-                                cardData.posterId
-                            ? null
-                            : () {},
-                        highlightColor: Colors.white,
-                        disabledColor: Colors.redAccent,
-                        color: Colors.white60,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20.0),
-                          side: BorderSide(color: Colors.red, width: 3),
-                        ),
-                        child: Icon(Icons.message,
-                            size: 50, color: Colors.black45),
-                      ),
-                    )
-                  ],
-                ),
-              ))),
-        ),
+                  )
+                ],
+              ),
+              Align(
+                alignment: Alignment(-0.4, -0.9),
+                child: Icon(Icons.person,
+                    size: 100,
+                    color: cardData.status == UpvotedStatus.Upvoted
+                        ? Color(0x80FFFFFF)
+                        : Color(0x00000000)),
+              ),
+              Align(
+                alignment: Alignment(0.4, -0.9),
+                child: Icon(Icons.pool,
+                    size: 100,
+                    color: cardData.status == UpvotedStatus.Downvoted
+                        ? Color(0x80FFFFFF)
+                        : Color(0x00000000)),
+              )
+            ],
+          ),
+        )),
       ),
     );
   }

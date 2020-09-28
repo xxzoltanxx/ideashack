@@ -22,7 +22,7 @@ class DMData {
 class _DMListState extends State<DMList> {
   List<DMData> dmData = [];
   List<DMData> dmDataHighlighted = [];
-  Future<void> grabDMFuture;
+  Stream<QuerySnapshot> grabDMSnapshots;
   Future<void> grabDMS() async {
     try {
       var dms = await Firestore.instance
@@ -76,7 +76,11 @@ class _DMListState extends State<DMList> {
   @override
   void initState() {
     super.initState();
-    grabDMFuture = grabDMS();
+    grabDMSnapshots = Firestore.instance
+        .collection('directMessages')
+        .where('posters', arrayContains: GlobalController.get().currentUserUid)
+        .orderBy('lastMessage', descending: true)
+        .snapshots();
   }
 
   @override
@@ -87,108 +91,144 @@ class _DMListState extends State<DMList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Direct messages")),
-      body: FutureBuilder(
-        future: grabDMFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting ||
-              snapshot.connectionState == ConnectionState.waiting) {
-            return Container(
-                child:
-                    Center(child: SpinKitRing(size: 100, color: spinnerColor)));
-          } else if (snapshot.connectionState == ConnectionState.done) {
-            List<Widget> widgetsToEmbed = [];
-            for (var data in dmDataHighlighted) {
-              bool isPostAuthor =
-                  data.postAuthor == GlobalController.get().currentUserUid;
-              widgetsToEmbed.add(Container(
-                  child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                        child: Text(data.lastMessage,
-                            style: data.shouldHiglight
-                                ? AUTHOR_CARD_TEXT_STYLE.copyWith(
-                                    fontWeight: FontWeight.bold)
-                                : AUTHOR_CARD_TEXT_STYLE)),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: RaisedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/message',
-                              arguments: <dynamic>[
-                                data.postId,
-                                data.postInitializer,
-                                data.postAuthor
-                              ]);
-                        },
-                        highlightColor: Colors.white,
-                        disabledColor: Colors.redAccent,
-                        color: Colors.white60,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20.0),
-                          side: BorderSide(color: Colors.red, width: 3),
-                        ),
-                        child: Icon(Icons.comment,
-                            size: 50, color: Colors.black45),
-                      ),
-                    ),
-                  ],
-                ),
-              )));
-            }
-            for (var data in dmData) {
-              widgetsToEmbed.add(Container(
-                  child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Expanded(
-                        child: Text(data.lastMessage,
-                            style: data.shouldHiglight
-                                ? AUTHOR_CARD_TEXT_STYLE.copyWith(
-                                    fontWeight: FontWeight.bold)
-                                : AUTHOR_CARD_TEXT_STYLE)),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: RaisedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/message',
-                              arguments: <dynamic>[
-                                data.postId,
-                                data.postInitializer,
-                                data.postAuthor
-                              ]);
-                        },
-                        highlightColor: Colors.white,
-                        disabledColor: Colors.redAccent,
-                        color: Colors.white60,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20.0),
-                          side: BorderSide(color: Colors.red, width: 3),
-                        ),
-                        child: Icon(Icons.comment,
-                            size: 50, color: Colors.black45),
-                      ),
-                    ),
-                  ],
-                ),
-              )));
-            }
-            return ListView(
-              children: widgetsToEmbed,
-            );
-          } else if (snapshot.hasError) {
-            return Container(child: Center(child: Text('Could not fetch DMs')));
-          }
-          return Container(
-              child:
-                  Center(child: SpinKitRing(size: 100, color: spinnerColor)));
-        },
-      ),
-    );
+        appBar: AppBar(title: Text("Your feed")),
+        body: SafeArea(
+            child: Container(
+          decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  colors: splashScreenColors,
+                  begin: Alignment.bottomLeft,
+                  end: Alignment.topRight)),
+          child: StreamBuilder(
+              stream: grabDMSnapshots,
+              builder: (context, snapshot) {
+                if (snapshot.data == null) {
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                        child: Center(child: Text('Fetching messages...'))),
+                  );
+                } else {
+                  List<Widget> chatWidgets = [];
+                  for (var post in snapshot.data.docs) {
+                    var dmID = post.id;
+                    Stream<QuerySnapshot> lastMessageFirstListStream = Firestore
+                        .instance
+                        .collection('directMessages')
+                        .doc(dmID)
+                        .collection('messages')
+                        .orderBy('time', descending: true)
+                        .snapshots();
+
+                    chatWidgets.add(StreamBuilder(
+                        stream: lastMessageFirstListStream,
+                        builder: (context, snapshot) {
+                          if (snapshot.data == null) {
+                            return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Container(
+                                    child: Padding(
+                                  padding: const EdgeInsets.all(20.0),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                          child: Text("Fetching Message...",
+                                              style: AUTHOR_CARD_TEXT_STYLE)),
+                                      Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: RaisedButton(
+                                          onPressed: null,
+                                          highlightColor: Colors.white,
+                                          disabledColor: Colors.redAccent,
+                                          color: Colors.white60,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(20.0),
+                                            side: BorderSide(
+                                                color: Colors.red, width: 3),
+                                          ),
+                                          child: Icon(Icons.comment,
+                                              size: 50, color: Colors.black45),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )));
+                          } else {
+                            var lastMessageFirstList = snapshot.data;
+                            snapshot.data.docs[0].get('text');
+                            bool shouldHighlight = false;
+
+                            bool isInitializer = false;
+                            if (post.get('initializerId') ==
+                                GlobalController.get().currentUserUid) {
+                              isInitializer = true;
+                            }
+                            double timestampToCompare;
+                            if (isInitializer) {
+                              timestampToCompare =
+                                  post.get('lastSeenInitializer');
+                            } else {
+                              timestampToCompare = post.get('lastSeenAuthor');
+                            }
+                            if (lastMessageFirstList.docs[0].get('time') >
+                                timestampToCompare) {
+                              shouldHighlight = true;
+                            }
+                            var lastMessage =
+                                lastMessageFirstList.docs[0].get('text');
+                            DMData data = DMData(
+                                post.get('postId'),
+                                post.get('initializerId'),
+                                post.get('postAuthorId'),
+                                lastMessage,
+                                shouldHighlight);
+                            return Container(
+                                child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                      child: Text(data.lastMessage,
+                                          style: data.shouldHiglight
+                                              ? AUTHOR_CARD_TEXT_STYLE.copyWith(
+                                                  fontWeight: FontWeight.bold)
+                                              : AUTHOR_CARD_TEXT_STYLE)),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: RaisedButton(
+                                      onPressed: () {
+                                        Navigator.pushNamed(context, '/message',
+                                            arguments: <dynamic>[
+                                              data.postId,
+                                              data.postInitializer,
+                                              data.postAuthor
+                                            ]);
+                                      },
+                                      highlightColor: Colors.white,
+                                      disabledColor: Colors.redAccent,
+                                      color: Colors.white60,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(20.0),
+                                        side: BorderSide(
+                                            color: Colors.red, width: 3),
+                                      ),
+                                      child: Icon(Icons.comment,
+                                          size: 50, color: Colors.black45),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ));
+                          }
+                        }));
+                  }
+                  return ListView(children: chatWidgets);
+                }
+              }),
+        )));
   }
 }

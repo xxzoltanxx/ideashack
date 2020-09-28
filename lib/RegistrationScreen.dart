@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'Const.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -50,16 +49,39 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         builder: (context, snapshot) {
           // Check for errors
           if (snapshot.hasError) {
-            return Scaffold(body: SomethingWentWrong());
+            return Scaffold(
+                body: Container(
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            colors: splashScreenColors,
+                            begin: Alignment.bottomLeft,
+                            end: Alignment.topRight)),
+                    child: SomethingWentWrong()));
           }
           // Once complete, show your application
           if (snapshot.connectionState == ConnectionState.done) {
             var _auth = FirebaseAuth.instance;
             CardList.get().setInstance(Firestore.instance);
             initFirebaseMessaging();
-            return Scaffold(body: LoginScreen(_auth));
+            return Scaffold(
+                body: Container(
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            colors: splashScreenColors,
+                            begin: Alignment.bottomLeft,
+                            end: Alignment.topRight)),
+                    child: LoginScreen(_auth)));
           }
-          return Scaffold(body: Loading());
+          return Scaffold(
+              body: SafeArea(
+            child: Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        colors: splashScreenColors,
+                        begin: Alignment.bottomLeft,
+                        end: Alignment.topRight)),
+                child: Loading()),
+          ));
         }
 
         // Otherwise, show something whilst waiting for initialization to complete
@@ -203,15 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(FontAwesomeIcons.solidLightbulb,
-                            size: 100, color: Colors.white60),
-                        SizedBox(height: 50),
-                        TypewriterAnimatedTextKit(
-                          text: ['Spark'],
-                          repeatForever: true,
-                          textStyle: SPLASH_TEXT_STYLE,
-                          speed: Duration(seconds: 1),
-                        ),
+                        Flexible(child: Image.asset('Assets/logo.png')),
                         SizedBox(height: 80),
                         Container(
                           width: 200,
@@ -238,8 +252,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     print("ONGOING");
                     return Container(
                         child: Center(
-                      child: SpinKitRing(size: 100, color: spinnerColor),
-                    ));
+                            child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset('Assets/logo.png', width: 200),
+                        SizedBox(height: 30),
+                        SpinKitThreeBounce(
+                          color: spinnerColor,
+                          size: 60,
+                        ),
+                      ],
+                    )));
                   }
                   if (snapshot.hasError) {
                     print("SNAPSHOT ERROR");
@@ -248,15 +271,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(FontAwesomeIcons.solidLightbulb,
-                            size: 100, color: Colors.white60),
-                        SizedBox(height: 50),
-                        TypewriterAnimatedTextKit(
-                          text: ['Spark'],
-                          repeatForever: true,
-                          textStyle: SPLASH_TEXT_STYLE,
-                          speed: Duration(seconds: 1),
-                        ),
+                        Flexible(child: Image.asset('Assets/logo.png')),
                         SizedBox(height: 80),
                         Container(
                           width: 200,
@@ -292,8 +307,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   print("REACHED HERE");
                   return Container(
                       child: Center(
-                    child: SpinKitRing(size: 100, color: spinnerColor),
-                  ));
+                          child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset('Assets/logo.png', width: 200),
+                      SizedBox(height: 30),
+                      SpinKitThreeBounce(
+                        color: spinnerColor,
+                        size: 60,
+                      ),
+                    ],
+                  )));
                   ;
                 });
           }
@@ -307,8 +331,17 @@ class _LoginScreenState extends State<LoginScreen> {
           }
           return Container(
               child: Center(
-            child: SpinKitRing(size: 100, color: spinnerColor),
-          ));
+                  child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset('Assets/logo.png', width: 200),
+              SizedBox(height: 30),
+              SpinKitThreeBounce(
+                color: spinnerColor,
+                size: 60,
+              ),
+            ],
+          )));
         });
   }
 }

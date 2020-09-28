@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'Const.dart';
-import 'UnderlinedText.dart';
 
 class OverlayWidget extends StatefulWidget {
   OverlayWidget({this.setTrendingFunc, this.noCards, this.trending});
@@ -47,14 +46,13 @@ class _OverlayWidgetState extends State<OverlayWidget>
                 onTap: () {
                   widget.setTrendingFunc(false);
                 },
-                child: UnderlinedText(overline: !widget.trending, text: 'New')),
+                child: Text('New')),
             SizedBox(width: 20),
             GestureDetector(
                 onTap: () {
                   widget.setTrendingFunc(true);
                 },
-                child:
-                    UnderlinedText(overline: widget.trending, text: 'Trending'))
+                child: Text('Trending'))
           ],
         ),
         Container(

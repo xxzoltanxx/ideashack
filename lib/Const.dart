@@ -3,9 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bad_words/bad_words.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:encrypt/encrypt.dart';
 
 //GLOBAL LIFECYCLE VARIABLES, I KNOW ITS SHIT I JUST STARTED USING FLUTTER
 
@@ -34,8 +34,37 @@ const double MAX_POST_DAILY_LIMIT = 4;
 const double BASE_DAILY_POSTS = 3;
 const int TRENDING_CARD_LIMIT = 90;
 
+const Color bottomLeftEnd = Color(0xFFE0C82D);
+const Color topRightEnd = Color(0xFFE5D831);
+
+const Color bottomLeftStart = Color(0xFFBF6600);
+const Color topRightStart = Color(0xFFC47802);
+
+const Color disabledUpperBarColor = Color(0xFF666666);
+const Color enabledUpperBarColor = Color(0xFF494949);
+
+const TextStyle enabledUpperBarStyle = TextStyle(
+  color: enabledUpperBarColor,
+  fontWeight: FontWeight.bold,
+);
+
+const TextStyle disabledOnReloadStyle = TextStyle(color: Color(0x99666666));
+
+const TextStyle enabledOnReloadStyle =
+    TextStyle(color: Color(0x99494949), fontWeight: FontWeight.bold);
+const TextStyle disabledUpperBarStyle = TextStyle(
+  color: disabledUpperBarColor,
+);
+
+const TextStyle cardThingsTextStyle =
+    TextStyle(color: Color(0xBF894100), fontSize: 20);
+const TextStyle cardThingsBelowTextStyle = TextStyle(
+    color: Color(0xFF894100), fontSize: 20, fontWeight: FontWeight.bold);
+const double cardthingspadding = 8.0;
+
 const Color spinnerColor = Color(0xBFFFFFFF);
 
+const List<Color> splashScreenColors = [Color(0xFFED8A00), Color(0xFFF29C03)];
 String formatedNumberString(int num) {
   if (num > 1000000) {
     return '${(num / 1000000)}m';
@@ -111,6 +140,7 @@ class GlobalController {
       List<String> userToken, String title, String body, String tag) async {
     final postUrl = 'https://fcm.googleapis.com/fcm/send';
     final data = {
+      "priority": "high",
       "registration_ids": userToken,
       "collapse_key": "type_a",
       "notification": {

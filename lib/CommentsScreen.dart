@@ -78,58 +78,66 @@ class _CommentsScreenState extends State<CommentsScreen> {
     }
     return Scaffold(
         appBar: AppBar(title: Text('Viewing comments')),
-        body: GestureDetector(
-          onTap: () {
-            FocusScope.of(context).requestFocus(new FocusNode());
-          },
-          child: Column(
-            children: [
-              Expanded(
-                  flex: 5,
-                  child: Center(
-                      child: ListView(shrinkWrap: true, children: comments))),
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Container(
-                        height: 20.0 * 24,
-                        child: TextField(
-                          onChanged: (string) {
-                            setState(() {
-                              inputText = string;
-                            });
-                          },
-                          onEditingComplete: () {},
-                          maxLines: 20.toInt(),
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 20,
-                          ),
-                          decoration: InputDecoration(
-                            filled: true,
-                            counterText: "",
-                            fillColor: Colors.white,
-                          ),
-                          maxLength: 245,
+        body: SafeArea(
+            child: Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        colors: splashScreenColors,
+                        begin: Alignment.bottomLeft,
+                        end: Alignment.topRight)),
+                child: GestureDetector(
+                  onTap: () {
+                    FocusScope.of(context).requestFocus(new FocusNode());
+                  },
+                  child: Column(
+                    children: [
+                      Expanded(
+                          flex: 5,
+                          child: Center(
+                              child: ListView(
+                                  shrinkWrap: true, children: comments))),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Container(
+                                height: 20.0 * 24,
+                                child: TextField(
+                                  onChanged: (string) {
+                                    setState(() {
+                                      inputText = string;
+                                    });
+                                  },
+                                  onEditingComplete: () {},
+                                  maxLines: 20.toInt(),
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                  ),
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    counterText: "",
+                                    fillColor: Colors.white,
+                                  ),
+                                  maxLength: 245,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: RaisedButton(
+                                  child: Center(child: Text('Post')),
+                                  onPressed: (cardData.commented ||
+                                          inputText.length < 15)
+                                      ? null
+                                      : buttonCallback),
+                            )
+                          ],
                         ),
-                      ),
-                    ),
-                    Expanded(
-                      child: RaisedButton(
-                          child: Center(child: Text('Post')),
-                          onPressed:
-                              (cardData.commented || inputText.length < 15)
-                                  ? null
-                                  : buttonCallback),
-                    )
-                  ],
-                ),
-              )
-            ],
-          ),
-        ));
+                      )
+                    ],
+                  ),
+                ))));
   }
 }
 

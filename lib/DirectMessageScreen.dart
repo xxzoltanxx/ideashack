@@ -204,173 +204,216 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
       firstBuild = false;
     }
     return Scaffold(
-        appBar: AppBar(title: Text('Direct message')),
-        body: FutureBuilder(
-          future: fetchDmFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.active ||
-                snapshot.connectionState == ConnectionState.waiting) {
-              return Container(
-                  child: Center(
-                      child: SpinKitRing(size: 100, color: spinnerColor)));
-            } else if (snapshot.hasError &&
-                snapshot.error == CommentsErrorCode.DidntInitializeData) {
-              print("IT IS HERE");
-              return Column(children: [
-                Expanded(
-                    flex: 8,
-                    child: Container(
-                        child: Center(child: Text('Start messaging!')))),
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
+        appBar: AppBar(title: Text('Direct Message')),
+        body: SafeArea(
+            child: Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        colors: splashScreenColors,
+                        begin: Alignment.bottomLeft,
+                        end: Alignment.topRight)),
+                child: FutureBuilder(
+                  future: fetchDmFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.active ||
+                        snapshot.connectionState == ConnectionState.waiting) {
+                      return Container(
+                          child: Center(
+                              child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset('Assets/logo.png', width: 200),
+                          SizedBox(height: 30),
+                          SpinKitThreeBounce(
+                            color: spinnerColor,
+                            size: 60,
+                          ),
+                        ],
+                      )));
+                    } else if (snapshot.hasError &&
+                        snapshot.error ==
+                            CommentsErrorCode.DidntInitializeData) {
+                      print("IT IS HERE");
+                      return Column(children: [
                         Expanded(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: 300,
+                            flex: 8,
+                            child: Container(
+                                child:
+                                    Center(child: Text('Start messaging!')))),
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: <Widget>[
+                                Expanded(
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxHeight: 300,
+                                    ),
+                                    child: TextField(
+                                      maxLines: null,
+                                      controller: messageTextController,
+                                      onChanged: (value) {
+                                        messageText = value;
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                FlatButton(
+                                  onPressed: initialSendButtonCallback,
+                                  child: Text(
+                                    'Send',
+                                  ),
+                                ),
+                              ],
                             ),
-                            child: TextField(
-                              maxLines: null,
-                              controller: messageTextController,
-                              onChanged: (value) {
-                                messageText = value;
-                              },
+                          ),
+                        )
+                      ]);
+                    } else if (snapshot.hasError &&
+                        snapshot.error ==
+                            CommentsErrorCode.FailedToInitialize) {
+                      return Column(children: [
+                        Expanded(
+                            flex: 8,
+                            child: Container(
+                                child: Center(
+                                    child: Text(
+                                        'Failed to initialize, try again!')))),
+                        Container(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+                              Expanded(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxHeight: 300,
+                                  ),
+                                  child: TextField(
+                                    maxLines: null,
+                                    controller: messageTextController,
+                                    onChanged: (value) {
+                                      messageText = value;
+                                    },
+                                  ),
+                                ),
+                              ),
+                              FlatButton(
+                                onPressed: initialSendButtonCallback,
+                                child: Text(
+                                  'Send',
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      ]);
+                    } else if (snapshot.connectionState ==
+                        ConnectionState.done) {
+                      if (firstTimeBuildingStream) {
+                        WidgetsBinding.instance
+                            .addPostFrameCallback((timeStamp) {
+                          setState(() {
+                            firstTimeBuildingStream = false;
+                            commentsStream = Firestore.instance
+                                .collection('directMessages')
+                                .doc(thisDocumentReference)
+                                .collection('messages')
+                                .orderBy('time')
+                                .snapshots();
+                          });
+                        });
+                        return Container(
+                            child: Center(
+                                child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.asset('Assets/logo.png', width: 200),
+                            SizedBox(height: 30),
+                            SpinKitThreeBounce(
+                              color: spinnerColor,
+                              size: 60,
                             ),
-                          ),
-                        ),
-                        FlatButton(
-                          onPressed: initialSendButtonCallback,
-                          child: Text(
-                            'Send',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              ]);
-            } else if (snapshot.hasError &&
-                snapshot.error == CommentsErrorCode.FailedToInitialize) {
-              return Column(children: [
-                Expanded(
-                    flex: 8,
-                    child: Container(
-                        child: Center(
-                            child: Text('Failed to initialize, try again!')))),
-                Container(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      Expanded(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: 300,
-                          ),
-                          child: TextField(
-                            maxLines: null,
-                            controller: messageTextController,
-                            onChanged: (value) {
-                              messageText = value;
-                            },
-                          ),
-                        ),
-                      ),
-                      FlatButton(
-                        onPressed: initialSendButtonCallback,
-                        child: Text(
-                          'Send',
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              ]);
-            } else if (snapshot.connectionState == ConnectionState.done) {
-              if (firstTimeBuildingStream) {
-                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                  setState(() {
-                    firstTimeBuildingStream = false;
-                    commentsStream = Firestore.instance
-                        .collection('directMessages')
-                        .doc(thisDocumentReference)
-                        .collection('messages')
-                        .orderBy('time')
-                        .snapshots();
-                  });
-                });
-                return Container(
-                    child: Center(
-                        child: SpinKitRing(size: 100, color: spinnerColor)));
-              }
-              return Column(children: [
-                StreamBuilder(
-                    stream: commentsStream,
-                    builder: (context, snapshot) {
-                      print(commentsStream);
-                      var messages = [].reversed;
-                      if (snapshot.data != null) {
-                        List<QueryDocumentSnapshot> messagesReversed =
-                            snapshot.data.docs;
-                        messages = messagesReversed.reversed;
+                          ],
+                        )));
                       }
+                      return Column(children: [
+                        StreamBuilder(
+                            stream: commentsStream,
+                            builder: (context, snapshot) {
+                              print(commentsStream);
+                              var messages = [].reversed;
+                              if (snapshot.data != null) {
+                                List<QueryDocumentSnapshot> messagesReversed =
+                                    snapshot.data.docs;
+                                messages = messagesReversed.reversed;
+                              }
 
-                      List<Widget> messageBubbles = [];
-                      for (var doc in messages) {
-                        messageBubbles.add(MessageBubble(
-                            sender: doc.get('sender'),
-                            text: doc.get('text'),
-                            isMe: doc.get('senderUid') ==
-                                GlobalController.get().currentUserUid));
-                      }
-                      return Expanded(
-                          flex: 8,
-                          child: ListView(
-                            reverse: true,
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.0, vertical: 20.0),
-                            children: messageBubbles,
-                          ));
-                    }),
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
+                              List<Widget> messageBubbles = [];
+                              for (var doc in messages) {
+                                messageBubbles.add(MessageBubble(
+                                    sender: doc.get('sender'),
+                                    text: doc.get('text'),
+                                    isMe: doc.get('senderUid') ==
+                                        GlobalController.get().currentUserUid));
+                              }
+                              return Expanded(
+                                  flex: 8,
+                                  child: ListView(
+                                    reverse: true,
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 10.0, vertical: 20.0),
+                                    children: messageBubbles,
+                                  ));
+                            }),
                         Expanded(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxHeight: 300,
-                            ),
-                            child: TextField(
-                              maxLines: null,
-                              controller: messageTextController,
-                              onChanged: (value) {
-                                messageText = value;
-                              },
+                          flex: 2,
+                          child: Container(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: <Widget>[
+                                Expanded(
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxHeight: 300,
+                                    ),
+                                    child: TextField(
+                                      maxLines: null,
+                                      controller: messageTextController,
+                                      onChanged: (value) {
+                                        messageText = value;
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                FlatButton(
+                                  onPressed: sendNormal,
+                                  child: Text(
+                                    'Send',
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                        FlatButton(
-                          onPressed: sendNormal,
-                          child: Text(
-                            'Send',
-                          ),
+                        )
+                      ]);
+                    }
+                    return Container(
+                        child: Center(
+                            child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset('Assets/logo.png', width: 200),
+                        SizedBox(height: 30),
+                        SpinKitThreeBounce(
+                          color: spinnerColor,
+                          size: 60,
                         ),
                       ],
-                    ),
-                  ),
-                )
-              ]);
-            }
-            return Container(
-                child:
-                    Center(child: SpinKitRing(size: 100, color: spinnerColor)));
-          },
-        ));
+                    )));
+                  },
+                ))));
   }
 }
 

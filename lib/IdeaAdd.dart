@@ -85,11 +85,10 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
           'hashtag': tag
         });
         await _firestore
-            .collection('posts')
-            .doc(result.id)
-            .collection('upvoted')
-            .add({
-          'userid': widget.user.uid,
+            .collection('users')
+            .doc(GlobalController.get().userDocId)
+            .update({
+          'upvoted': FieldValue.arrayUnion([result.id])
         });
       } else {
         result = await _firestore.collection('posts').add({
@@ -101,11 +100,10 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
           'commentsNum': 0,
         });
         await _firestore
-            .collection('posts')
-            .doc(result.id)
-            .collection('upvoted')
-            .add({
-          'userid': widget.user.uid,
+            .collection('users')
+            .doc(GlobalController.get().userDocId)
+            .update({
+          'upvoted': FieldValue.arrayUnion([result.id])
         });
       }
 
@@ -128,7 +126,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
       }
       await Firestore.instance
           .collection('users')
-          .doc(GlobalController.get().userDocUid)
+          .doc(GlobalController.get().userDocId)
           .update({'dailyPosts': GlobalController.get().dailyPosts - 1});
     } catch (e) {
       return Future.error("ERROR");

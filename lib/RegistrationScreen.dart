@@ -130,14 +130,19 @@ class _LoginScreenState extends State<LoginScreen> {
       String docId = possibleUser.docs[0].id;
       await Firestore.instance.collection('users').doc(docId).update(
           {'lastSeen': timestamp, 'uid': user.uid, 'pushToken': pushToken});
+      GlobalController.get().userDocId = docId;
       return;
     }
-    await Firestore.instance.collection('users').add({
+    var snapshot = await Firestore.instance.collection('users').add({
       'dailyPosts': BASE_DAILY_POSTS,
       'lastSeen': timestamp,
       'uid': user.uid,
-      'pushToken': pushToken
+      'pushToken': pushToken,
+      'upvoted': [],
+      'downvoted': [],
+      'commented': [],
     });
+    GlobalController.get().userDocId = snapshot.id;
   }
 
   Future<void> checkForSignIn() async {

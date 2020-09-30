@@ -321,10 +321,11 @@ class _MainPageState extends State<MainPage>
     try {
       String id = currentCardData.id;
       await Firestore.instance
-          .collection('posts')
-          .doc(id)
-          .collection('upvoted')
-          .add({'userid': user.uid});
+          .collection('users')
+          .doc(GlobalController.get().userDocId)
+          .update({
+        'upvoted': FieldValue.arrayUnion([id])
+      });
       await Firestore.instance.collection('posts').doc(id).update({
         'score': FieldValue.increment(1),
       });
@@ -337,10 +338,11 @@ class _MainPageState extends State<MainPage>
     try {
       String id = currentCardData.id;
       await Firestore.instance
-          .collection('posts')
-          .doc(id)
-          .collection('downvoted')
-          .add({'userid': user.uid});
+          .collection('users')
+          .doc(GlobalController.get().userDocId)
+          .update({
+        'downvoted': FieldValue.arrayUnion([id])
+      });
       await Firestore.instance.collection('posts').doc(id).update({
         'score': FieldValue.increment(-1),
       });

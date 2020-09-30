@@ -26,6 +26,12 @@ class CardList {
 
   Future<void> getUserCardsData({Function lambda}) async {
     try {
+      var userDataSnapshotList = await _firestoreInstance
+          .collection('users')
+          .where('uid', isEqualTo: GlobalController.get().currentUserUid)
+          .get();
+      var userDataSnapshot = userDataSnapshotList.docs[0];
+
       var timestamp = await getCurrentTimestampServer();
       var snapshot = await _firestoreInstance
           .collection('posts')
@@ -37,14 +43,8 @@ class CardList {
       userCardsData.clear();
       int i = 0;
       for (var doc in snapshot.docs) {
-        var commentedArr = await _firestoreInstance
-            .collection('posts')
-            .doc(doc.id)
-            .collection('commented')
-            .where('userid',
-                arrayContains: GlobalController.get().currentUserUid)
-            .get();
-        bool commented = commentedArr.docs.length > 0;
+        bool commented =
+            userDataSnapshot.get('commented').toSet().contains(doc.id);
         userCardsData.add(CardData(
             id: doc.id,
             author: doc.get('author'),
@@ -66,6 +66,12 @@ class CardList {
 
   Future<void> getByTag({Function lambda, String tag}) async {
     try {
+      var userDataSnapshotList = await _firestoreInstance
+          .collection('users')
+          .where('uid', isEqualTo: GlobalController.get().currentUserUid)
+          .get();
+      var userDataSnapshot = userDataSnapshotList.docs[0];
+
       QuerySnapshot snapshot;
       UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
       var timestamp = await getCurrentTimestampServer();
@@ -78,32 +84,18 @@ class CardList {
       cardsData.clear();
       for (var doc in doxs) {
         upvoteStatus = UpvotedStatus.DidntVote;
-        var upvoted = await _firestoreInstance
-            .collection('posts')
-            .doc(doc.id)
-            .collection('upvoted')
-            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
-            .get();
-        var downvoted = await _firestoreInstance
-            .collection('posts')
-            .doc(doc.id)
-            .collection('downvoted')
-            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
-            .get();
-        var commentedArr = await _firestoreInstance
-            .collection('posts')
-            .doc(doc.id)
-            .collection('commented')
-            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
-            .get();
+        var upvoted = userDataSnapshot.get('upvoted').toSet().contains(doc.id);
+        var downvoted =
+            userDataSnapshot.get('downvoted').toSet().contains(doc.id);
+        var commented =
+            userDataSnapshot.get('commented').toSet().contains(doc.id);
         bool skipPost = false;
-        if (upvoted.docs.length > 0) {
+        if (upvoted) {
           upvoteStatus = UpvotedStatus.Upvoted;
-        } else if (downvoted.docs.length > 0) {
+        } else if (downvoted) {
           upvoteStatus = UpvotedStatus.Downvoted;
         }
         if (!skipPost) {
-          bool commented = commentedArr.docs.length > 0;
           cardsData.add(CardData(
               posterId: doc.get('userid'),
               id: doc.id,
@@ -123,6 +115,12 @@ class CardList {
 
   Future<void> getNextBatch({Function lambda, bool trending}) async {
     try {
+      var userDataSnapshotList = await _firestoreInstance
+          .collection('users')
+          .where('uid', isEqualTo: GlobalController.get().currentUserUid)
+          .get();
+      var userDataSnapshot = userDataSnapshotList.docs[0];
+
       QuerySnapshot snapshot;
       UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
       var timestamp = await getCurrentTimestampServer();
@@ -147,37 +145,22 @@ class CardList {
       cardsData.clear();
       for (var doc in doxs) {
         upvoteStatus = UpvotedStatus.DidntVote;
-        var upvoted = await _firestoreInstance
-            .collection('posts')
-            .doc(doc.id)
-            .collection('upvoted')
-            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
-            .get();
-        var downvoted = await _firestoreInstance
-            .collection('posts')
-            .doc(doc.id)
-            .collection('downvoted')
-            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
-            .get();
-        var commentedArr = await _firestoreInstance
-            .collection('posts')
-            .doc(doc.id)
-            .collection('commented')
-            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
-            .get();
+        var upvoted = userDataSnapshot.get('upvoted').toSet().contains(doc.id);
+        var downvoted =
+            userDataSnapshot.get('downvoted').toSet().contains(doc.id);
+        var commented =
+            userDataSnapshot.get('commented').toSet().contains(doc.id);
         bool skipPost = false;
-        if (!trending &&
-            (upvoted.docs.length > 0 || downvoted.docs.length > 0)) {
+        if (!trending && (upvoted || downvoted)) {
           skipPost = true;
         } else if (trending) {
-          if (upvoted.docs.length > 0) {
+          if (upvoted) {
             upvoteStatus = UpvotedStatus.Upvoted;
-          } else if (downvoted.docs.length > 0) {
+          } else if (downvoted) {
             upvoteStatus = UpvotedStatus.Downvoted;
           }
         }
         if (!skipPost) {
-          bool commented = commentedArr.docs.length > 0;
           cardsData.add(CardData(
               posterId: doc.get('userid'),
               id: doc.id,

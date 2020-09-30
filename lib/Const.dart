@@ -121,11 +121,11 @@ class GlobalController {
   String currentUserUid = "";
   int dailyPosts = 4;
   bool fetchingDailyPosts = false;
-  String userDocUid = null;
   User currentUser = null;
   String fetchToken;
   String serverKey;
   double timeOnStartup;
+  String userDocId;
 
   void initParameters() {
     serverKey = parameters.get('serbian');
@@ -191,15 +191,15 @@ class GlobalController {
           .collection('users')
           .where('uid', isEqualTo: currentUserUid)
           .get();
-      if (userDocUid == null) {
-        userDocUid = user.docs[0].id;
+      if (userDocId == null) {
+        userDocId = user.docs[0].id;
       }
       double lastSeen = user.docs[0].get('lastSeen');
       //lol
       int dailyyPosts = user.docs[0].get('dailyPosts').toInt();
       if (lastMidnightSeconds > lastSeen) {
         if (dailyyPosts < BASE_DAILY_POSTS) {
-          await Firestore.instance.collection('users').doc(userDocUid).update({
+          await Firestore.instance.collection('users').doc(userDocId).update({
             'lastSeen': nowseconds,
             'dailyPosts': BASE_DAILY_POSTS,
           });
@@ -208,7 +208,7 @@ class GlobalController {
       } else {
         await Firestore.instance
             .collection('users')
-            .doc(userDocUid)
+            .doc(userDocId)
             .update({'lastSeen': nowseconds});
       }
       dailyPosts = dailyyPosts;

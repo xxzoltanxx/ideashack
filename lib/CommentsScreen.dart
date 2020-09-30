@@ -28,10 +28,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
       double time = await getCurrentTimestampServer();
       String input = inputText;
       await Firestore.instance
-          .collection('posts')
-          .doc(cardData.id)
-          .collection('commented')
-          .add({'userid': GlobalController.get().currentUserUid});
+          .collection('users')
+          .doc(GlobalController.get().userDocId)
+          .update({
+        'commented': FieldValue.arrayUnion([cardData.id])
+      });
       await Firestore.instance
           .collection('posts')
           .doc(cardData.id)

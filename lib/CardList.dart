@@ -71,6 +71,9 @@ class CardList {
           .where('uid', isEqualTo: GlobalController.get().currentUserUid)
           .get();
       var userDataSnapshot = userDataSnapshotList.docs[0];
+      var upvotedSet = userDataSnapshot.get('upvoted').toSet();
+      var downvotedSet = userDataSnapshot.get('downvoted').toSet();
+      var commentedSet = userDataSnapshot.get('commented').toSet();
 
       QuerySnapshot snapshot;
       UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
@@ -84,11 +87,9 @@ class CardList {
       cardsData.clear();
       for (var doc in doxs) {
         upvoteStatus = UpvotedStatus.DidntVote;
-        var upvoted = userDataSnapshot.get('upvoted').toSet().contains(doc.id);
-        var downvoted =
-            userDataSnapshot.get('downvoted').toSet().contains(doc.id);
-        var commented =
-            userDataSnapshot.get('commented').toSet().contains(doc.id);
+        var upvoted = upvotedSet.contains(doc.id);
+        var downvoted = downvotedSet.contains(doc.id);
+        var commented = commentedSet.contains(doc.id);
         bool skipPost = false;
         if (upvoted) {
           upvoteStatus = UpvotedStatus.Upvoted;
@@ -121,6 +122,9 @@ class CardList {
           .get();
       var userDataSnapshot = userDataSnapshotList.docs[0];
 
+      var upvotedSet = userDataSnapshot.get('upvoted').toSet();
+      var downvotedSet = userDataSnapshot.get('downvoted').toSet();
+      var commentedSet = userDataSnapshot.get('commented').toSet();
       QuerySnapshot snapshot;
       UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
       var timestamp = await getCurrentTimestampServer();
@@ -145,11 +149,9 @@ class CardList {
       cardsData.clear();
       for (var doc in doxs) {
         upvoteStatus = UpvotedStatus.DidntVote;
-        var upvoted = userDataSnapshot.get('upvoted').toSet().contains(doc.id);
-        var downvoted =
-            userDataSnapshot.get('downvoted').toSet().contains(doc.id);
-        var commented =
-            userDataSnapshot.get('commented').toSet().contains(doc.id);
+        var upvoted = upvotedSet.contains(doc.id);
+        var downvoted = downvotedSet.contains(doc.id);
+        var commented = commentedSet.contains(doc.id);
         bool skipPost = false;
         if (!trending && (upvoted || downvoted)) {
           skipPost = true;

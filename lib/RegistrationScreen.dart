@@ -113,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
         .orderBy('score', descending: true)
         .limit(1)
         .get();
-    if (maxScore.docs.length > 0) {
+    if (maxScore.docs != null && maxScore.docs.length > 0) {
       GlobalController.get().MAX_SCORE = maxScore.docs[0].get('score');
     }
 
@@ -121,18 +121,20 @@ class _LoginScreenState extends State<LoginScreen> {
     QuerySnapshot possibleUser = await Firestore.instance
         .collection('users')
         .where('uid', isEqualTo: user.uid)
-        .get();
+        .get(GetOptions(source: Source.server));
 
     var timestamp = await getCurrentTimestampServer();
     GlobalController.get().timeOnStartup = timestamp;
     var pushToken = await GlobalController.get().fetchPushToken();
-    if (possibleUser.docs.length > 0) {
+    if (possibleUser.docs != null && possibleUser.docs.length > 0) {
+      print(possibleUser.docs);
       String docId = possibleUser.docs[0].id;
       await Firestore.instance.collection('users').doc(docId).update(
           {'lastSeen': timestamp, 'uid': user.uid, 'pushToken': pushToken});
       GlobalController.get().userDocId = docId;
       return;
     }
+    print("REACHED HERE");
     var snapshot = await Firestore.instance.collection('users').add({
       'dailyPosts': BASE_DAILY_POSTS,
       'lastSeen': timestamp,

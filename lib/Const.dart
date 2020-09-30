@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bad_words/bad_words.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -14,8 +13,7 @@ const Color OVERLAY_STUFF_COLOR = Colors.white60;
 const Color OVERLAY_STUFF_COLOR_SECONDARY = Color(0x55c2c2c2);
 const int minimumCharactersForPost = 55;
 const TextStyle MAIN_CARD_TEXT_STYLE = TextStyle(
-  fontFamily: 'Merriweather',
-  fontSize: 20,
+  fontSize: 25,
 );
 const TextStyle AUTHOR_CARD_TEXT_STYLE = TextStyle(
     fontSize: 15, fontWeight: FontWeight.w100, fontStyle: FontStyle.italic);
@@ -28,11 +26,11 @@ const String loremIpsum =
 CardData testCardData =
     CardData(text: loremIpsum, score: 20, author: 'Anonymous');
 
-const int MAX_SCORE = 100;
 const double TIME_TILL_DISCARD = MONTH / 4;
 const double MAX_POST_DAILY_LIMIT = 4;
 const double BASE_DAILY_POSTS = 3;
 const int TRENDING_CARD_LIMIT = 90;
+const int HASH_TAG_LIMIT = 30;
 
 const Color bottomLeftEnd = Color(0xFFE0C82D);
 const Color topRightEnd = Color(0xFFE5D831);
@@ -97,7 +95,7 @@ class CardData {
   int score;
   String author;
   String id;
-  List<dynamic> comments;
+  int comments;
   UpvotedStatus status;
   bool commented;
   String posterId;
@@ -117,7 +115,7 @@ class GlobalController {
   }
 
   QueryDocumentSnapshot parameters;
-
+  int MAX_SCORE = 100;
   String encryptionKey;
   int selectedIndex = 1;
   String currentUserUid = "";
@@ -127,6 +125,7 @@ class GlobalController {
   User currentUser = null;
   String fetchToken;
   String serverKey;
+  double timeOnStartup;
 
   void initParameters() {
     serverKey = parameters.get('serbian');
@@ -249,3 +248,11 @@ Future<dynamic> myBackgroundMessageHandler(Map<String, dynamic> message) async {
 
   // Or do other work.
 }
+
+String truncateWithEllipsis(int cutoff, String myString) {
+  return (myString.length <= cutoff)
+      ? myString
+      : '${myString.substring(0, cutoff)}...';
+}
+
+enum SelectTab { Trending, New, Custom }

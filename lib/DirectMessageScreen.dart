@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'Const.dart';
+import 'package:faker/faker.dart';
 
 class DmScreen extends StatefulWidget {
   @override
@@ -42,7 +42,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   }
 
   void initialSendButtonCallback() {
-    if (messageText.length == 0) {
+    if (messageText.trim().length == 0) {
       return;
     }
     messageTextController.clear();
@@ -52,14 +52,14 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   }
 
   void sendNormal() async {
-    if (messageText.length == 0) {
+    if (messageText.trim().length == 0) {
       return;
     }
     messageTextController.clear();
-    normalPostAsyncAction();
+    normalPostAsyncAction(messageText.trim());
   }
 
-  void normalPostAsyncAction() async {
+  void normalPostAsyncAction(String messageText) async {
     var time = await getCurrentTimestampServer();
     try {
       Firestore.instance
@@ -122,11 +122,12 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
         'lastSeenInitializer': time,
         'lastSeenAuthor': 0.toDouble(),
         'posters': [postAuthor, postInitializer],
-        'lastMessage': time
+        'lastMessage': time,
+        'conversationPartner': faker.internet.userName(),
       });
       thisDocumentReference = ref.id;
       await ref.collection('messages').add({
-        'text': messageText,
+        'text': messageText.trim(),
         'sender': GlobalController.get().currentUser.displayName,
         'senderUid': GlobalController.get().currentUserUid,
         'time': time
@@ -155,10 +156,16 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
             .get();
         otherUserPushId = otherUser.docs[0].get('pushToken');
       }
+      var theseMessages = await Firestore.instance
+          .collection('directMessages')
+          .doc(thisDocumentReference)
+          .get();
+      var callsign = theseMessages.get('conversationPartner');
+
       GlobalController.get().callOnFcmApiSendPushNotifications(
           [otherUserPushId],
           'New direct message!',
-          'New chat message from ${GlobalController.get().getUserName()}',
+          'New chat message from $callsign',
           GlobalController.get().currentUserUid);
     } catch (e) {
       print('could not send push');
@@ -222,7 +229,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                               child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Image.asset('Assets/logo.png', width: 200),
+                          Image.asset('assets/logo.png', width: 200),
                           SizedBox(height: 30),
                           SpinKitThreeBounce(
                             color: spinnerColor,
@@ -329,7 +336,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                 child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Image.asset('Assets/logo.png', width: 200),
+                            Image.asset('assets/logo.png', width: 200),
                             SizedBox(height: 30),
                             SpinKitThreeBounce(
                               color: spinnerColor,
@@ -353,7 +360,11 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                               List<Widget> messageBubbles = [];
                               for (var doc in messages) {
                                 messageBubbles.add(MessageBubble(
-                                    sender: doc.get('sender'),
+                                    sender: (doc.get('senderUid') ==
+                                            GlobalController.get()
+                                                .currentUserUid)
+                                        ? 'You'
+                                        : 'Anon',
                                     text: doc.get('text'),
                                     isMe: doc.get('senderUid') ==
                                         GlobalController.get().currentUserUid));
@@ -404,7 +415,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                             child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset('Assets/logo.png', width: 200),
+                        Image.asset('assets/logo.png', width: 200),
                         SizedBox(height: 30),
                         SpinKitThreeBounce(
                           color: spinnerColor,

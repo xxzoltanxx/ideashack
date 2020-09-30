@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hashtagable/hashtagable.dart';
 import 'Const.dart';
 
 class BackgroundCard extends StatelessWidget {
@@ -16,10 +16,18 @@ class BackgroundCard extends StatelessWidget {
               begin: FractionalOffset.bottomLeft,
               end: FractionalOffset.topRight,
               colors: [
-                Color.lerp(bottomLeftStart, bottomLeftEnd,
-                    (cardData.score.toDouble() / MAX_SCORE).clamp(0.0, 1.0)),
-                Color.lerp(topRightStart, topRightEnd,
-                    (cardData.score.toDouble() / MAX_SCORE).clamp(0.0, 1.0)),
+                Color.lerp(
+                    bottomLeftStart,
+                    bottomLeftEnd,
+                    (cardData.score.toDouble() /
+                            GlobalController.get().MAX_SCORE)
+                        .clamp(0.0, 1.0)),
+                Color.lerp(
+                    topRightStart,
+                    topRightEnd,
+                    (cardData.score.toDouble() /
+                            GlobalController.get().MAX_SCORE)
+                        .clamp(0.0, 1.0)),
               ]),
         ),
         child: Center(
@@ -36,8 +44,7 @@ class BackgroundCard extends StatelessWidget {
                         padding: const EdgeInsets.only(left: cardthingspadding),
                         child: Row(
                           children: [
-                            Icon(Icons.thumb_up,
-                                color: cardThingsTextStyle.color, size: 30),
+                            Image.asset('assets/score.png', width: 40),
                             SizedBox(width: 10),
                             Text(cardData.score.toString(),
                                 style: cardThingsTextStyle),
@@ -53,10 +60,9 @@ class BackgroundCard extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.comment,
-                                    color: cardThingsTextStyle.color, size: 30),
+                                Image.asset('assets/comments.png', width: 40),
                                 SizedBox(width: 10),
-                                Text(cardData.comments.length.toString(),
+                                Text(cardData.comments.toString(),
                                     style: cardThingsTextStyle),
                               ],
                             )
@@ -67,8 +73,11 @@ class BackgroundCard extends StatelessWidget {
                   ),
                   Expanded(
                       child: Center(
-                    child: Text(cardData.text,
-                        style: MAIN_CARD_TEXT_STYLE,
+                    child: HashTagText(
+                        text: cardData.text,
+                        basicStyle: MAIN_CARD_TEXT_STYLE,
+                        decoratedStyle:
+                            MAIN_CARD_TEXT_STYLE.copyWith(color: Colors.blue),
                         textAlign: TextAlign.center),
                   )),
                   SizedBox(height: 20),
@@ -102,16 +111,16 @@ class BackgroundCard extends StatelessWidget {
               ),
               Align(
                 alignment: Alignment(-0.4, -0.9),
-                child: Icon(Icons.person,
-                    size: 100,
+                child: Image.asset('assets/upvoted.png',
+                    width: 200,
                     color: cardData.status == UpvotedStatus.Upvoted
                         ? Color(0x80FFFFFF)
                         : Color(0x00000000)),
               ),
               Align(
                 alignment: Alignment(0.4, -0.9),
-                child: Icon(Icons.pool,
-                    size: 100,
+                child: Image.asset('assets/downvoted.png',
+                    width: 200,
                     color: cardData.status == UpvotedStatus.Downvoted
                         ? Color(0x80FFFFFF)
                         : Color(0x00000000)),

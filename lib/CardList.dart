@@ -37,21 +37,90 @@ class CardList {
       userCardsData.clear();
       int i = 0;
       for (var doc in snapshot.docs) {
-        bool commented = doc
-            .get('commented')
-            .toSet()
-            .contains(GlobalController.get().currentUserUid);
+        var commentedArr = await _firestoreInstance
+            .collection('posts')
+            .doc(doc.id)
+            .collection('data')
+            .where('commented',
+                arrayContains: GlobalController.get().currentUserUid)
+            .get();
+        bool commented = commentedArr.docs.length > 0;
         userCardsData.add(CardData(
             id: doc.id,
             author: doc.get('author'),
             score: doc.get('score'),
             text: doc.get('body'),
-            comments: doc.get('comments'),
+            comments: doc.get('commentsNum'),
             posterId: doc.get('userid'),
             commented: commented));
       }
     } catch (e) {
       print(e + "HELLO3");
+    }
+    if (lambda != null) lambda();
+  }
+
+  void clear() {
+    cardsData.clear();
+  }
+
+  Future<void> getByTag({Function lambda, String tag}) async {
+    try {
+      print(tag);
+      QuerySnapshot snapshot;
+      UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
+      var timestamp = await getCurrentTimestampServer();
+      snapshot = await _firestoreInstance
+          .collection('posts')
+          .where('hashtag', isEqualTo: tag)
+          .where('postTime', isGreaterThan: timestamp - TIME_TILL_DISCARD)
+          .get();
+      var doxs = snapshot.docs;
+      cardsData.clear();
+      for (var doc in doxs) {
+        upvoteStatus = UpvotedStatus.DidntVote;
+        var upvoted = await _firestoreInstance
+            .collection('posts')
+            .doc(doc.id)
+            .collection('data')
+            .where('postUpvoted',
+                arrayContains: GlobalController.get().currentUserUid)
+            .get();
+        var downvoted = await _firestoreInstance
+            .collection('posts')
+            .doc(doc.id)
+            .collection('data')
+            .where('postDownvoted',
+                arrayContains: GlobalController.get().currentUserUid)
+            .get();
+        var commentedArr = await _firestoreInstance
+            .collection('posts')
+            .doc(doc.id)
+            .collection('data')
+            .where('commented',
+                arrayContains: GlobalController.get().currentUserUid)
+            .get();
+        bool skipPost = false;
+        if (upvoted.docs.length > 0) {
+          upvoteStatus = UpvotedStatus.Upvoted;
+        } else if (downvoted.docs.length > 0) {
+          upvoteStatus = UpvotedStatus.Downvoted;
+        }
+        if (!skipPost) {
+          bool commented = commentedArr.docs.length > 0;
+          cardsData.add(CardData(
+              posterId: doc.get('userid'),
+              id: doc.id,
+              author: doc.get('author'),
+              score: doc.get('score'),
+              text: doc.get('body'),
+              status: upvoteStatus,
+              comments: doc.get('commentsNum'),
+              commented: commented));
+        }
+      }
+    } catch (e) {
+      print(e);
     }
     if (lambda != null) lambda();
   }
@@ -82,29 +151,40 @@ class CardList {
       cardsData.clear();
       for (var doc in doxs) {
         upvoteStatus = UpvotedStatus.DidntVote;
-        var upvoted = doc.get('postUpvoted');
-        var downvoted = doc.get('postDownvoted');
+        var upvoted = await _firestoreInstance
+            .collection('posts')
+            .doc(doc.id)
+            .collection('data')
+            .where('postUpvoted',
+                arrayContains: GlobalController.get().currentUserUid)
+            .get();
+        var downvoted = await _firestoreInstance
+            .collection('posts')
+            .doc(doc.id)
+            .collection('data')
+            .where('postDownvoted',
+                arrayContains: GlobalController.get().currentUserUid)
+            .get();
+        var commentedArr = await _firestoreInstance
+            .collection('posts')
+            .doc(doc.id)
+            .collection('data')
+            .where('commented',
+                arrayContains: GlobalController.get().currentUserUid)
+            .get();
         bool skipPost = false;
         if (!trending &&
-            (upvoted.toSet().contains(GlobalController.get().currentUserUid) ||
-                downvoted
-                    .toSet()
-                    .contains(GlobalController.get().currentUserUid))) {
+            (upvoted.docs.length > 0 || downvoted.docs.length > 0)) {
           skipPost = true;
         } else if (trending) {
-          if (upvoted.toSet().contains(GlobalController.get().currentUserUid)) {
+          if (upvoted.docs.length > 0) {
             upvoteStatus = UpvotedStatus.Upvoted;
-          } else if (downvoted
-              .toSet()
-              .contains(GlobalController.get().currentUserUid)) {
+          } else if (downvoted.docs.length > 0) {
             upvoteStatus = UpvotedStatus.Downvoted;
           }
         }
         if (!skipPost) {
-          bool commented = doc
-              .get('commented')
-              .toSet()
-              .contains(GlobalController.get().currentUserUid);
+          bool commented = commentedArr.docs.length > 0;
           cardsData.add(CardData(
               posterId: doc.get('userid'),
               id: doc.id,
@@ -112,7 +192,7 @@ class CardList {
               score: doc.get('score'),
               text: doc.get('body'),
               status: upvoteStatus,
-              comments: doc.get('comments'),
+              comments: doc.get('commentsNum'),
               commented: commented));
         }
       }

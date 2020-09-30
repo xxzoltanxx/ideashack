@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_animation_progress_bar/flutter_animation_progress_bar.dart';
+import 'package:hashtagable/hashtagable.dart';
 
 class IdeaAdd extends StatefulWidget {
   IdeaAdd(this.onEnd, this.user, this.fetchingDailyPosts);
@@ -58,22 +59,79 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
   }
 
   Future<void> Post() async {
+    if (extractHashTags(inputText).length > 1) {
+      return Future.error("SPAM");
+    }
     if (spamFilter.isProfane(inputText)) {
       return Future.error("SPAM");
     }
     try {
+      String tag = '';
+      var hashtags = extractHashTags(inputText);
+      if (hashtags.length > 0) {
+        tag = hashtags[0];
+      }
+
       var timestamp = await getCurrentTimestampServer();
-      var result = await _firestore.collection('posts').add({
-        'author': !anonimous ? widget.user.displayName : 'Anonymous',
-        'body': inputText,
-        'score': 0,
-        'postTime': timestamp,
-        'userid': widget.user.uid,
-        'postUpvoted': [widget.user.uid],
-        'postDownvoted': [],
-        'comments': [],
-        'commented': [],
-      });
+      DocumentReference result;
+      if (tag != '') {
+        result = await _firestore.collection('posts').add({
+          'author': !anonimous ? widget.user.displayName : 'Anonymous',
+          'body': inputText,
+          'score': 0,
+          'postTime': timestamp,
+          'userid': widget.user.uid,
+          'commentsNum': 0,
+          'hashtag': tag
+        });
+        await _firestore
+            .collection('posts')
+            .doc(result.id)
+            .collection('data')
+            .doc('data')
+            .set({
+          'postUpvoted': [widget.user.uid],
+          'postDownvoted': [],
+          'commented': [],
+        });
+      } else {
+        result = await _firestore.collection('posts').add({
+          'author': !anonimous ? widget.user.displayName : 'Anonymous',
+          'body': inputText,
+          'score': 0,
+          'postTime': timestamp,
+          'userid': widget.user.uid,
+          'commentsNum': 0,
+        });
+        await _firestore
+            .collection('posts')
+            .doc(result.id)
+            .collection('data')
+            .doc('data')
+            .set({
+          'postUpvoted': [widget.user.uid],
+          'postDownvoted': [],
+          'commented': [],
+        });
+      }
+
+      if (tag != '') {
+        var possibleEntry = await Firestore.instance
+            .collection('hashtags')
+            .where('tag', isEqualTo: tag)
+            .get();
+        if (possibleEntry.docs.length > 0) {
+          await Firestore.instance
+              .collection('hashtags')
+              .doc(possibleEntry.docs[0].id)
+              .update({'popularity': FieldValue.increment(1)});
+        } else {
+          await Firestore.instance.collection('hashtags').add({
+            'tag': tag,
+            'popularity': 0,
+          });
+        }
+      }
       await Firestore.instance
           .collection('users')
           .doc(GlobalController.get().userDocUid)
@@ -91,7 +149,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
               child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset('Assets/logo.png', width: 200),
+          Image.asset('assets/logo.png', width: 200),
           SizedBox(height: 30),
           SpinKitThreeBounce(
             color: spinnerColor,
@@ -122,7 +180,11 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Container(
-                          child: TextField(
+                          child: HashTagTextField(
+                            decoratedStyle: TextStyle(
+                              color: Colors.blue,
+                              fontSize: 20,
+                            ),
                             controller: controller,
                             onChanged: (string) {
                               inputText = string;
@@ -139,7 +201,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                             },
                             onEditingComplete: () {},
                             maxLines: maxLines.toInt(),
-                            style: TextStyle(
+                            basicStyle: TextStyle(
                               color: Colors.black,
                               fontSize: 20,
                             ),
@@ -355,7 +417,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                         child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset('Assets/logo.png', width: 200),
+                    Image.asset('assets/logo.png', width: 200),
                     SizedBox(height: 30),
                     SpinKitThreeBounce(
                       color: spinnerColor,
@@ -370,7 +432,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                     child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('Assets/logo.png', width: 200),
+                Image.asset('assets/logo.png', width: 200),
                 SizedBox(height: 30),
                 SpinKitThreeBounce(
                   color: spinnerColor,

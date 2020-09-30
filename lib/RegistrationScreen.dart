@@ -108,6 +108,15 @@ class _LoginScreenState extends State<LoginScreen> {
     QuerySnapshot parametersArray =
         await Firestore.instance.collection('parameters').get();
     GlobalController.get().parameters = parametersArray.docs[0];
+    QuerySnapshot maxScore = await Firestore.instance
+        .collection('posts')
+        .orderBy('score', descending: true)
+        .limit(1)
+        .get();
+    if (maxScore.docs.length > 0) {
+      GlobalController.get().MAX_SCORE = maxScore.docs[0].get('score');
+    }
+
     GlobalController.get().initParameters();
     QuerySnapshot possibleUser = await Firestore.instance
         .collection('users')
@@ -115,6 +124,7 @@ class _LoginScreenState extends State<LoginScreen> {
         .get();
 
     var timestamp = await getCurrentTimestampServer();
+    GlobalController.get().timeOnStartup = timestamp;
     var pushToken = await GlobalController.get().fetchPushToken();
     if (possibleUser.docs.length > 0) {
       String docId = possibleUser.docs[0].id;
@@ -225,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Flexible(child: Image.asset('Assets/logo.png')),
+                        Flexible(child: Image.asset('assets/logo.png')),
                         SizedBox(height: 80),
                         Container(
                           width: 200,
@@ -255,7 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset('Assets/logo.png', width: 200),
+                        Image.asset('assets/logo.png', width: 200),
                         SizedBox(height: 30),
                         SpinKitThreeBounce(
                           color: spinnerColor,
@@ -271,7 +281,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Flexible(child: Image.asset('Assets/logo.png')),
+                        Flexible(child: Image.asset('assets/logo.png')),
                         SizedBox(height: 80),
                         Container(
                           width: 200,
@@ -310,7 +320,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Image.asset('Assets/logo.png', width: 200),
+                      Image.asset('assets/logo.png', width: 200),
                       SizedBox(height: 30),
                       SpinKitThreeBounce(
                         color: spinnerColor,
@@ -334,7 +344,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('Assets/logo.png', width: 200),
+              Image.asset('assets/logo.png', width: 200),
               SizedBox(height: 30),
               SpinKitThreeBounce(
                 color: spinnerColor,

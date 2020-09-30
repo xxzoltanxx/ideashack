@@ -1,12 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'Const.dart';
 import 'BackgroundCard.dart';
-import 'OverlayWidget.dart';
 import 'package:ideashack/CardList.dart';
 import 'IdeaAdd.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'RegistrationScreen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,6 +15,8 @@ import 'UserCard.dart';
 import 'CommentsScreen.dart';
 import 'DirectMessageScreen.dart';
 import 'DMList.dart';
+import 'package:hashtagable/hashtagable.dart';
+import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light
@@ -36,6 +37,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
+          textTheme: TextTheme(
+            headline6: TextStyle(fontFamily: 'Roboto'),
+            headline5: TextStyle(fontFamily: 'Roboto'),
+            bodyText1: TextStyle(fontFamily: 'Roboto'),
+            bodyText2: TextStyle(fontFamily: 'Roboto'),
+          ),
           primaryColor: Color(0xFF212121),
           cardColor: Color(0xFF444444),
           bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -80,13 +87,15 @@ class _MainPageState extends State<MainPage>
   double boxColor = 0;
   Animation animation;
   bool fetchingData = false;
-  bool trendingSelect = false;
-  bool currentlyTrending = false;
+  SelectTab tabSelect = SelectTab.New;
+  SelectTab currentSelect = SelectTab.New;
   int fetchNum = 0;
   Widget bodyWidget;
   User user;
   bool firstBuild = true;
   Future<void> batchFuture;
+  bool searchSelected = false;
+  String customSearch = "";
 
   final AlignmentSt defaultFrontCardAlign = AlignmentSt(0.0, 0.0);
   AlignmentSt frontCardAlign;
@@ -112,6 +121,18 @@ class _MainPageState extends State<MainPage>
             .checkLastTimestampsAndUpdatePosts(onFetchUserTimestampsCallback);
       }
     }
+  }
+
+  void customSearchFunc(String tag) {
+    this.tabSelect = SelectTab.Custom;
+    this.currentSelect = SelectTab.Custom;
+    customSearch = tag;
+    setState(() {
+      fetchNum = 0;
+      currentCardData = null;
+      nextCardData = null;
+      CardList.get().clear();
+    });
   }
 
   void commentsCallback(CardData data, bool profane) {
@@ -221,7 +242,10 @@ class _MainPageState extends State<MainPage>
 
   void setTrendingFunc(bool trending) {
     setState(() {
-      this.trendingSelect = trending;
+      if (trending)
+        this.tabSelect = SelectTab.Trending;
+      else
+        this.tabSelect = SelectTab.New;
     });
   }
 
@@ -296,9 +320,16 @@ class _MainPageState extends State<MainPage>
   void upvote() async {
     try {
       String id = currentCardData.id;
+      await Firestore.instance
+          .collection('posts')
+          .doc(id)
+          .collection('data')
+          .doc('data')
+          .update({
+        'postUpvoted': FieldValue.arrayUnion([user.uid])
+      });
       await Firestore.instance.collection('posts').doc(id).update({
         'score': FieldValue.increment(1),
-        'postUpvoted': FieldValue.arrayUnion([user.uid])
       });
     } catch (e) {
       print(e);
@@ -308,9 +339,16 @@ class _MainPageState extends State<MainPage>
   void downvote() async {
     try {
       String id = currentCardData.id;
+      await Firestore.instance
+          .collection('posts')
+          .doc(id)
+          .collection('data')
+          .doc('data')
+          .update({
+        'postDownvoted': FieldValue.arrayUnion([user.uid])
+      });
       await Firestore.instance.collection('posts').doc(id).update({
         'score': FieldValue.increment(-1),
-        'postDownvoted': FieldValue.arrayUnion([user.uid])
       });
     } catch (e) {
       print(e);
@@ -344,8 +382,10 @@ class _MainPageState extends State<MainPage>
 
   void FetchedData() {
     setState(() {
-      currentlyTrending = trendingSelect;
+      print("TRIGGERED2");
       fetchingData = false;
+      searchSelected = false;
+      currentSelect = tabSelect;
       if (CardList.get().peekNextCard() == null) {
         fetchNum = fetchNum + 1;
       }
@@ -384,13 +424,22 @@ class _MainPageState extends State<MainPage>
             fetchNum < 2 &&
             !fetchingData &&
             user != null) ||
-        trendingSelect != currentlyTrending) {
+        tabSelect != currentSelect) {
       currentCardData = null;
       nextCardData = null;
-      fetchingData = true;
       setState(() {
-        batchFuture = CardList.get()
-            .getNextBatch(lambda: FetchedData, trending: trendingSelect);
+        fetchingData = true;
+        print("TRIGGERED");
+        if (tabSelect == SelectTab.Trending) {
+          batchFuture =
+              CardList.get().getNextBatch(lambda: FetchedData, trending: true);
+        } else if (tabSelect == SelectTab.New) {
+          batchFuture =
+              CardList.get().getNextBatch(lambda: FetchedData, trending: false);
+        } else {
+          batchFuture =
+              CardList.get().getByTag(lambda: FetchedData, tag: customSearch);
+        }
       });
     } else if (currentCardData != null && stackCards.length > 1) {
       stackCards[1] = (Container(
@@ -408,12 +457,14 @@ class _MainPageState extends State<MainPage>
                         Color.lerp(
                             bottomLeftStart,
                             bottomLeftEnd,
-                            (currentCardData.score.toDouble() / MAX_SCORE)
+                            (currentCardData.score.toDouble() /
+                                    GlobalController.get().MAX_SCORE)
                                 .clamp(0.0, 1.0)),
                         Color.lerp(
                             topRightStart,
                             topRightEnd,
-                            (currentCardData.score.toDouble() / MAX_SCORE)
+                            (currentCardData.score.toDouble() /
+                                    GlobalController.get().MAX_SCORE)
                                 .clamp(0.0, 1.0)),
                       ]),
                   boxShadow: [
@@ -437,9 +488,7 @@ class _MainPageState extends State<MainPage>
                                   left: cardthingspadding),
                               child: Row(
                                 children: [
-                                  Icon(Icons.thumb_up,
-                                      color: cardThingsTextStyle.color,
-                                      size: 30),
+                                  Image.asset('assets/score.png', width: 40),
                                   SizedBox(width: 10),
                                   Text(currentCardData.score.toString(),
                                       style: cardThingsTextStyle),
@@ -455,13 +504,10 @@ class _MainPageState extends State<MainPage>
                                 children: [
                                   Row(
                                     children: [
-                                      Icon(Icons.comment,
-                                          color: cardThingsTextStyle.color,
-                                          size: 30),
+                                      Image.asset('assets/comments.png',
+                                          width: 40),
                                       SizedBox(width: 10),
-                                      Text(
-                                          currentCardData.comments.length
-                                              .toString(),
+                                      Text(currentCardData.comments.toString(),
                                           style: cardThingsTextStyle),
                                     ],
                                   )
@@ -472,9 +518,16 @@ class _MainPageState extends State<MainPage>
                         ),
                         Expanded(
                             child: Center(
-                          child: Text(currentCardData.text,
-                              style: MAIN_CARD_TEXT_STYLE,
-                              textAlign: TextAlign.center),
+                          child: HashTagText(
+                            onTap: (string) {
+                              customSearchFunc(string.trim());
+                            },
+                            textAlign: TextAlign.center,
+                            text: currentCardData.text,
+                            basicStyle: MAIN_CARD_TEXT_STYLE,
+                            decoratedStyle: MAIN_CARD_TEXT_STYLE.copyWith(
+                                color: Colors.blue),
+                          ),
                         )),
                         SizedBox(height: 20),
                         Padding(
@@ -519,22 +572,27 @@ class _MainPageState extends State<MainPage>
                         )
                       ],
                     ),
-                    Align(
-                      alignment: Alignment(-0.4, -0.9),
-                      child: Icon(Icons.person,
-                          size: 100,
-                          color: currentCardData.status == UpvotedStatus.Upvoted
-                              ? Color(0x80FFFFFF)
-                              : Color(0x00000000)),
+                    IgnorePointer(
+                      child: Align(
+                        alignment: Alignment(-0.4, -0.9),
+                        child: Image.asset('assets/upvoted.png',
+                            width: 200,
+                            color:
+                                currentCardData.status == UpvotedStatus.Upvoted
+                                    ? Color(0x80FFFFFF)
+                                    : Color(0x00000000)),
+                      ),
                     ),
-                    Align(
-                      alignment: Alignment(0.4, -0.9),
-                      child: Icon(Icons.pool,
-                          size: 100,
-                          color:
-                              currentCardData.status == UpvotedStatus.Downvoted
-                                  ? Color(0x80FFFFFF)
-                                  : Color(0x00000000)),
+                    IgnorePointer(
+                      child: Align(
+                        alignment: Alignment(0.4, -0.9),
+                        child: Image.asset('assets/downvoted.png',
+                            width: 200,
+                            color: currentCardData.status ==
+                                    UpvotedStatus.Downvoted
+                                ? Color(0x80FFFFFF)
+                                : Color(0x00000000)),
+                      ),
                     )
                   ],
                 ),
@@ -569,7 +627,7 @@ class _MainPageState extends State<MainPage>
                         child: Padding(
                           padding: const EdgeInsets.all(4.0),
                           child: Text('New',
-                              style: !currentlyTrending
+                              style: (tabSelect == SelectTab.New)
                                   ? enabledUpperBarStyle
                                   : disabledUpperBarStyle),
                         ),
@@ -587,7 +645,7 @@ class _MainPageState extends State<MainPage>
                         child: Padding(
                           padding: const EdgeInsets.all(4.0),
                           child: Text('Trending',
-                              style: currentlyTrending
+                              style: (tabSelect == SelectTab.Trending)
                                   ? enabledUpperBarStyle
                                   : disabledUpperBarStyle),
                         ),
@@ -598,12 +656,19 @@ class _MainPageState extends State<MainPage>
                         indent: 2,
                         endIndent: 2,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: Text(
-                          'Search',
-                          style: TextStyle(
-                            color: disabledUpperBarColor,
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            searchSelected = !searchSelected;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Text(
+                            'Search',
+                            style: searchSelected
+                                ? enabledUpperBarStyle
+                                : disabledUpperBarStyle,
                           ),
                         ),
                       ),
@@ -612,6 +677,8 @@ class _MainPageState extends State<MainPage>
                     ],
                   ),
                 )),
+            Container(
+                child: !searchSelected ? null : SearchBar(customSearchFunc)),
             Expanded(child: Stack(children: stackCards)),
           ],
         ),
@@ -636,7 +703,7 @@ class _MainPageState extends State<MainPage>
                         child: Padding(
                           padding: const EdgeInsets.all(4.0),
                           child: Text('New',
-                              style: !currentlyTrending
+                              style: (tabSelect == SelectTab.New)
                                   ? enabledOnReloadStyle
                                   : disabledOnReloadStyle),
                         ),
@@ -652,7 +719,7 @@ class _MainPageState extends State<MainPage>
                         child: Padding(
                           padding: const EdgeInsets.all(4.0),
                           child: Text('Trending',
-                              style: currentlyTrending
+                              style: (tabSelect == SelectTab.New)
                                   ? enabledOnReloadStyle
                                   : disabledOnReloadStyle),
                         ),
@@ -678,7 +745,7 @@ class _MainPageState extends State<MainPage>
                         child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('Assets/logo.png', width: 200),
+                Image.asset('assets/logo.png', width: 200),
                 SizedBox(height: 30),
                 SpinKitThreeBounce(
                   color: spinnerColor,
@@ -706,7 +773,7 @@ class _MainPageState extends State<MainPage>
                           child: Padding(
                             padding: const EdgeInsets.all(4.0),
                             child: Text('New',
-                                style: !currentlyTrending
+                                style: (tabSelect == SelectTab.New)
                                     ? enabledUpperBarStyle
                                     : disabledUpperBarStyle),
                           ),
@@ -724,7 +791,7 @@ class _MainPageState extends State<MainPage>
                           child: Padding(
                             padding: const EdgeInsets.all(4.0),
                             child: Text('Trending',
-                                style: currentlyTrending
+                                style: (tabSelect == SelectTab.Trending)
                                     ? enabledUpperBarStyle
                                     : disabledUpperBarStyle),
                           ),
@@ -735,12 +802,24 @@ class _MainPageState extends State<MainPage>
                           indent: 2,
                           endIndent: 2,
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: Text(
-                            'Search',
-                            style: TextStyle(
-                              color: disabledUpperBarColor,
+                        InkWell(
+                          onTap: () {
+                            setState(() {});
+                          },
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                searchSelected = !searchSelected;
+                              });
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Text(
+                                'Search',
+                                style: searchSelected
+                                    ? enabledUpperBarStyle
+                                    : disabledUpperBarStyle,
+                              ),
                             ),
                           ),
                         ),
@@ -833,7 +912,10 @@ class _FeedOverlayState extends State<FeedOverlay> {
             stream: authorStream,
             builder: (context, snapshot) {
               if (snapshot.data == null) {
-                return Icon(Icons.notifications, size: 20, color: Colors.grey);
+                return Image.asset(
+                  'assets/bell-inactive.png',
+                  width: 25,
+                );
               } else {
                 List<QueryDocumentSnapshot> commentHolderList =
                     snapshot.data.docs;
@@ -847,11 +929,10 @@ class _FeedOverlayState extends State<FeedOverlay> {
                     relevantTimestamp = snapshotDoc.get('lastSeenAuthor');
                   }
                   if (snapshotDoc.get('lastMessage') > relevantTimestamp) {
-                    return Icon(Icons.notifications_active,
-                        size: 20, color: Colors.red);
+                    return Image.asset('assets/bell-active.png', width: 25);
                   }
                 }
-                return Icon(Icons.notifications, size: 20, color: Colors.grey);
+                return Image.asset('assets/bell-inactive.png', width: 25);
               }
             }),
       ),
@@ -875,13 +956,14 @@ class DislikeIndicator extends StatelessWidget {
     }
     return Center(
       child: Transform.scale(
-        scale: (didSwipe && opacity != 0) ? 1 : animationProgress,
-        child: Icon(Icons.thumb_down,
-            size: 100,
-            color: didSwipe
-                ? Color.lerp(Colors.white, Colors.red, animationProgress)
-                : Colors.white),
-      ),
+          scale: (didSwipe && opacity != 0) ? 1 : animationProgress,
+          child: Transform.rotate(
+              angle: 3.14,
+              child: Image.asset('assets/thumbs-up.png',
+                  width: 200,
+                  color: didSwipe
+                      ? Color.lerp(Colors.white, Colors.red, animationProgress)
+                      : Colors.white))),
     );
   }
 }
@@ -903,12 +985,126 @@ class LikeIndicator extends StatelessWidget {
     return Center(
       child: Transform.scale(
         scale: (didSwipe && opacity != 0) ? 1 : animationProgress,
-        child: Icon(Icons.thumb_up,
-            size: 100,
+        child: Image.asset('assets/thumbs-up.png',
+            width: 200,
             color: didSwipe
                 ? Color.lerp(Colors.white, Colors.green, animationProgress)
                 : Colors.white),
       ),
     );
+  }
+}
+
+class SearchBar extends StatefulWidget {
+  @override
+  _SearchBarState createState() => _SearchBarState();
+  SearchBar(this.callback);
+  final Function callback;
+}
+
+class _SearchBarState extends State<SearchBar> {
+  Future<QuerySnapshot> snapshot;
+  String searchString = "#";
+  TextEditingController controller;
+  GlobalKey key;
+  @override
+  void initState() {
+    key = GlobalKey<AutoCompleteTextFieldState<String>>();
+    snapshot = Firestore.instance
+        .collection('hashtags')
+        .orderBy('popularity', descending: true)
+        .limit(HASH_TAG_LIMIT)
+        .get();
+    controller = TextEditingController(text: searchString);
+    super.initState();
+  }
+
+  void callback() {
+    print("TRIGGERED");
+    widget.callback(searchString);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+        future: snapshot,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.active ||
+              snapshot.connectionState == ConnectionState.waiting) {
+            return Container(child: Center(child: Text('Fetching tags...')));
+          }
+          if (snapshot.hasError) {
+            return Container(
+                child: Center(child: Text('Could not fetch tags...')));
+          } else {
+            if (snapshot.data == null || snapshot.data.docs == null) {
+              return Container(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 50,
+                        child: SimpleAutoCompleteTextField(
+                          suggestionsAmount: 5,
+                          textSubmitted: (string) {
+                            searchString = string;
+                            callback();
+                          },
+                          onFocusChanged: (hasFocus) {},
+                          key: key,
+                          suggestions: [],
+                          textChanged: (str) {
+                            searchString = str;
+                          },
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 50),
+                    FlatButton(
+                        onPressed: callback,
+                        color: Colors.transparent,
+                        child: Center(child: Text('Search')))
+                  ],
+                ),
+              );
+            } else {
+              List<String> suggestions = [];
+              for (var doc in snapshot.data.docs) {
+                suggestions.add(doc.get('tag'));
+              }
+              print(suggestions);
+              return Container(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 50,
+                        child: SimpleAutoCompleteTextField(
+                          suggestionsAmount: 5,
+                          textSubmitted: (string) {
+                            print('submited');
+                            searchString = string;
+                            callback();
+                          },
+                          controller: controller,
+                          key: key,
+                          suggestions: suggestions,
+                          textChanged: (str) {
+                            searchString = str;
+                          },
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 50),
+                    FlatButton(
+                        onPressed: callback,
+                        color: Colors.transparent,
+                        child: Center(child: Text('Search')))
+                  ],
+                ),
+              );
+            }
+          }
+        });
   }
 }

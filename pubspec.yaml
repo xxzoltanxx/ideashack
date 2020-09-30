@@ -38,7 +38,9 @@ dependencies:
   flutter_animation_progress_bar: ^1.0.5
   bad_words: ^0.1.0
   firebase_messaging: ^7.0.0
-  flutter_svg: ^0.19.0
+  faker: ^1.2.1
+  hashtagable: ^1.0.2
+  autocomplete_textfield: ^1.7.3
 
 dev_dependencies:
   flutter_test:
@@ -57,7 +59,14 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - Assets/
+    - assets/logo.png
+    - assets/bell-active.png
+    - assets/bell-inactive.png
+    - assets/comments.png
+    - assets/downvoted.png
+    - assets/score.png
+    - assets/thumbs-up.png
+    - assets/upvoted.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -72,9 +81,11 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
-    - family: Merriweather
+    - family: Roboto
       fonts:
-        - asset: Fonts/Merriweather-Regular.ttf
+        - asset: assets/fonts/roboto-regular.ttf
+        - asset: assets/fonts/roboto-bold.ttf
+          weight: 700
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro

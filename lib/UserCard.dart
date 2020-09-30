@@ -58,7 +58,7 @@ class _UserCardState extends State<UserCard> {
               child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset('Assets/logo.png', width: 200),
+          Image.asset('assets/logo.png', width: 200),
           SizedBox(height: 30),
           SpinKitThreeBounce(
             color: spinnerColor,

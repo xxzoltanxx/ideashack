@@ -31,12 +31,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
       await Firestore.instance
           .collection('posts')
           .doc(cardData.id)
-          .collection('data')
-          .doc('data')
-          .update({
-        'commented':
-            FieldValue.arrayUnion([GlobalController.get().currentUserUid])
-      });
+          .collection('commented')
+          .add({'userid': GlobalController.get().currentUserUid});
       await Firestore.instance
           .collection('posts')
           .doc(cardData.id)

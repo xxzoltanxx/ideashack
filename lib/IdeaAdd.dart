@@ -87,12 +87,9 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
         await _firestore
             .collection('posts')
             .doc(result.id)
-            .collection('data')
-            .doc('data')
-            .set({
-          'postUpvoted': [widget.user.uid],
-          'postDownvoted': [],
-          'commented': [],
+            .collection('upvoted')
+            .add({
+          'userid': widget.user.uid,
         });
       } else {
         result = await _firestore.collection('posts').add({
@@ -106,12 +103,9 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
         await _firestore
             .collection('posts')
             .doc(result.id)
-            .collection('data')
-            .doc('data')
-            .set({
-          'postUpvoted': [widget.user.uid],
-          'postDownvoted': [],
-          'commented': [],
+            .collection('upvoted')
+            .add({
+          'userid': widget.user.uid,
         });
       }
 

@@ -323,11 +323,8 @@ class _MainPageState extends State<MainPage>
       await Firestore.instance
           .collection('posts')
           .doc(id)
-          .collection('data')
-          .doc('data')
-          .update({
-        'postUpvoted': FieldValue.arrayUnion([user.uid])
-      });
+          .collection('upvoted')
+          .add({'userid': user.uid});
       await Firestore.instance.collection('posts').doc(id).update({
         'score': FieldValue.increment(1),
       });
@@ -342,11 +339,8 @@ class _MainPageState extends State<MainPage>
       await Firestore.instance
           .collection('posts')
           .doc(id)
-          .collection('data')
-          .doc('data')
-          .update({
-        'postDownvoted': FieldValue.arrayUnion([user.uid])
-      });
+          .collection('downvoted')
+          .add({'userid': user.uid});
       await Firestore.instance.collection('posts').doc(id).update({
         'score': FieldValue.increment(-1),
       });

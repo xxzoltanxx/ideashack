@@ -40,8 +40,8 @@ class CardList {
         var commentedArr = await _firestoreInstance
             .collection('posts')
             .doc(doc.id)
-            .collection('data')
-            .where('commented',
+            .collection('commented')
+            .where('userid',
                 arrayContains: GlobalController.get().currentUserUid)
             .get();
         bool commented = commentedArr.docs.length > 0;
@@ -66,7 +66,6 @@ class CardList {
 
   Future<void> getByTag({Function lambda, String tag}) async {
     try {
-      print(tag);
       QuerySnapshot snapshot;
       UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
       var timestamp = await getCurrentTimestampServer();
@@ -82,23 +81,20 @@ class CardList {
         var upvoted = await _firestoreInstance
             .collection('posts')
             .doc(doc.id)
-            .collection('data')
-            .where('postUpvoted',
-                arrayContains: GlobalController.get().currentUserUid)
+            .collection('upvoted')
+            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
             .get();
         var downvoted = await _firestoreInstance
             .collection('posts')
             .doc(doc.id)
-            .collection('data')
-            .where('postDownvoted',
-                arrayContains: GlobalController.get().currentUserUid)
+            .collection('downvoted')
+            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
             .get();
         var commentedArr = await _firestoreInstance
             .collection('posts')
             .doc(doc.id)
-            .collection('data')
-            .where('commented',
-                arrayContains: GlobalController.get().currentUserUid)
+            .collection('commented')
+            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
             .get();
         bool skipPost = false;
         if (upvoted.docs.length > 0) {
@@ -154,23 +150,20 @@ class CardList {
         var upvoted = await _firestoreInstance
             .collection('posts')
             .doc(doc.id)
-            .collection('data')
-            .where('postUpvoted',
-                arrayContains: GlobalController.get().currentUserUid)
+            .collection('upvoted')
+            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
             .get();
         var downvoted = await _firestoreInstance
             .collection('posts')
             .doc(doc.id)
-            .collection('data')
-            .where('postDownvoted',
-                arrayContains: GlobalController.get().currentUserUid)
+            .collection('downvoted')
+            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
             .get();
         var commentedArr = await _firestoreInstance
             .collection('posts')
             .doc(doc.id)
-            .collection('data')
-            .where('commented',
-                arrayContains: GlobalController.get().currentUserUid)
+            .collection('commented')
+            .where('userid', isEqualTo: GlobalController.get().currentUserUid)
             .get();
         bool skipPost = false;
         if (!trending &&

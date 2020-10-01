@@ -5,6 +5,7 @@ import 'package:bad_words/bad_words.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:true_time/true_time.dart';
 
 //GLOBAL LIFECYCLE VARIABLES, I KNOW ITS SHIT I JUST STARTED USING FLUTTER
 
@@ -184,7 +185,6 @@ class GlobalController {
   void checkLastTimestampsAndUpdatePosts(Function callback) async {
     try {
       final now = await getCurrentTimestampServer();
-      print(now);
       DateTime time =
           new DateTime.fromMillisecondsSinceEpoch((now * 1000).toInt());
       final lastMidnight = new DateTime(time.year, time.month, time.day);
@@ -223,17 +223,16 @@ class GlobalController {
   }
 }
 
+bool timeInited = false;
+
 Future<double> getCurrentTimestampServer() async {
-  await Firestore.instance
-      .collection('timestamp')
-      .doc('1')
-      .update({'timestamp': FieldValue.serverTimestamp()});
-  var timestampField = await Firestore.instance
-      .collection('timestamp')
-      .doc('1')
-      .get(GetOptions(source: Source.server));
-  var timestamp = timestampField.get('timestamp').millisecondsSinceEpoch / 1000;
-  return timestamp;
+  if (!timeInited) {
+    await TrueTime.init(ntpServer: 'time.google.com');
+    timeInited = true;
+  }
+  var time = await TrueTime.now();
+  var timeMilli = time.millisecondsSinceEpoch;
+  return timeMilli / 1000;
 }
 
 final spamFilter = Filter();

@@ -43,6 +43,8 @@ dependencies:
   autocomplete_textfield: ^1.7.3
   path_provider: ^1.6.18
   social_share: ^2.0.5
+  true_time:
+    git: https://github.com/ShadyBoshra2012/flutter_true_time.git
 
 dev_dependencies:
   flutter_test:

@@ -11,6 +11,7 @@ import 'dart:async';
 import 'CardList.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:social_share/social_share.dart';
+import 'package:true_time/true_time.dart';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -125,7 +126,6 @@ class _LoginScreenState extends State<LoginScreen> {
         .collection('users')
         .where('uid', isEqualTo: user.uid)
         .get(GetOptions(source: Source.server));
-
     var timestamp = await getCurrentTimestampServer();
     GlobalController.get().timeOnStartup = timestamp;
     var pushToken = await GlobalController.get().fetchPushToken();

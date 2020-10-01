@@ -9,6 +9,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:async';
 import 'CardList.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:social_share/social_share.dart';
 
 class RegistrationScreen extends StatefulWidget {
   @override
@@ -105,6 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> secondaryFuture;
 
   Future<void> checkOrSetupNewUser(User user) async {
+    SocialShare.checkInstalledAppsForShare();
     QuerySnapshot parametersArray =
         await Firestore.instance.collection('parameters').get();
     GlobalController.get().parameters = parametersArray.docs[0];

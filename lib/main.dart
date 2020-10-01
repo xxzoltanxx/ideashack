@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'Const.dart';
 import 'BackgroundCard.dart';
 import 'package:ideashack/CardList.dart';
@@ -17,6 +18,11 @@ import 'DirectMessageScreen.dart';
 import 'DMList.dart';
 import 'package:hashtagable/hashtagable.dart';
 import 'package:autocomplete_textfield/autocomplete_textfield.dart';
+import 'package:flutter/rendering.dart';
+import 'dart:ui' as ui;
+import 'package:path_provider/path_provider.dart';
+import 'package:social_share/social_share.dart';
+import 'dart:io';
 
 void main() {
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light
@@ -96,6 +102,8 @@ class _MainPageState extends State<MainPage>
   Future<void> batchFuture;
   bool searchSelected = false;
   String customSearch = "";
+  RenderRepaintBoundary repaint;
+  GlobalKey mainWidgetKey;
 
   final AlignmentSt defaultFrontCardAlign = AlignmentSt(0.0, 0.0);
   AlignmentSt frontCardAlign;
@@ -158,6 +166,7 @@ class _MainPageState extends State<MainPage>
     KeyboardVisibilityNotification().addNewListener(onHide: () {
       SystemChrome.restoreSystemUIOverlays();
     });
+    mainWidgetKey = GlobalKey();
     WidgetsBinding.instance.addObserver(this);
     currentCardData = CardList.get().getNextCard();
     nextCardData = CardList.get().getNextCard();
@@ -444,155 +453,168 @@ class _MainPageState extends State<MainPage>
           child: Transform.translate(
             offset:
                 Offset(frontCardAlign.x * 20, (frontCardAlign.x.abs()) * 10),
-            child: Container(
-              decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                      begin: FractionalOffset.bottomLeft,
-                      end: FractionalOffset.topRight,
-                      colors: [
-                        Color.lerp(
-                            bottomLeftStart,
-                            bottomLeftEnd,
-                            (currentCardData.score.toDouble() /
-                                    GlobalController.get().MAX_SCORE)
-                                .clamp(0.0, 1.0)),
-                        Color.lerp(
-                            topRightStart,
-                            topRightEnd,
-                            (currentCardData.score.toDouble() /
-                                    GlobalController.get().MAX_SCORE)
-                                .clamp(0.0, 1.0)),
-                      ]),
-                  boxShadow: [
-                    BoxShadow(
-                      blurRadius: 20.0,
-                      color: Color.fromARGB(boxColor.toInt(), 0, 0, 0),
-                    )
-                  ]),
-              child: Center(
-                  child: Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Stack(
-                  children: [
-                    Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: cardthingspadding),
-                              child: Row(
-                                children: [
-                                  Image.asset('assets/score.png', width: 40),
-                                  SizedBox(width: 10),
-                                  Text(currentCardData.score.toString(),
-                                      style: cardThingsTextStyle),
-                                ],
-                              ),
-                            ),
-                            Expanded(child: Container()),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  right: cardthingspadding),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Image.asset('assets/comments.png',
-                                          width: 40),
-                                      SizedBox(width: 10),
-                                      Text(currentCardData.comments.toString(),
-                                          style: cardThingsTextStyle),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        Expanded(
-                            child: Center(
-                          child: HashTagText(
-                            onTap: (string) {
-                              customSearchFunc(string.trim());
-                            },
-                            textAlign: TextAlign.center,
-                            text: currentCardData.text,
-                            basicStyle: MAIN_CARD_TEXT_STYLE,
-                            decoratedStyle: MAIN_CARD_TEXT_STYLE.copyWith(
-                                color: Colors.blue),
-                          ),
-                        )),
-                        SizedBox(height: 20),
-                        Padding(
-                          padding: const EdgeInsets.all(cardthingspadding),
-                          child: Divider(
-                            color: cardThingsTextStyle.color,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(
-                              left: cardthingspadding,
-                              right: cardthingspadding),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: RepaintBoundary(
+              key: mainWidgetKey,
+              child: Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        begin: FractionalOffset.bottomLeft,
+                        end: FractionalOffset.topRight,
+                        colors: [
+                          Color.lerp(
+                              bottomLeftStart,
+                              bottomLeftEnd,
+                              (currentCardData.score.toDouble() /
+                                      GlobalController.get().MAX_SCORE)
+                                  .clamp(0.0, 1.0)),
+                          Color.lerp(
+                              topRightStart,
+                              topRightEnd,
+                              (currentCardData.score.toDouble() /
+                                      GlobalController.get().MAX_SCORE)
+                                  .clamp(0.0, 1.0)),
+                        ]),
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: 20.0,
+                        color: Color.fromARGB(boxColor.toInt(), 0, 0, 0),
+                      )
+                    ]),
+                child: Center(
+                    child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: Stack(
+                    children: [
+                      Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              InkWell(
-                                  child: Text('Message',
-                                      style: cardThingsBelowTextStyle),
-                                  onTap: () {
-                                    Navigator.pushNamed(context, '/message',
-                                        arguments: <dynamic>[
-                                          currentCardData.id,
-                                          GlobalController.get().currentUserUid,
-                                          currentCardData.posterId,
-                                        ]);
-                                  }),
-                              InkWell(
-                                  onTap: () {
-                                    Navigator.pushNamed(context, '/comments',
-                                        arguments: <dynamic>[
-                                          currentCardData,
-                                          commentsCallback
-                                        ]);
-                                  },
-                                  child: Text('Comment',
-                                      style: cardThingsBelowTextStyle)),
-                              InkWell(
-                                  child: Text('Share',
-                                      style: cardThingsBelowTextStyle))
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: cardthingspadding),
+                                child: Row(
+                                  children: [
+                                    Image.asset('assets/score.png', width: 40),
+                                    SizedBox(width: 10),
+                                    Text(currentCardData.score.toString(),
+                                        style: cardThingsTextStyle),
+                                  ],
+                                ),
+                              ),
+                              Expanded(child: Container()),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    right: cardthingspadding),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Image.asset('assets/comments.png',
+                                            width: 40),
+                                        SizedBox(width: 10),
+                                        Text(
+                                            currentCardData.comments.toString(),
+                                            style: cardThingsTextStyle),
+                                      ],
+                                    )
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
-                        )
-                      ],
-                    ),
-                    IgnorePointer(
-                      child: Align(
-                        alignment: Alignment(-0.4, -0.9),
-                        child: Image.asset('assets/upvoted.png',
-                            width: 200,
-                            color:
-                                currentCardData.status == UpvotedStatus.Upvoted
-                                    ? Color(0x80FFFFFF)
-                                    : Color(0x00000000)),
+                          Expanded(
+                              child: Center(
+                            child: HashTagText(
+                              onTap: (string) {
+                                customSearchFunc(string.trim());
+                              },
+                              textAlign: TextAlign.center,
+                              text: currentCardData.text,
+                              basicStyle: MAIN_CARD_TEXT_STYLE,
+                              decoratedStyle: MAIN_CARD_TEXT_STYLE.copyWith(
+                                  color: Colors.blue),
+                            ),
+                          )),
+                          SizedBox(height: 20),
+                          Padding(
+                            padding: const EdgeInsets.all(cardthingspadding),
+                            child: Divider(
+                              color: cardThingsTextStyle.color,
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                left: cardthingspadding,
+                                right: cardthingspadding),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                InkWell(
+                                    child: Text('Message',
+                                        style: cardThingsBelowTextStyle),
+                                    onTap: () {
+                                      Navigator.pushNamed(context, '/message',
+                                          arguments: <dynamic>[
+                                            currentCardData.id,
+                                            GlobalController.get()
+                                                .currentUserUid,
+                                            currentCardData.posterId,
+                                          ]);
+                                    }),
+                                InkWell(
+                                    onTap: () {
+                                      Navigator.pushNamed(context, '/comments',
+                                          arguments: <dynamic>[
+                                            currentCardData,
+                                            commentsCallback
+                                          ]);
+                                    },
+                                    child: Text('Comment',
+                                        style: cardThingsBelowTextStyle)),
+                                InkWell(
+                                    onTap: () {
+                                      repaint = mainWidgetKey.currentContext
+                                          .findRenderObject();
+                                      showDialog(
+                                          context: context,
+                                          builder: (_) => SharePopup(
+                                              repaint, currentCardData.text));
+                                    },
+                                    child: Text('Share',
+                                        style: cardThingsBelowTextStyle))
+                              ],
+                            ),
+                          )
+                        ],
                       ),
-                    ),
-                    IgnorePointer(
-                      child: Align(
-                        alignment: Alignment(0.4, -0.9),
-                        child: Image.asset('assets/downvoted.png',
-                            width: 200,
-                            color: currentCardData.status ==
-                                    UpvotedStatus.Downvoted
-                                ? Color(0x80FFFFFF)
-                                : Color(0x00000000)),
+                      IgnorePointer(
+                        child: Align(
+                          alignment: Alignment(-0.4, -0.9),
+                          child: Image.asset('assets/upvoted.png',
+                              width: 200,
+                              color: currentCardData.status ==
+                                      UpvotedStatus.Upvoted
+                                  ? Color(0x80FFFFFF)
+                                  : Color(0x00000000)),
+                        ),
                       ),
-                    )
-                  ],
-                ),
-              )),
+                      IgnorePointer(
+                        child: Align(
+                          alignment: Alignment(0.4, -0.9),
+                          child: Image.asset('assets/downvoted.png',
+                              width: 200,
+                              color: currentCardData.status ==
+                                      UpvotedStatus.Downvoted
+                                  ? Color(0x80FFFFFF)
+                                  : Color(0x00000000)),
+                        ),
+                      )
+                    ],
+                  ),
+                )),
+              ),
             ),
           ),
         ),
@@ -1102,5 +1124,139 @@ class _SearchBarState extends State<SearchBar> {
             }
           }
         });
+  }
+}
+
+class SharePopup extends StatefulWidget {
+  SharePopup(this.repaint, this.text);
+  RenderRepaintBoundary repaint;
+  String text;
+  @override
+  _SharePopupState createState() => _SharePopupState();
+}
+
+class _SharePopupState extends State<SharePopup> {
+  Future<void> imageConstructFuture;
+  ui.Image image;
+  ByteData byteData;
+  String pathStr;
+
+  Future<void> getImageBytes() async {
+    image = await widget.repaint.toImage();
+    byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    Directory path = await getApplicationDocumentsDirectory();
+    pathStr = path.path + '/share.png';
+    new File(pathStr).writeAsBytes(byteData.buffer
+        .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+    print(pathStr);
+  }
+
+  @override
+  void initState() {
+    imageConstructFuture = getImageBytes();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Center(child: Text('Share')),
+      content: FutureBuilder(
+        future: imageConstructFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.active ||
+              snapshot.connectionState == ConnectionState.waiting) {
+            return Container(
+                width: 200,
+                height: 200,
+                child: SpinKitThreeBounce(color: Colors.white));
+          }
+          if (image == null) {
+            image = snapshot.data;
+          }
+          return Container(
+              width: 200,
+              height: 350,
+              child: Column(
+                children: [
+                  Image.memory(byteData.buffer.asUint8List(), height: 100),
+                  SizedBox(height: 20),
+                  InkWell(
+                    onTap: () {
+                      Platform.isAndroid
+                          ? SocialShare.shareFacebookStory(
+                              pathStr,
+                              "#ffffff",
+                              "#000000",
+                              "https://www.google.com",
+                              appId: '240400507128183',
+                            )
+                          : SocialShare.shareFacebookStory(
+                              pathStr,
+                              "#ffffff",
+                              "#000000",
+                              "https://www.google.com",
+                            );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Share on facebook'),
+                        Icon(FontAwesomeIcons.facebookSquare)
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 30),
+                  InkWell(
+                    onTap: () {
+                      SocialShare.shareTwitter('${widget.text}',
+                          hashtags: ['spark', 'idea', 'changetheworld'],
+                          url: 'http://test.com',
+                          trailingText:
+                              'download Spark for more brilliant ideas');
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Share on twitter'),
+                        Icon(FontAwesomeIcons.twitterSquare)
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 30),
+                  InkWell(
+                    onTap: () {
+                      SocialShare.shareInstagramStory(pathStr, "#ffffff",
+                          "#000000", "https://deep-link-url");
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Share on instagram'),
+                        Icon(FontAwesomeIcons.instagramSquare)
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 30),
+                  InkWell(
+                    onTap: () {
+                      SocialShare.shareSms(
+                          '${widget.text} - download Spark for more brilliant ideas',
+                          url: "",
+                          trailingText: "");
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('Share via SMS'),
+                        Icon(FontAwesomeIcons.sms)
+                      ],
+                    ),
+                  )
+                ],
+              ));
+        },
+      ),
+    );
   }
 }

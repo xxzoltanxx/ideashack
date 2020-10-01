@@ -31,6 +31,11 @@ const double MAX_POST_DAILY_LIMIT = 4;
 const double BASE_DAILY_POSTS = 3;
 const int TRENDING_CARD_LIMIT = 90;
 const int HASH_TAG_LIMIT = 30;
+const List<String> splashScreenText = [
+  'Light your creativity',
+  'App for serious and not so serious ideas',
+  'Ideas don\'t have to be useful'
+];
 
 const Color bottomLeftEnd = Color(0xFFE0C82D);
 const Color topRightEnd = Color(0xFFE5D831);
@@ -178,15 +183,13 @@ class GlobalController {
 
   void checkLastTimestampsAndUpdatePosts(Function callback) async {
     try {
-      fetchingDailyPosts = true;
       final now = await getCurrentTimestampServer();
+      print(now);
       DateTime time =
           new DateTime.fromMillisecondsSinceEpoch((now * 1000).toInt());
       final lastMidnight = new DateTime(time.year, time.month, time.day);
-
       final nowseconds = now;
       final lastMidnightSeconds = lastMidnight.millisecondsSinceEpoch / 1000;
-
       var user = await Firestore.instance
           .collection('users')
           .where('uid', isEqualTo: currentUserUid)
@@ -212,11 +215,11 @@ class GlobalController {
             .update({'lastSeen': nowseconds});
       }
       dailyPosts = dailyyPosts;
-      fetchingDailyPosts = false;
+      callback(dailyPosts);
     } catch (e) {
       print(e);
+      callback(0);
     }
-    callback(dailyPosts);
   }
 }
 
@@ -225,8 +228,10 @@ Future<double> getCurrentTimestampServer() async {
       .collection('timestamp')
       .doc('1')
       .update({'timestamp': FieldValue.serverTimestamp()});
-  var timestampField =
-      await Firestore.instance.collection('timestamp').doc('1').get();
+  var timestampField = await Firestore.instance
+      .collection('timestamp')
+      .doc('1')
+      .get(GetOptions(source: Source.server));
   var timestamp = timestampField.get('timestamp').millisecondsSinceEpoch / 1000;
   return timestamp;
 }

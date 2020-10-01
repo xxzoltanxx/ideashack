@@ -135,6 +135,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    print(widget.fetchingDailyPosts);
     if (widget.fetchingDailyPosts) {
       return Container(
           child: Center(

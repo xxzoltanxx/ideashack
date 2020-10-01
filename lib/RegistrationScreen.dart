@@ -1,3 +1,4 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -245,7 +246,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Flexible(child: Image.asset('assets/logo.png')),
-                        SizedBox(height: 80),
+                        SizedBox(height: 40),
+                        FadeAnimatedTextKit(
+                            text: splashScreenText,
+                            repeatForever: true,
+                            textStyle:
+                                (TextStyle(fontWeight: FontWeight.bold))),
+                        SizedBox(height: 40),
                         Container(
                           width: 200,
                           height: 70,
@@ -291,7 +298,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Flexible(child: Image.asset('assets/logo.png')),
-                        SizedBox(height: 80),
+                        SizedBox(height: 40),
+                        FadeAnimatedTextKit(
+                            text: splashScreenText,
+                            repeatForever: true,
+                            textStyle:
+                                (TextStyle(fontWeight: FontWeight.bold))),
+                        SizedBox(height: 40),
                         Container(
                           width: 200,
                           height: 70,
@@ -373,44 +386,22 @@ class SomethingWentWrong extends StatelessWidget {
   }
 }
 
-class Loading extends StatefulWidget {
-  @override
-  _LoadingState createState() => _LoadingState();
-}
-
-class _LoadingState extends State<Loading> with SingleTickerProviderStateMixin {
-  AnimationController _controller;
-  Animation _animation;
-  double _size = 50;
-  double _angleSum = 0;
-
-  @override
-  void initState() {
-    _controller = new AnimationController(
-        vsync: this, duration: Duration(milliseconds: 500));
-    _controller.repeat(min: 0.0, max: 1.0);
-    _animation = CurvedAnimation(parent: _controller, curve: Curves.bounceIn);
-    _controller.addListener(() {
-      setState(() {
-        _angleSum += _controller.value * 50;
-      });
-    });
-    super.initState();
-  }
-
+class Loading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
         child: Center(
-            child: Transform.rotate(
-      angle: _angleSum,
-      child: Icon(FontAwesomeIcons.lightbulb, size: _size * _animation.value),
+            child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Image.asset('assets/logo.png', width: 200),
+        SizedBox(height: 30),
+        SpinKitThreeBounce(
+          color: spinnerColor,
+          size: 60,
+        ),
+      ],
     )));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+    ;
   }
 }

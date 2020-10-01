@@ -124,7 +124,12 @@ class _MainPageState extends State<MainPage>
           fetchNum = 0;
         });
       }
-      if (!GlobalController.get().fetchingDailyPosts) {
+      if (!GlobalController.get().fetchingDailyPosts &&
+          GlobalController.get().selectedIndex == 0) {
+        setState(() {
+          GlobalController.get().fetchingDailyPosts = true;
+        });
+        print("HERE");
         GlobalController.get()
             .checkLastTimestampsAndUpdatePosts(onFetchUserTimestampsCallback);
       }
@@ -277,8 +282,19 @@ class _MainPageState extends State<MainPage>
     if (nextCardData != null) {
       stackCards.add(BackgroundCard(cardData: nextCardData));
     } else {
-      stackCards.add(
-          Container(child: Center(child: Text('No more ideas currently'))));
+      stackCards.add(Container(
+          child: Center(
+              child: Container(
+                  child: Center(
+                      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset('assets/logo.png', width: 200),
+          SizedBox(height: 20),
+          Text('No more ideas currently'),
+          SizedBox(height: 54)
+        ],
+      ))))));
     }
     stackCards.add(Container());
     stackCards.add(Container());
@@ -393,6 +409,8 @@ class _MainPageState extends State<MainPage>
       currentSelect = tabSelect;
       if (CardList.get().peekNextCard() == null) {
         fetchNum = fetchNum + 1;
+      } else {
+        fetchNum = 2;
       }
       checkForNextCard();
     });
@@ -868,6 +886,9 @@ class _MainPageState extends State<MainPage>
                 });
               }
               if (number == 0) {
+                setState(() {
+                  GlobalController.get().fetchingDailyPosts = true;
+                });
                 GlobalController.get().checkLastTimestampsAndUpdatePosts(
                     onFetchUserTimestampsCallback);
               }

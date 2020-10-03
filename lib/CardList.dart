@@ -11,6 +11,8 @@ class CardList {
     return _instance;
   }
 
+  DocumentSnapshot lastDocumentSnapshot;
+
   void setInstance(FirebaseFirestore inst) {
     _firestoreInstance = inst;
   }
@@ -36,7 +38,7 @@ class CardList {
       var snapshot = await _firestoreInstance
           .collection('posts')
           .orderBy('postTime', descending: true)
-          .where('postTime', isGreaterThan: timestamp - TIME_TILL_DISCARD)
+          .where('hidden', isEqualTo: 0)
           .where('userid', isEqualTo: GlobalController.get().currentUserUid)
           .get();
 
@@ -64,6 +66,10 @@ class CardList {
     cardsData.clear();
   }
 
+  void resetLastDocumentSnapshot() {
+    lastDocumentSnapshot = null;
+  }
+
   Future<void> getByTag({Function lambda, String tag}) async {
     try {
       var userDataSnapshotList = await _firestoreInstance
@@ -78,11 +84,27 @@ class CardList {
       QuerySnapshot snapshot;
       UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
       var timestamp = await getCurrentTimestampServer();
-      snapshot = await _firestoreInstance
-          .collection('posts')
-          .where('hashtag', isEqualTo: tag)
-          .where('postTime', isGreaterThan: timestamp - TIME_TILL_DISCARD)
-          .get();
+      if (lastDocumentSnapshot != null) {
+        snapshot = await _firestoreInstance
+            .collection('posts')
+            .where('hashtag', isEqualTo: tag)
+            .orderBy('score', descending: true)
+            .where('hidden', isEqualTo: 0)
+            .startAfterDocument(lastDocumentSnapshot)
+            .limit(QUERY_SIZE)
+            .get();
+      } else {
+        snapshot = await _firestoreInstance
+            .collection('posts')
+            .where('hashtag', isEqualTo: tag)
+            .orderBy('score', descending: true)
+            .where('hidden', isEqualTo: 0)
+            .limit(QUERY_SIZE)
+            .get();
+      }
+      if (snapshot.docs.length == 0) {
+        print("IT IS NULL");
+      }
       var doxs = snapshot.docs;
       cardsData.clear();
       for (var doc in doxs) {
@@ -108,6 +130,11 @@ class CardList {
               commented: commented));
         }
       }
+      if (snapshot.docs.length < QUERY_SIZE) {
+        lastDocumentSnapshot = null;
+      } else {
+        lastDocumentSnapshot = snapshot.docs.last;
+      }
     } catch (e) {
       print(e);
     }
@@ -129,50 +156,68 @@ class CardList {
       UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
       var timestamp = await getCurrentTimestampServer();
       if (!trending) {
-        snapshot = await _firestoreInstance
-            .collection('posts')
-            .orderBy('postTime', descending: true)
-            .where('postTime', isGreaterThan: timestamp - TIME_TILL_DISCARD)
-            .get();
+        if (lastDocumentSnapshot != null) {
+          snapshot = await _firestoreInstance
+              .collection('posts')
+              .orderBy('postTime', descending: true)
+              .where('hidden', isEqualTo: 0)
+              .startAfterDocument(lastDocumentSnapshot)
+              .limit(QUERY_SIZE)
+              .get();
+        } else {
+          snapshot = await _firestoreInstance
+              .collection('posts')
+              .orderBy('postTime', descending: true)
+              .where('hidden', isEqualTo: 0)
+              .limit(QUERY_SIZE)
+              .get();
+        }
       } else {
-        snapshot = await _firestoreInstance
-            .collection('posts')
-            .where('postTime', isGreaterThan: timestamp - TIME_TILL_DISCARD)
-            .get();
+        if (lastDocumentSnapshot != null) {
+          snapshot = await _firestoreInstance
+              .collection('posts')
+              .orderBy('score', descending: true)
+              .where('hidden', isEqualTo: 0)
+              .startAfterDocument(lastDocumentSnapshot)
+              .limit(QUERY_SIZE)
+              .get();
+        } else {
+          snapshot = await _firestoreInstance
+              .collection('posts')
+              .orderBy('score', descending: true)
+              .where('hidden', isEqualTo: 0)
+              .limit(QUERY_SIZE)
+              .get();
+        }
       }
       var doxs = snapshot.docs;
-      if (trending) {
-        doxs.sort((a, b) {
-          return b.get('score').compareTo(a.get('score'));
-        });
-      }
       cardsData.clear();
       for (var doc in doxs) {
         upvoteStatus = UpvotedStatus.DidntVote;
         var upvoted = upvotedSet.contains(doc.id);
         var downvoted = downvotedSet.contains(doc.id);
         var commented = commentedSet.contains(doc.id);
-        bool skipPost = false;
-        if (!trending && (upvoted || downvoted)) {
-          skipPost = true;
-        } else if (trending) {
-          if (upvoted) {
-            upvoteStatus = UpvotedStatus.Upvoted;
-          } else if (downvoted) {
-            upvoteStatus = UpvotedStatus.Downvoted;
-          }
+        if (upvoted) {
+          upvoteStatus = UpvotedStatus.Upvoted;
+        } else if (downvoted) {
+          upvoteStatus = UpvotedStatus.Downvoted;
         }
-        if (!skipPost) {
-          cardsData.add(CardData(
-              posterId: doc.get('userid'),
-              id: doc.id,
-              author: doc.get('author'),
-              score: doc.get('score'),
-              text: doc.get('body'),
-              status: upvoteStatus,
-              comments: doc.get('commentsNum'),
-              commented: commented));
-        }
+        cardsData.add(CardData(
+            posterId: doc.get('userid'),
+            id: doc.id,
+            author: doc.get('author'),
+            score: doc.get('score'),
+            text: doc.get('body'),
+            status: upvoteStatus,
+            comments: doc.get('commentsNum'),
+            commented: commented));
+      }
+      if (snapshot.docs.length < QUERY_SIZE) {
+        print(snapshot.docs);
+        lastDocumentSnapshot = null;
+        print("LENGTH IS ZERO");
+      } else {
+        lastDocumentSnapshot = snapshot.docs.last;
       }
     } catch (e) {
       print(e);

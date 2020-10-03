@@ -196,7 +196,8 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
         .collection('directMessages')
         .doc(thisDocumentReference)
         .collection('messages')
-        .orderBy('time')
+        .orderBy('time', descending: true)
+        .limit(QUERY_SIZE)
         .snapshots();
   }
 
@@ -327,7 +328,8 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                 .collection('directMessages')
                                 .doc(thisDocumentReference)
                                 .collection('messages')
-                                .orderBy('time')
+                                .orderBy('time', descending: true)
+                                .limit(QUERY_SIZE)
                                 .snapshots();
                           });
                         });
@@ -354,7 +356,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                               if (snapshot.data != null) {
                                 List<QueryDocumentSnapshot> messagesReversed =
                                     snapshot.data.docs;
-                                messages = messagesReversed.reversed;
+                                messages = messagesReversed;
                               }
 
                               List<Widget> messageBubbles = [];

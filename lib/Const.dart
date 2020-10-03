@@ -68,6 +68,7 @@ const double cardthingspadding = 8.0;
 
 const Color spinnerColor = Color(0xBFFFFFFF);
 
+const int QUERY_SIZE = 50;
 const List<Color> splashScreenColors = [Color(0xFFED8A00), Color(0xFFF29C03)];
 String formatedNumberString(int num) {
   if (num > 1000000) {
@@ -96,7 +97,9 @@ class CardData {
       this.comments,
       this.status,
       this.commented,
-      this.posterId});
+      this.posterId,
+      this.isAd = false});
+  bool isAd;
   String text;
   int score;
   String author;
@@ -121,6 +124,7 @@ class GlobalController {
   }
 
   QueryDocumentSnapshot parameters;
+  double adLockTime = 8.0;
   int MAX_SCORE = 100;
   String encryptionKey;
   int selectedIndex = 1;
@@ -132,6 +136,16 @@ class GlobalController {
   String serverKey;
   double timeOnStartup;
   String userDocId;
+  int cardsSwiped = 1;
+  int cardsToShowAd = 15;
+  bool isNextAd = false;
+  bool finishedAd = true;
+  bool isAdLocked = false;
+
+  bool shouldShowAd() {
+    print(cardsSwiped);
+    return cardsSwiped % cardsToShowAd == 0;
+  }
 
   void initParameters() {
     serverKey = parameters.get('serbian');

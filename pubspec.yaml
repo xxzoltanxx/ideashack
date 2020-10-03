@@ -43,6 +43,8 @@ dependencies:
   autocomplete_textfield: ^1.7.3
   path_provider: ^1.6.18
   social_share: ^2.0.5
+  dotted_line: ^2.0.1
+  admob_flutter: ^1.0.0
   true_time:
     git: https://github.com/ShadyBoshra2012/flutter_true_time.git
 
@@ -71,6 +73,8 @@ flutter:
     - assets/score.png
     - assets/thumbs-up.png
     - assets/upvoted.png
+    - assets/search.png
+    - assets/shareidea.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

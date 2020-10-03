@@ -9,6 +9,47 @@ class BackgroundCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (cardData.isAd) {
+      return Container(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+                begin: FractionalOffset.bottomLeft,
+                end: FractionalOffset.topRight,
+                colors: [
+                  Color.lerp(
+                      bottomLeftStart,
+                      bottomLeftEnd,
+                      (0.toDouble() / GlobalController.get().MAX_SCORE)
+                          .clamp(0.0, 1.0)),
+                  Color.lerp(
+                      topRightStart,
+                      topRightEnd,
+                      (0.toDouble() / GlobalController.get().MAX_SCORE)
+                          .clamp(0.0, 1.0)),
+                ]),
+          ),
+          child: Center(
+              child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('Thanks for supporting us!'),
+              SizedBox(height: 30),
+              Text(
+                  'Take a break for ${GlobalController.get().adLockTime.toInt()} seconds!'),
+              SizedBox(height: 30),
+              Container(
+                  width: 320,
+                  height: 260,
+                  decoration: BoxDecoration(color: Colors.black45, boxShadow: [
+                    BoxShadow(color: Colors.black45, blurRadius: 20)
+                  ]),
+                  child: Center(child: Text('Oh no! An ad!')))
+            ],
+          )),
+        ),
+      );
+    }
     return Container(
       child: Container(
         decoration: BoxDecoration(

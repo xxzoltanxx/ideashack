@@ -130,20 +130,25 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     GlobalController.get().initParameters();
-    QuerySnapshot possibleUser = await Firestore.instance
-        .collection('users')
-        .where('uid', isEqualTo: user.uid)
-        .get(GetOptions(source: Source.server));
+    QuerySnapshot possibleUser;
+
+    var pushToken;
+    if (!user.isAnonymous) {
+      possibleUser = await Firestore.instance
+          .collection('users')
+          .where('uid', isEqualTo: user.uid)
+          .get(GetOptions(source: Source.server));
+      pushToken = await GlobalController.get().fetchPushToken();
+    }
     var timestamp = await getCurrentTimestampServer();
     GlobalController.get().timeOnStartup = timestamp;
-    var pushToken = await GlobalController.get().fetchPushToken();
-    if (possibleUser.docs != null && possibleUser.docs.length > 0) {
+    if (!user.isAnonymous &&
+        possibleUser.docs != null &&
+        possibleUser.docs.length > 0) {
       print(possibleUser.docs);
       String docId = possibleUser.docs[0].id;
-      if (!user.isAnonymous) {
-        await Firestore.instance.collection('users').doc(docId).update(
-            {'lastSeen': timestamp, 'uid': user.uid, 'pushToken': pushToken});
-      }
+      await Firestore.instance.collection('users').doc(docId).update(
+          {'lastSeen': timestamp, 'uid': user.uid, 'pushToken': pushToken});
       GlobalController.get().userDocId = docId;
       return;
     }

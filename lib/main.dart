@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_admob/native_admob_controller.dart';
+import 'package:flutter_native_admob/native_admob_options.dart';
 import 'Const.dart';
 import 'BackgroundCard.dart';
 import 'package:ideashack/CardList.dart';
@@ -21,22 +23,18 @@ import 'package:flutter/rendering.dart';
 import 'dart:io';
 import 'package:ideashack/SearchScreen.dart';
 import 'FeedOverlay.dart';
-import 'package:admob_flutter/admob_flutter.dart';
+import 'package:flutter_native_admob/flutter_native_admob.dart';
 
 import 'package:ideashack/MainScreenMisc.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  Admob.initialize(testDeviceIds: ["738451C1DB43B39858E14A914334CF2A"]);
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light
       .copyWith(systemNavigationBarColor: Colors.white));
   SystemChrome.setEnabledSystemUIOverlays(
-      [SystemUiOverlay.top, SystemUiOverlay.bottom]).then((_) {
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
-        .then((_) {
-      runApp(MyApp());
-    });
-  });
+      [SystemUiOverlay.top, SystemUiOverlay.bottom]);
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  runApp(MyApp());
 }
 
 String getBannerAdUnitId() {
@@ -117,6 +115,8 @@ class _MainPageState extends State<MainPage>
   GlobalKey mainWidgetKey;
   double adCounter = 0;
   Timer adTimer;
+  Widget banner;
+  NativeAdmobController controllerAdmob = NativeAdmobController();
 
   final AlignmentSt defaultFrontCardAlign = AlignmentSt(0.0, 0.0);
   AlignmentSt frontCardAlign;
@@ -182,6 +182,9 @@ class _MainPageState extends State<MainPage>
   @override
   void initState() {
     print("INITED THE STATE OF THE MAIN SCREEN");
+    controllerAdmob.setTestDeviceIds(['738451C1DB43B39858E14A914334CF2A']);
+    controllerAdmob.setAdUnitID('ca-app-pub-9903730459271982/8200307113');
+    controllerAdmob.reloadAd();
     CardList.get().clear();
     KeyboardVisibilityNotification().addNewListener(onHide: () {
       SystemChrome.restoreSystemUIOverlays();
@@ -655,9 +658,30 @@ class _MainPageState extends State<MainPage>
                                 BoxShadow(color: Colors.black45, blurRadius: 20)
                               ]),
                           child: Center(
-                              child: AdmobBanner(
-                                  adUnitId: getBannerAdUnitId(),
-                                  adSize: AdmobBannerSize.MEDIUM_RECTANGLE))),
+                              child: NativeAdmob(
+                                  error:
+                                      Center(child: Text('No ads to display')),
+                                  adUnitID:
+                                      'ca-app-pub-9903730459271982/8200307113',
+                                  controller: controllerAdmob,
+                                  loading: Center(
+                                      child: SpinKitThreeBounce(
+                                          size: 20, color: Colors.white)),
+                                  type: NativeAdmobType.full,
+                                  options: NativeAdmobOptions(
+                                      callToActionStyle:
+                                          NativeTextStyle(color: Colors.white),
+                                      adLabelTextStyle:
+                                          NativeTextStyle(color: Colors.white),
+                                      bodyTextStyle:
+                                          NativeTextStyle(color: Colors.white),
+                                      headlineTextStyle:
+                                          NativeTextStyle(color: Colors.white),
+                                      advertiserTextStyle:
+                                          NativeTextStyle(color: Colors.white),
+                                      storeTextStyle:
+                                          NativeTextStyle(color: Colors.white),
+                                      showMediaContent: true)))),
                     ],
                   )),
                 ),

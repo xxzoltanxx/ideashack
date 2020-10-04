@@ -44,7 +44,7 @@ dependencies:
   path_provider: ^1.6.18
   social_share: ^2.0.5
   dotted_line: ^2.0.1
-  admob_flutter: ^1.0.0
+  flutter_native_admob: ^2.1.0+3
   true_time:
     git: https://github.com/ShadyBoshra2012/flutter_true_time.git
 

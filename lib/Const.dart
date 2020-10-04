@@ -81,6 +81,7 @@ String formatedNumberString(int num) {
 }
 
 enum InfoSheet {
+  Register,
   Posted,
   Commented,
   Profane,

@@ -11,9 +11,10 @@ import 'dart:async';
 import 'CardList.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:social_share/social_share.dart';
-import 'package:true_time/true_time.dart';
 
 class RegistrationScreen extends StatefulWidget {
+  RegistrationScreen({this.doSignInWithGoogle = false});
+  bool doSignInWithGoogle;
   @override
   _RegistrationScreenState createState() => _RegistrationScreenState();
 }
@@ -73,7 +74,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             colors: splashScreenColors,
                             begin: Alignment.bottomLeft,
                             end: Alignment.topRight)),
-                    child: LoginScreen(_auth)));
+                    child: LoginScreen(_auth, widget.doSignInWithGoogle)));
           }
           return Scaffold(
               body: SafeArea(
@@ -93,7 +94,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 }
 
 class LoginScreen extends StatefulWidget {
-  LoginScreen(this.auth);
+  LoginScreen(this.auth, this.doSignInWithGoogle);
+  bool doSignInWithGoogle;
   final FirebaseAuth auth;
 
   @override
@@ -106,6 +108,12 @@ class _LoginScreenState extends State<LoginScreen> {
   User user;
   Future<void> initialFuture;
   Future<void> secondaryFuture;
+
+  void signInButtonSecondary() {
+    setState(() {
+      initialFuture = checkForSignIn();
+    });
+  }
 
   Future<void> checkOrSetupNewUser(User user) async {
     SocialShare.checkInstalledAppsForShare();
@@ -132,43 +140,52 @@ class _LoginScreenState extends State<LoginScreen> {
     if (possibleUser.docs != null && possibleUser.docs.length > 0) {
       print(possibleUser.docs);
       String docId = possibleUser.docs[0].id;
-      await Firestore.instance.collection('users').doc(docId).update(
-          {'lastSeen': timestamp, 'uid': user.uid, 'pushToken': pushToken});
+      if (!user.isAnonymous) {
+        await Firestore.instance.collection('users').doc(docId).update(
+            {'lastSeen': timestamp, 'uid': user.uid, 'pushToken': pushToken});
+      }
       GlobalController.get().userDocId = docId;
       return;
     }
     print("REACHED HERE");
-    var snapshot = await Firestore.instance.collection('users').add({
-      'dailyPosts': BASE_DAILY_POSTS,
-      'lastSeen': timestamp,
-      'uid': user.uid,
-      'pushToken': pushToken,
-      'upvoted': [],
-      'downvoted': [],
-      'commented': [],
-    });
-    GlobalController.get().userDocId = snapshot.id;
+    if (!user.isAnonymous) {
+      var snapshot = await Firestore.instance.collection('users').add({
+        'dailyPosts': BASE_DAILY_POSTS,
+        'lastSeen': timestamp,
+        'uid': user.uid,
+        'pushToken': pushToken,
+        'upvoted': [],
+        'downvoted': [],
+        'commented': [],
+      });
+      GlobalController.get().userDocId = snapshot.id;
+    }
   }
 
   Future<void> checkForSignIn() async {
-    var signedIn = await googleSignIn.isSignedIn();
+    var signedIn = widget.auth.currentUser != null;
     if (!signedIn) {
-      return Future.error("NOT SIGNED IN");
+      {
+        try {
+          UserCredential creds = await widget.auth.signInAnonymously();
+          user = creds.user;
+
+          assert(await user.getIdToken() != null);
+
+          User currentUser = widget.auth.currentUser;
+          assert(user.uid == currentUser.uid);
+          GlobalController.get().currentUserUid = user.uid;
+          GlobalController.get().currentUser = user;
+          await checkOrSetupNewUser(currentUser);
+        } catch (e) {
+          print(e);
+          return Future.error("COULDN'T LOG IN");
+        }
+      }
     } else {
       try {
-        account = await googleSignIn.signIn();
-        GoogleSignInAuthentication googleSignInAuthentication =
-            await account.authentication;
+        user = widget.auth.currentUser;
 
-        AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleSignInAuthentication.accessToken,
-          idToken: googleSignInAuthentication.idToken,
-        );
-        UserCredential authResult =
-            await widget.auth.signInWithCredential(credential);
-        user = authResult.user;
-
-        if (user != null) assert(!user.isAnonymous);
         assert(await user.getIdToken() != null);
 
         User currentUser = widget.auth.currentUser;
@@ -191,6 +208,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> signIn() async {
     try {
+      if (FirebaseAuth.instance.currentUser != null) {
+        await FirebaseAuth.instance.currentUser.delete();
+        await FirebaseAuth.instance.signOut();
+      }
       account = await googleSignIn.signIn();
       GoogleSignInAuthentication googleSignInAuthentication =
           await account.authentication;
@@ -219,7 +240,9 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    initialFuture = checkForSignIn();
+    if (!widget.doSignInWithGoogle) {
+      initialFuture = checkForSignIn();
+    }
   }
 
   @override
@@ -229,129 +252,173 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.doSignInWithGoogle) {
+      return FutureBuilder(
+          future: secondaryFuture,
+          builder: (context, snapshot) {
+            print("INNER BUILDER");
+            if (snapshot.connectionState == ConnectionState.none) {
+              return Container(
+                  child: Center(
+                      child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(child: Image.asset('assets/logo.png')),
+                  SizedBox(height: 40),
+                  FadeAnimatedTextKit(
+                      text: splashScreenText,
+                      repeatForever: true,
+                      textStyle: (TextStyle(fontWeight: FontWeight.bold))),
+                  SizedBox(height: 40),
+                  Container(
+                    width: 200,
+                    height: 70,
+                    child: RaisedButton(
+                        onPressed: signInButtonCallback,
+                        color: Colors.white,
+                        child: Row(
+                          children: [
+                            Icon(
+                              FontAwesomeIcons.googlePlusSquare,
+                              color: Colors.black,
+                            ),
+                            SizedBox(width: 20),
+                            Text('Google login', style: LOGINTEXTSTYLE)
+                          ],
+                        )),
+                  ),
+                ],
+              )));
+            }
+            if (snapshot.connectionState == ConnectionState.active ||
+                snapshot.connectionState == ConnectionState.waiting) {
+              print("ONGOING");
+              return Container(
+                  child: Center(
+                      child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/logo.png', width: 200),
+                  SizedBox(height: 30),
+                  SpinKitThreeBounce(
+                    color: spinnerColor,
+                    size: 60,
+                  ),
+                ],
+              )));
+            }
+            if (snapshot.hasError) {
+              print("SNAPSHOT ERROR");
+              return Container(
+                  child: Center(
+                      child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(child: Image.asset('assets/logo.png')),
+                  SizedBox(height: 40),
+                  FadeAnimatedTextKit(
+                      text: splashScreenText,
+                      repeatForever: true,
+                      textStyle: (TextStyle(fontWeight: FontWeight.bold))),
+                  SizedBox(height: 40),
+                  Container(
+                    width: 200,
+                    height: 70,
+                    child: RaisedButton(
+                        onPressed: signInButtonCallback,
+                        color: Colors.white,
+                        child: Row(
+                          children: [
+                            Icon(
+                              FontAwesomeIcons.googlePlusSquare,
+                              color: Colors.black,
+                            ),
+                            SizedBox(width: 20),
+                            Text('Google login', style: LOGINTEXTSTYLE)
+                          ],
+                        )),
+                  ),
+                  SizedBox(height: 20),
+                  Text("Failed to sign in, try again!"),
+                ],
+              )));
+            }
+            if (snapshot.connectionState == ConnectionState.done) {
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                WidgetsBinding.instance.addPostFrameCallback((duration) =>
+                    Navigator.popAndPushNamed(context, '/main',
+                        arguments: user));
+              });
+              return Container(
+                  child: Center(child: Text('You\'re logged in!')));
+            }
+            print("REACHED HERE");
+            return Container(
+                child: Center(
+                    child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/logo.png', width: 200),
+                SizedBox(height: 30),
+                SpinKitThreeBounce(
+                  color: spinnerColor,
+                  size: 60,
+                ),
+              ],
+            )));
+            ;
+          });
+    }
+
     return FutureBuilder(
         // Initialize FlutterFire
         future: initialFuture,
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.active ||
+              snapshot.connectionState == ConnectionState.waiting) {
+            return Container(
+                child: Center(
+                    child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/logo.png', width: 200),
+                SizedBox(height: 30),
+                SpinKitThreeBounce(
+                  color: spinnerColor,
+                  size: 60,
+                ),
+              ],
+            )));
+          }
           // Check for errors
           if (snapshot.hasError) {
-            return FutureBuilder(
-                future: secondaryFuture,
-                builder: (context, snapshot) {
-                  print("INNER BUILDER");
-                  if (snapshot.connectionState == ConnectionState.none) {
-                    return Container(
-                        child: Center(
-                            child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(child: Image.asset('assets/logo.png')),
-                        SizedBox(height: 40),
-                        FadeAnimatedTextKit(
-                            text: splashScreenText,
-                            repeatForever: true,
-                            textStyle:
-                                (TextStyle(fontWeight: FontWeight.bold))),
-                        SizedBox(height: 40),
-                        Container(
-                          width: 200,
-                          height: 70,
-                          child: RaisedButton(
-                              onPressed: signInButtonCallback,
-                              color: Colors.white,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    FontAwesomeIcons.googlePlusSquare,
-                                    color: Colors.black,
-                                  ),
-                                  SizedBox(width: 20),
-                                  Text('Google login', style: LOGINTEXTSTYLE)
-                                ],
-                              )),
-                        ),
-                      ],
-                    )));
-                  }
-                  if (snapshot.connectionState == ConnectionState.active ||
-                      snapshot.connectionState == ConnectionState.waiting) {
-                    print("ONGOING");
-                    return Container(
-                        child: Center(
-                            child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset('assets/logo.png', width: 200),
-                        SizedBox(height: 30),
-                        SpinKitThreeBounce(
-                          color: spinnerColor,
-                          size: 60,
-                        ),
-                      ],
-                    )));
-                  }
-                  if (snapshot.hasError) {
-                    print("SNAPSHOT ERROR");
-                    return Container(
-                        child: Center(
-                            child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Flexible(child: Image.asset('assets/logo.png')),
-                        SizedBox(height: 40),
-                        FadeAnimatedTextKit(
-                            text: splashScreenText,
-                            repeatForever: true,
-                            textStyle:
-                                (TextStyle(fontWeight: FontWeight.bold))),
-                        SizedBox(height: 40),
-                        Container(
-                          width: 200,
-                          height: 70,
-                          child: RaisedButton(
-                              onPressed: signInButtonCallback,
-                              color: Colors.white,
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    FontAwesomeIcons.googlePlusSquare,
-                                    color: Colors.black,
-                                  ),
-                                  SizedBox(width: 20),
-                                  Text('Google login', style: LOGINTEXTSTYLE)
-                                ],
-                              )),
-                        ),
-                        SizedBox(height: 20),
-                        Text("Failed to sign in, try again!"),
-                      ],
-                    )));
-                  }
-                  if (snapshot.connectionState == ConnectionState.done) {
-                    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                      WidgetsBinding.instance.addPostFrameCallback((duration) =>
-                          Navigator.popAndPushNamed(context, '/main',
-                              arguments: user));
-                    });
-                    return Container(
-                        child: Center(child: Text('You\'re logged in!')));
-                  }
-                  print("REACHED HERE");
-                  return Container(
+            return Container(
+                child: Center(
+                    child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(child: Image.asset('assets/logo.png')),
+                SizedBox(height: 40),
+                FadeAnimatedTextKit(
+                    text: splashScreenText,
+                    repeatForever: true,
+                    textStyle: (TextStyle(fontWeight: FontWeight.bold))),
+                SizedBox(height: 40),
+                Text('Something went wrong',
+                    style: TextStyle(
+                        color: Colors.red, fontStyle: FontStyle.italic)),
+                SizedBox(height: 40),
+                Container(
+                  width: 200,
+                  height: 70,
+                  child: RaisedButton(
+                      onPressed: signInButtonSecondary,
+                      color: Colors.white,
                       child: Center(
-                          child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Image.asset('assets/logo.png', width: 200),
-                      SizedBox(height: 30),
-                      SpinKitThreeBounce(
-                        color: spinnerColor,
-                        size: 60,
-                      ),
-                    ],
-                  )));
-                  ;
-                });
+                          child: Text('Try again', style: LOGINTEXTSTYLE))),
+                ),
+              ],
+            )));
           }
           // Once complete, show your application
           if (snapshot.connectionState == ConnectionState.done) {

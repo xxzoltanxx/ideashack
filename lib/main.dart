@@ -27,7 +27,7 @@ import 'package:ideashack/MainScreenMisc.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  Admob.initialize();
+  Admob.initialize(testDeviceIds: ["738451C1DB43B39858E14A914334CF2A"]);
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light
       .copyWith(systemNavigationBarColor: Colors.white));
   SystemChrome.setEnabledSystemUIOverlays(
@@ -43,7 +43,7 @@ String getBannerAdUnitId() {
   if (Platform.isIOS) {
     return 'ca-app-pub-3940256099942544/2934735716';
   } else if (Platform.isAndroid) {
-    return 'ca-app-pub-4102451006671600/4757291094';
+    return 'ca-app-pub-9903730459271982/9623099806';
   }
   return null;
 }
@@ -181,6 +181,8 @@ class _MainPageState extends State<MainPage>
 
   @override
   void initState() {
+    print("INITED THE STATE OF THE MAIN SCREEN");
+    CardList.get().clear();
     KeyboardVisibilityNotification().addNewListener(onHide: () {
       SystemChrome.restoreSystemUIOverlays();
     });
@@ -377,9 +379,13 @@ class _MainPageState extends State<MainPage>
           if ((frontCardRot.abs()) > 10) {
             if (currentCardData.status == UpvotedStatus.DidntVote) {
               if (frontCardRot > 10) {
-                upvote();
+                if (!GlobalController.get().currentUser.isAnonymous) {
+                  upvote();
+                }
               } else {
-                downvote();
+                if (!GlobalController.get().currentUser.isAnonymous) {
+                  downvote();
+                }
               }
             }
             deletingCard = true;
@@ -441,6 +447,23 @@ class _MainPageState extends State<MainPage>
       info = ListTile(
           leading: Icon(Icons.not_interested),
           title: Text('Comment is too profane to post!'));
+    } else if (sheet == InfoSheet.Register) {
+      info = ListTile(
+          leading: Icon(Icons.remove_circle_outline),
+          title: HashTagText(
+              decoratedStyle: TextStyle(color: Colors.blue),
+              basicStyle: TextStyle(),
+              text: '#register to use this',
+              onTap: (string) {
+                Navigator.pop(context);
+                print("POPPED");
+                Navigator.pushReplacement(context,
+                    MaterialPageRoute(builder: (context) {
+                  return RegistrationScreen(
+                    doSignInWithGoogle: true,
+                  );
+                }));
+              }));
     }
     showModalBottomSheet(
         isDismissible: true,
@@ -470,6 +493,7 @@ class _MainPageState extends State<MainPage>
   @override
   Widget build(BuildContext context) {
     if (firstBuild) {
+      print(currentCardData);
       user = ModalRoute.of(context).settings.arguments;
       firstBuild = false;
     }
@@ -752,24 +776,39 @@ class _MainPageState extends State<MainPage>
                                   InkWell(
                                       child: Text('Message',
                                           style: cardThingsBelowTextStyle),
-                                      onTap: () {
-                                        Navigator.pushNamed(context, '/message',
-                                            arguments: <dynamic>[
-                                              currentCardData.id,
-                                              GlobalController.get()
-                                                  .currentUserUid,
-                                              currentCardData.posterId,
-                                            ]);
-                                      }),
+                                      onTap: GlobalController.get()
+                                              .currentUser
+                                              .isAnonymous
+                                          ? () {
+                                              _settingModalBottomSheet(
+                                                  context, InfoSheet.Register);
+                                            }
+                                          : () {
+                                              Navigator.pushNamed(
+                                                  context, '/message',
+                                                  arguments: <dynamic>[
+                                                    currentCardData.id,
+                                                    GlobalController.get()
+                                                        .currentUserUid,
+                                                    currentCardData.posterId,
+                                                  ]);
+                                            }),
                                   InkWell(
-                                      onTap: () {
-                                        Navigator.pushNamed(
-                                            context, '/comments',
-                                            arguments: <dynamic>[
-                                              currentCardData,
-                                              commentsCallback
-                                            ]);
-                                      },
+                                      onTap: GlobalController.get()
+                                              .currentUser
+                                              .isAnonymous
+                                          ? () {
+                                              _settingModalBottomSheet(
+                                                  context, InfoSheet.Register);
+                                            }
+                                          : () {
+                                              Navigator.pushNamed(
+                                                  context, '/comments',
+                                                  arguments: <dynamic>[
+                                                    currentCardData,
+                                                    commentsCallback
+                                                  ]);
+                                            },
                                       child: Text('Comment',
                                           style: cardThingsBelowTextStyle)),
                                   InkWell(
@@ -819,7 +858,8 @@ class _MainPageState extends State<MainPage>
           ),
         ));
       }
-      if (currentCardData.status == UpvotedStatus.DidntVote) {
+      if (currentCardData.status == UpvotedStatus.DidntVote &&
+          !GlobalController.get().currentUser.isAnonymous) {
         stackCards[2] =
             LikeIndicator(controller.value, deletingCard, thumbsUpOpacity);
         stackCards[3] =
@@ -1065,6 +1105,11 @@ class _MainPageState extends State<MainPage>
             if (number == GlobalController.get().selectedIndex) {
               return;
             } else {
+              if ((number == 0 &&
+                  GlobalController.get().currentUser.isAnonymous)) {
+                _settingModalBottomSheet(context, InfoSheet.Register);
+                return;
+              }
               fadingIn = true;
               controller.forward(from: 0.0);
               if (number == 1) {

@@ -243,7 +243,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                                   maxLength: 245,
                                 ),
                               ),
-                              SizedBox(height: 20),
+                              SizedBox(height: 10),
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
@@ -305,7 +305,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                                       '/${MAX_POST_DAILY_LIMIT.toInt()} ',
                                 ),
                               ),
-                              SizedBox(height: 50),
+                              SizedBox(height: 10),
                               Divider(color: disabledUpperBarColor),
                               Expanded(child: Container()),
                             ],

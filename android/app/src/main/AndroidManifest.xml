@@ -9,7 +9,7 @@
     <application
 
         android:name=".Application"
-        android:label="ideashack"
+        android:label="Spark"
         android:icon="@mipmap/ic_launcher">
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -54,7 +54,7 @@
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-4102451006671600~3647050092"/>
+            android:value="ca-app-pub-9903730459271982~1197814873"/>
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

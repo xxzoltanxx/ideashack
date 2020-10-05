@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -15,11 +17,15 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   String postAuthor;
   String messageText;
   String thisDocumentReference;
-  bool deletingConversation = false;
 
   TextEditingController messageTextController;
   bool firstBuild = true;
   bool firstTimeBuildingStream = true;
+  bool isBlocked = false;
+  Function buttonCallback;
+  String blockText = "";
+  DocumentSnapshot thisDocument = null;
+  StreamSubscription snapshotStream = null;
 
   Stream<QuerySnapshot> commentsStream;
   Future<void> fetchDmFuture;
@@ -63,6 +69,20 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   void normalPostAsyncAction(String messageText) async {
     var time = await getCurrentTimestampServer();
     try {
+      if (isBlocked) {
+        showModalBottomSheet(
+            isDismissible: true,
+            context: context,
+            builder: (BuildContext bc) {
+              return Container(
+                child: ListTile(
+                    leading: Icon(Icons.not_interested),
+                    title: Text(
+                        'This channel has been blocked, it will fade away!')),
+              );
+            });
+        return;
+      }
       Firestore.instance
           .collection('directMessages')
           .doc(thisDocumentReference)
@@ -106,16 +126,14 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    if (!deletingConversation) {
-      if (postAuthor == GlobalController.get().currentUserUid)
-        setupTimestamps(true);
-      if (postInitializer == GlobalController.get().currentUserUid)
-        setupTimestamps(false);
-    }
+    if (postAuthor == GlobalController.get().currentUserUid)
+      setupTimestamps(true);
+    if (postInitializer == GlobalController.get().currentUserUid)
+      setupTimestamps(false);
     super.dispose();
   }
 
-  Future<void> initialize() async {
+  Future<DocumentSnapshot> initialize() async {
     try {
       var time = await getCurrentTimestampServer();
       var ref = await Firestore.instance.collection('directMessages').add({
@@ -127,7 +145,9 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
         'posters': [postAuthor, postInitializer],
         'lastMessage': time,
         'conversationPartner': faker.internet.userName(),
+        'isBlocked': []
       });
+      thisDocument = await ref.get();
       thisDocumentReference = ref.id;
       await ref.collection('messages').add({
         'text': messageText.trim(),
@@ -181,11 +201,12 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
         .where('postId', isEqualTo: postId)
         .where('initializerId', isEqualTo: postInitializer)
         .get();
+
     print(directMessageField.docs.length);
     if (directMessageField.docs.length == 0) {
       return Future.error(CommentsErrorCode.DidntInitializeData);
     }
-
+    thisDocument = directMessageField.docs[0];
     thisDocumentReference = directMessageField.docs[0].id;
 
     var res = await Firestore.instance
@@ -204,11 +225,20 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
         .snapshots();
   }
 
-  void deleteCallback() {
+  void blockCallback() {
     setState(() {
-      deletingConversation = true;
+      blockText = "Unblock";
+      buttonCallback = unblockCallback;
     });
-    deleteConversation();
+    blockCommunication();
+  }
+
+  void unblockCallback() {
+    setState(() {
+      blockText = "Block";
+      buttonCallback = blockCallback;
+    });
+    unblockCommunication();
   }
 
   void deleteConversation() async {
@@ -229,6 +259,26 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
     Navigator.pop(context);
   }
 
+  void blockCommunication() async {
+    await Firestore.instance
+        .collection('directMessages')
+        .doc(thisDocumentReference)
+        .update({
+      'isBlocked':
+          FieldValue.arrayUnion([GlobalController.get().currentUserUid])
+    });
+  }
+
+  void unblockCommunication() async {
+    await Firestore.instance
+        .collection('directMessages')
+        .doc(thisDocumentReference)
+        .update({
+      'isBlocked':
+          FieldValue.arrayRemove([GlobalController.get().currentUserUid])
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (firstBuild) {
@@ -239,39 +289,14 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
       fetchDmFuture = fetchDm();
       firstBuild = false;
     }
-    if (deletingConversation) {
-      return Scaffold(
-          appBar: AppBar(title: Text('Direct Message'), actions: [
-            Center(
-                child: Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: RaisedButton(onPressed: null, child: Text('Block')),
-            ))
-          ]),
-          body: SafeArea(
-              child: Container(
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                          colors: splashScreenColors,
-                          begin: Alignment.bottomLeft,
-                          end: Alignment.topRight)),
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Center(child: Text('Deleting conversation...')),
-                        Center(
-                            child: SpinKitThreeBounce(
-                                size: 100, color: Colors.white)),
-                      ]))));
-    }
     return Scaffold(
         appBar: AppBar(title: Text('Direct Message'), actions: [
           Center(
               child: Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: RaisedButton(
-                onPressed: commentsStream == null ? null : deleteCallback,
-                child: Text('Block')),
+                onPressed: commentsStream == null ? null : buttonCallback,
+                child: Text(blockText)),
           ))
         ]),
         body: SafeArea(
@@ -392,6 +417,32 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                 .orderBy('time', descending: true)
                                 .limit(QUERY_SIZE)
                                 .snapshots();
+                            if (thisDocument != null) {
+                              isBlocked = thisDocument
+                                  .get('isBlocked')
+                                  .toSet()
+                                  .contains(
+                                      GlobalController.get().currentUserUid);
+                              print(isBlocked);
+                              if (isBlocked) {
+                                blockText = "Unblock";
+                                buttonCallback = unblockCallback;
+                              } else {
+                                blockText = "Block";
+                                buttonCallback = blockCallback;
+                              }
+                              snapshotStream = Firestore.instance
+                                  .collection('directMessages')
+                                  .doc(thisDocumentReference)
+                                  .snapshots()
+                                  .listen((event) {
+                                if (event.get('isBlocked').length > 0) {
+                                  isBlocked = true;
+                                } else {
+                                  isBlocked = false;
+                                }
+                              });
+                            }
                           });
                         });
                         return Container(

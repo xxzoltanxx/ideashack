@@ -162,6 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
         'upvoted': [],
         'downvoted': [],
         'commented': [],
+        'reportedPosts': []
       });
       GlobalController.get().userDocId = snapshot.id;
     }

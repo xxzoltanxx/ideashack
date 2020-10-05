@@ -33,18 +33,21 @@ class BackgroundCard extends StatelessWidget {
               child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              SizedBox(height: 20),
               Text('Thanks for supporting us!'),
               SizedBox(height: 30),
               Text(
                   'Take a break for ${GlobalController.get().adLockTime.toInt()} seconds!'),
               SizedBox(height: 30),
-              Container(
-                  width: 320,
-                  height: 260,
+              Flexible(
+                  child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
                   decoration: BoxDecoration(color: Colors.black45, boxShadow: [
                     BoxShadow(color: Colors.black45, blurRadius: 20)
                   ]),
-                  child: Center(child: Text('Oh no! An ad!')))
+                ),
+              ))
             ],
           )),
         ),
@@ -113,14 +116,33 @@ class BackgroundCard extends StatelessWidget {
                     ],
                   ),
                   Expanded(
-                      child: Center(
-                    child: HashTagText(
-                        text: cardData.text,
-                        basicStyle: MAIN_CARD_TEXT_STYLE,
-                        decoratedStyle:
-                            MAIN_CARD_TEXT_STYLE.copyWith(color: Colors.blue),
-                        textAlign: TextAlign.center),
-                  )),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: HashTagText(
+                            onTap: null,
+                            textAlign: TextAlign.center,
+                            text: cardData.text,
+                            basicStyle: MAIN_CARD_TEXT_STYLE,
+                            decoratedStyle: MAIN_CARD_TEXT_STYLE.copyWith(
+                                color: Colors.blue),
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            FlatButton(
+                              child: Text('Report',
+                                  style: cardThingsBelowTextStyle.copyWith(
+                                      fontStyle: FontStyle.italic,
+                                      fontSize: 15)),
+                            )
+                          ],
+                        )
+                      ],
+                    ),
+                  ),
                   SizedBox(height: 20),
                   Padding(
                     padding: const EdgeInsets.all(cardthingspadding),

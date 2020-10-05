@@ -15,6 +15,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   String postAuthor;
   String messageText;
   String thisDocumentReference;
+  bool deletingConversation = false;
 
   TextEditingController messageTextController;
   bool firstBuild = true;
@@ -105,10 +106,12 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    if (postAuthor == GlobalController.get().currentUserUid)
-      setupTimestamps(true);
-    if (postInitializer == GlobalController.get().currentUserUid)
-      setupTimestamps(false);
+    if (!deletingConversation) {
+      if (postAuthor == GlobalController.get().currentUserUid)
+        setupTimestamps(true);
+      if (postInitializer == GlobalController.get().currentUserUid)
+        setupTimestamps(false);
+    }
     super.dispose();
   }
 
@@ -201,6 +204,31 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
         .snapshots();
   }
 
+  void deleteCallback() {
+    setState(() {
+      deletingConversation = true;
+    });
+    deleteConversation();
+  }
+
+  void deleteConversation() async {
+    await Firestore.instance
+        .collection('directMessages')
+        .doc(thisDocumentReference)
+        .collection('messages')
+        .get()
+        .then((snapshot) {
+      for (var document in snapshot.docs) {
+        document.reference.delete();
+      }
+    });
+    await Firestore.instance
+        .collection('directMessages')
+        .doc(thisDocumentReference)
+        .delete();
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (firstBuild) {
@@ -211,8 +239,41 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
       fetchDmFuture = fetchDm();
       firstBuild = false;
     }
+    if (deletingConversation) {
+      return Scaffold(
+          appBar: AppBar(title: Text('Direct Message'), actions: [
+            Center(
+                child: Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: RaisedButton(onPressed: null, child: Text('Block')),
+            ))
+          ]),
+          body: SafeArea(
+              child: Container(
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                          colors: splashScreenColors,
+                          begin: Alignment.bottomLeft,
+                          end: Alignment.topRight)),
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(child: Text('Deleting conversation...')),
+                        Center(
+                            child: SpinKitThreeBounce(
+                                size: 100, color: Colors.white)),
+                      ]))));
+    }
     return Scaffold(
-        appBar: AppBar(title: Text('Direct Message')),
+        appBar: AppBar(title: Text('Direct Message'), actions: [
+          Center(
+              child: Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: RaisedButton(
+                onPressed: commentsStream == null ? null : deleteCallback,
+                child: Text('Block')),
+          ))
+        ]),
         body: SafeArea(
             child: Container(
                 decoration: BoxDecoration(
@@ -351,7 +412,6 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                         StreamBuilder(
                             stream: commentsStream,
                             builder: (context, snapshot) {
-                              print(commentsStream);
                               var messages = [].reversed;
                               if (snapshot.data != null) {
                                 List<QueryDocumentSnapshot> messagesReversed =

@@ -77,7 +77,8 @@ class _DMListState extends State<DMList> {
                     chatWidgets.add(StreamBuilder(
                         stream: lastMessageFirstListStream,
                         builder: (context, snapshot) {
-                          if (snapshot.data == null) {
+                          if (snapshot.data == null ||
+                              snapshot.data.docs.length == 0) {
                             return Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Container(

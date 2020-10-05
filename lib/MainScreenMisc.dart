@@ -64,6 +64,77 @@ class LikeIndicator extends StatelessWidget {
   }
 }
 
+class ReportPopup extends StatefulWidget {
+  ReportPopup(this.future, this.anonymous, this.reported);
+  final bool reported;
+  final Future<void> future;
+  final bool anonymous;
+  @override
+  _ReportPopupState createState() => _ReportPopupState();
+}
+
+class _ReportPopupState extends State<ReportPopup> {
+  @override
+  Widget build(BuildContext context) {
+    if (widget.reported) {
+      return AlertDialog(
+          title: Text("Reporting..."),
+          content: Container(
+              width: 200,
+              height: 200,
+              child: Center(
+                  child: Text(
+                'You already reported this post!',
+                textAlign: TextAlign.center,
+              ))));
+    }
+    return AlertDialog(
+        title: Text("Reporting..."),
+        content: FutureBuilder(
+          future: widget.future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting ||
+                snapshot.connectionState == ConnectionState.active) {
+              return Container(
+                  child: Center(
+                      child:
+                          SpinKitThreeBounce(size: 50, color: Colors.white)));
+            }
+            if (snapshot.hasError) {
+              return Container(
+                  width: 200,
+                  height: 200,
+                  child: Center(
+                      child: Text(
+                    'Something went wrong, try again!',
+                    textAlign: TextAlign.center,
+                  )));
+            }
+            if (snapshot.connectionState == ConnectionState.done) {
+              String text;
+              if (widget.anonymous == true) {
+                text =
+                    "Report received, bear in mind that anonymous reports don't hold much value";
+              } else {
+                text = "Report received! We'll look into it!";
+              }
+              return Container(
+                  width: 200,
+                  height: 200,
+                  child: Center(
+                      child: Text(
+                    text,
+                    textAlign: TextAlign.center,
+                  )));
+            }
+            return Container(
+                child: Center(
+                    child: SpinKitThreeBounce(size: 50, color: Colors.white)));
+          },
+        ));
+  }
+}
+
 class SharePopup extends StatefulWidget {
   SharePopup(this.repaint, this.text);
   RenderRepaintBoundary repaint;

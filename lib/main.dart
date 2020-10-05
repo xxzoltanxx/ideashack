@@ -122,6 +122,56 @@ class _MainPageState extends State<MainPage>
   AlignmentSt frontCardAlign;
   double frontCardRot = 0.0;
 
+  Future<void> reportPost() async {
+    try {
+      var docs = await Firestore.instance
+          .collection('reportedPosts')
+          .where('postid', isEqualTo: currentCardData.id)
+          .get();
+      if (docs.docs.length == 0) {
+        if (user.isAnonymous) {
+          await Firestore.instance.collection('reportedPosts').add(
+              {'postid': currentCardData.id, 'anonReports': 1, 'reports': 0});
+        } else {
+          await Firestore.instance.collection('reportedPosts').add(
+              {'postid': currentCardData.id, 'reports': 1, 'anonReports': 0});
+        }
+      } else {
+        if (user.isAnonymous) {
+          await Firestore.instance
+              .collection('reportedPosts')
+              .doc(docs.docs[0].id)
+              .update({'anonReports': FieldValue.increment(1)});
+        } else {
+          await Firestore.instance
+              .collection('reportedPosts')
+              .doc(docs.docs[0].id)
+              .update({'reports': FieldValue.increment(1)});
+        }
+      }
+      if (!user.isAnonymous) {
+        await Firestore.instance
+            .collection('users')
+            .doc(GlobalController.get().userDocId)
+            .update({
+          'reportedPosts': FieldValue.arrayUnion([currentCardData.id])
+        });
+      }
+      currentCardData.reported = true;
+    } catch (e) {
+      return Future.error(e);
+    }
+  }
+
+  void reportPostButtonClicked() {
+    showDialog(
+        context: context,
+        builder: (_) => ReportPopup(
+            !currentCardData.reported ? reportPost() : null,
+            user.isAnonymous,
+            currentCardData.reported));
+  }
+
   void onFetchUserTimestampsCallback(int newPosts) {
     setState(() {
       GlobalController.get().fetchingDailyPosts = false;
@@ -183,7 +233,7 @@ class _MainPageState extends State<MainPage>
   void initState() {
     print("INITED THE STATE OF THE MAIN SCREEN");
     controllerAdmob.setTestDeviceIds(['738451C1DB43B39858E14A914334CF2A']);
-    controllerAdmob.setAdUnitID('ca-app-pub-9903730459271982/8200307113');
+    controllerAdmob.setAdUnitID('ca-app-pub-4102451006671600/2649770997');
     controllerAdmob.reloadAd();
     CardList.get().clear();
     KeyboardVisibilityNotification().addNewListener(onHide: () {
@@ -643,45 +693,47 @@ class _MainPageState extends State<MainPage>
                       child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      SizedBox(height: 30),
                       Text('Thanks for supporting us!'),
                       SizedBox(height: 30),
                       Text(GlobalController.get().isAdLocked
                           ? 'Take a break for ${adCounter.toInt()} seconds!'
                           : 'Keep swiping!'),
                       SizedBox(height: 30),
-                      Container(
-                          width: 320,
-                          height: 260,
-                          decoration: BoxDecoration(
-                              color: Colors.black45,
-                              boxShadow: [
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Container(
+                              decoration:
+                                  BoxDecoration(color: Colors.black45, boxShadow: [
                                 BoxShadow(color: Colors.black45, blurRadius: 20)
                               ]),
-                          child: Center(
-                              child: NativeAdmob(
-                                  error:
-                                      Center(child: Text('No ads to display')),
-                                  adUnitID:
-                                      'ca-app-pub-9903730459271982/8200307113',
-                                  controller: controllerAdmob,
-                                  loading: Center(
-                                      child: SpinKitThreeBounce(
-                                          size: 20, color: Colors.white)),
-                                  type: NativeAdmobType.full,
-                                  options: NativeAdmobOptions(
-                                      callToActionStyle:
-                                          NativeTextStyle(color: Colors.white),
-                                      adLabelTextStyle:
-                                          NativeTextStyle(color: Colors.white),
-                                      bodyTextStyle:
-                                          NativeTextStyle(color: Colors.white),
-                                      headlineTextStyle:
-                                          NativeTextStyle(color: Colors.white),
-                                      advertiserTextStyle:
-                                          NativeTextStyle(color: Colors.white),
-                                      storeTextStyle:
-                                          NativeTextStyle(color: Colors.white),
-                                      showMediaContent: true)))),
+                              child: Center(
+                                  child: NativeAdmob(
+                                      error: Center(
+                                          child: Text('No ads to display',
+                                              style: TextStyle(
+                                                  color: Colors.white))),
+                                      adUnitID:
+                                          'ca-app-pub-4102451006671600/2649770997',
+                                      controller: controllerAdmob,
+                                      loading: Center(
+                                          child: SpinKitThreeBounce(
+                                              size: 20, color: Colors.white)),
+                                      type: NativeAdmobType.full,
+                                      options: NativeAdmobOptions(
+                                          callToActionStyle: NativeTextStyle(
+                                              color: Colors.white),
+                                          adLabelTextStyle: NativeTextStyle(
+                                              color: Colors.white),
+                                          bodyTextStyle: NativeTextStyle(
+                                              color: Colors.white),
+                                          headlineTextStyle: NativeTextStyle(color: Colors.white),
+                                          advertiserTextStyle: NativeTextStyle(color: Colors.white),
+                                          storeTextStyle: NativeTextStyle(color: Colors.white),
+                                          showMediaContent: true)))),
+                        ),
+                      ),
                     ],
                   )),
                 ),
@@ -770,17 +822,35 @@ class _MainPageState extends State<MainPage>
                               ],
                             ),
                             Expanded(
-                                child: Center(
-                              child: HashTagText(
-                                onTap: (string) {
-                                  customSearchFunc(string.trim());
-                                },
-                                textAlign: TextAlign.center,
-                                text: currentCardData.text,
-                                basicStyle: MAIN_CARD_TEXT_STYLE,
-                                decoratedStyle: MAIN_CARD_TEXT_STYLE.copyWith(
-                                    color: Colors.blue),
-                              ),
+                                child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Center(
+                                  child: HashTagText(
+                                    onTap: (string) {
+                                      customSearchFunc(string.trim());
+                                    },
+                                    textAlign: TextAlign.center,
+                                    text: currentCardData.text,
+                                    basicStyle: MAIN_CARD_TEXT_STYLE,
+                                    decoratedStyle: MAIN_CARD_TEXT_STYLE
+                                        .copyWith(color: Colors.blue),
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    FlatButton(
+                                      child: Text('Report',
+                                          style:
+                                              cardThingsBelowTextStyle.copyWith(
+                                                  fontStyle: FontStyle.italic,
+                                                  fontSize: 15)),
+                                      onPressed: reportPostButtonClicked,
+                                    )
+                                  ],
+                                )
+                              ],
                             )),
                             SizedBox(height: 20),
                             Padding(
@@ -904,6 +974,7 @@ class _MainPageState extends State<MainPage>
                     children: [
                       InkWell(
                         onTap: () {
+                          searchSelected = false;
                           setTrendingFunc(false);
                         },
                         child: Padding(
@@ -923,6 +994,7 @@ class _MainPageState extends State<MainPage>
                       ),
                       InkWell(
                         onTap: () {
+                          searchSelected = false;
                           setTrendingFunc(true);
                         },
                         child: Padding(
@@ -943,7 +1015,7 @@ class _MainPageState extends State<MainPage>
                       InkWell(
                         onTap: () {
                           setState(() {
-                            searchSelected = !searchSelected;
+                            searchSelected = true;
                           });
                         },
                         child: Padding(
@@ -1053,6 +1125,7 @@ class _MainPageState extends State<MainPage>
                       children: [
                         InkWell(
                           onTap: () {
+                            searchSelected = false;
                             setTrendingFunc(false);
                           },
                           child: Padding(
@@ -1072,6 +1145,7 @@ class _MainPageState extends State<MainPage>
                         ),
                         InkWell(
                           onTap: () {
+                            searchSelected = false;
                             setTrendingFunc(true);
                           },
                           child: Padding(
@@ -1096,7 +1170,7 @@ class _MainPageState extends State<MainPage>
                           child: GestureDetector(
                             onTap: () {
                               setState(() {
-                                searchSelected = !searchSelected;
+                                searchSelected = true;
                               });
                             },
                             child: Padding(

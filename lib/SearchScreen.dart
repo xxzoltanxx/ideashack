@@ -237,7 +237,6 @@ class _SearchBarState extends State<SearchBar> {
               for (var doc in snapshot.data.docs) {
                 suggestions.add(doc.get('tag'));
               }
-              print(suggestions);
               return Container(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),

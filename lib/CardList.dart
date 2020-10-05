@@ -137,6 +137,7 @@ class CardList {
         var upvotedSet = userDataSnapshot.get('upvoted').toSet();
         var downvotedSet = userDataSnapshot.get('downvoted').toSet();
         var commentedSet = userDataSnapshot.get('commented').toSet();
+        var reportedSet = userDataSnapshot.get('reportedPosts').toSet();
 
         QuerySnapshot snapshot;
         UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
@@ -169,6 +170,7 @@ class CardList {
           var upvoted = upvotedSet.contains(doc.id);
           var downvoted = downvotedSet.contains(doc.id);
           var commented = commentedSet.contains(doc.id);
+          var reported = reportedSet.contains(doc.id);
           bool skipPost = false;
           if (upvoted) {
             upvoteStatus = UpvotedStatus.Upvoted;
@@ -184,7 +186,8 @@ class CardList {
                 text: doc.get('body'),
                 status: upvoteStatus,
                 comments: doc.get('commentsNum'),
-                commented: commented));
+                commented: commented,
+                reported: reported));
           }
         }
         if (snapshot.docs.length < QUERY_SIZE) {
@@ -247,6 +250,7 @@ class CardList {
           var upvoted = false;
           var downvoted = false;
           var commented = false;
+          var reported = false;
           if (upvoted) {
             upvoteStatus = UpvotedStatus.Upvoted;
           } else if (downvoted) {
@@ -260,10 +264,10 @@ class CardList {
               text: doc.get('body'),
               status: upvoteStatus,
               comments: doc.get('commentsNum'),
-              commented: commented));
+              commented: commented,
+              reported: reported));
         }
         if (snapshot.docs.length < QUERY_SIZE) {
-          print(snapshot.docs);
           lastDocumentSnapshot = null;
           print("LENGTH IS ZERO");
         } else {
@@ -279,9 +283,9 @@ class CardList {
         var upvotedSet = userDataSnapshot.get('upvoted').toSet();
         var downvotedSet = userDataSnapshot.get('downvoted').toSet();
         var commentedSet = userDataSnapshot.get('commented').toSet();
+        var reportedSet = userDataSnapshot.get('reportedPosts').toSet();
         QuerySnapshot snapshot;
         UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
-        var timestamp = await getCurrentTimestampServer();
         if (!trending) {
           if (lastDocumentSnapshot != null) {
             snapshot = await _firestoreInstance
@@ -324,6 +328,7 @@ class CardList {
           var upvoted = upvotedSet.contains(doc.id);
           var downvoted = downvotedSet.contains(doc.id);
           var commented = commentedSet.contains(doc.id);
+          var reported = reportedSet.contains(doc.id);
           if (upvoted) {
             upvoteStatus = UpvotedStatus.Upvoted;
           } else if (downvoted) {
@@ -337,10 +342,10 @@ class CardList {
               text: doc.get('body'),
               status: upvoteStatus,
               comments: doc.get('commentsNum'),
-              commented: commented));
+              commented: commented,
+              reported: reported));
         }
         if (snapshot.docs.length < QUERY_SIZE) {
-          print(snapshot.docs);
           lastDocumentSnapshot = null;
           print("LENGTH IS ZERO");
         } else {

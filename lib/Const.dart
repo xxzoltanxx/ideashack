@@ -5,7 +5,7 @@ import 'package:bad_words/bad_words.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:true_time/true_time.dart';
+import 'package:ntp/ntp.dart';
 
 //GLOBAL LIFECYCLE VARIABLES, I KNOW ITS SHIT I JUST STARTED USING FLUTTER
 
@@ -99,7 +99,8 @@ class CardData {
       this.status,
       this.commented,
       this.posterId,
-      this.isAd = false});
+      this.isAd = false,
+      this.reported = false});
   bool isAd;
   String text;
   int score;
@@ -109,6 +110,7 @@ class CardData {
   UpvotedStatus status;
   bool commented;
   String posterId;
+  bool reported;
 }
 
 const int MONTH = 2629743;
@@ -144,7 +146,6 @@ class GlobalController {
   bool isAdLocked = false;
 
   bool shouldShowAd() {
-    print(cardsSwiped);
     return cardsSwiped % cardsToShowAd == 0;
   }
 
@@ -238,16 +239,14 @@ class GlobalController {
   }
 }
 
-bool timeInited = false;
-
 Future<double> getCurrentTimestampServer() async {
-  if (!timeInited) {
-    await TrueTime.init(ntpServer: 'time.google.com');
-    timeInited = true;
-  }
-  var time = await TrueTime.now();
-  var timeMilli = time.millisecondsSinceEpoch;
-  return timeMilli / 1000;
+  final DateTime localTime = DateTime.now();
+  final int offset = await NTP.getNtpOffset(
+    lookUpAddress: 'time.google.com',
+    localTime: localTime,
+  );
+  DateTime time = DateTime.now().add(Duration(milliseconds: offset));
+  return time.millisecondsSinceEpoch / 1000;
 }
 
 final spamFilter = Filter();

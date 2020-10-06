@@ -85,6 +85,7 @@ enum InfoSheet {
   Posted,
   Commented,
   Profane,
+  Deleted,
 }
 
 enum UpvotedStatus { DidntVote, Upvoted, Downvoted }

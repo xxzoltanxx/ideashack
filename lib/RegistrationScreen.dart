@@ -11,6 +11,7 @@ import 'dart:async';
 import 'CardList.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:social_share/social_share.dart';
+import 'package:flutter/services.dart' show PlatformException;
 
 class RegistrationScreen extends StatefulWidget {
   RegistrationScreen({this.doSignInWithGoogle = false});
@@ -20,7 +21,7 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  Future<FirebaseApp> firebaseFuture;
+  Future<void> firebaseFuture;
 
   void initFirebaseMessaging() {
     FirebaseMessaging _firebaseMessaging =
@@ -39,10 +40,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
+  Future<void> initializeApp() async {
+    try {
+      await Firebase.initializeApp();
+      print("INITIALIZED");
+    } catch (e) {
+      print("EXCEPTION");
+      return Future.error("COULDNT INIT FIREBASE");
+    }
+  }
+
   @override
   void initState() {
-    firebaseFuture = Firebase.initializeApp();
+    firebaseFuture = initializeApp();
     super.initState();
+  }
+
+  void retryConnection() {
+    setState(() {
+      firebaseFuture = initializeApp();
+    });
   }
 
   @override
@@ -60,7 +77,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                             colors: splashScreenColors,
                             begin: Alignment.bottomLeft,
                             end: Alignment.topRight)),
-                    child: SomethingWentWrong()));
+                    child: SomethingWentWrong(retryConnection)));
           }
           // Once complete, show your application
           if (snapshot.connectionState == ConnectionState.done) {
@@ -86,10 +103,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         end: Alignment.topRight)),
                 child: Loading()),
           ));
-        }
+          print("HELLO");
 
-        // Otherwise, show something whilst waiting for initialization to complete
-        );
+          // Otherwise, show something whilst waiting for initialization to complete
+        });
   }
 }
 
@@ -116,55 +133,59 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> checkOrSetupNewUser(User user) async {
-    SocialShare.checkInstalledAppsForShare();
-    QuerySnapshot parametersArray =
-        await Firestore.instance.collection('parameters').get();
-    GlobalController.get().parameters = parametersArray.docs[0];
-    QuerySnapshot maxScore = await Firestore.instance
-        .collection('posts')
-        .orderBy('score', descending: true)
-        .limit(1)
-        .get();
-    if (maxScore.docs != null && maxScore.docs.length > 0) {
-      GlobalController.get().MAX_SCORE = maxScore.docs[0].get('score');
-    }
+    try {
+      SocialShare.checkInstalledAppsForShare();
+      QuerySnapshot parametersArray =
+          await Firestore.instance.collection('parameters').get();
+      GlobalController.get().parameters = parametersArray.docs[0];
+      QuerySnapshot maxScore = await Firestore.instance
+          .collection('posts')
+          .orderBy('score', descending: true)
+          .limit(1)
+          .get();
+      if (maxScore.docs != null && maxScore.docs.length > 0) {
+        GlobalController.get().MAX_SCORE = maxScore.docs[0].get('score');
+      }
 
-    GlobalController.get().initParameters();
-    QuerySnapshot possibleUser;
+      GlobalController.get().initParameters();
+      QuerySnapshot possibleUser;
 
-    var pushToken;
-    if (!user.isAnonymous) {
-      possibleUser = await Firestore.instance
-          .collection('users')
-          .where('uid', isEqualTo: user.uid)
-          .get(GetOptions(source: Source.server));
-      pushToken = await GlobalController.get().fetchPushToken();
-    }
-    var timestamp = await getCurrentTimestampServer();
-    GlobalController.get().timeOnStartup = timestamp;
-    if (!user.isAnonymous &&
-        possibleUser.docs != null &&
-        possibleUser.docs.length > 0) {
-      print(possibleUser.docs);
-      String docId = possibleUser.docs[0].id;
-      await Firestore.instance.collection('users').doc(docId).update(
-          {'lastSeen': timestamp, 'uid': user.uid, 'pushToken': pushToken});
-      GlobalController.get().userDocId = docId;
-      return;
-    }
-    print("REACHED HERE");
-    if (!user.isAnonymous) {
-      var snapshot = await Firestore.instance.collection('users').add({
-        'dailyPosts': BASE_DAILY_POSTS,
-        'lastSeen': timestamp,
-        'uid': user.uid,
-        'pushToken': pushToken,
-        'upvoted': [],
-        'downvoted': [],
-        'commented': [],
-        'reportedPosts': []
-      });
-      GlobalController.get().userDocId = snapshot.id;
+      var pushToken;
+      if (!user.isAnonymous) {
+        possibleUser = await Firestore.instance
+            .collection('users')
+            .where('uid', isEqualTo: user.uid)
+            .get(GetOptions(source: Source.server));
+        pushToken = await GlobalController.get().fetchPushToken();
+      }
+      var timestamp = await getCurrentTimestampServer();
+      GlobalController.get().timeOnStartup = timestamp;
+      if (!user.isAnonymous &&
+          possibleUser.docs != null &&
+          possibleUser.docs.length > 0) {
+        print(possibleUser.docs);
+        String docId = possibleUser.docs[0].id;
+        await Firestore.instance.collection('users').doc(docId).update(
+            {'lastSeen': timestamp, 'uid': user.uid, 'pushToken': pushToken});
+        GlobalController.get().userDocId = docId;
+        return;
+      }
+      print("REACHED HERE");
+      if (!user.isAnonymous) {
+        var snapshot = await Firestore.instance.collection('users').add({
+          'dailyPosts': BASE_DAILY_POSTS,
+          'lastSeen': timestamp,
+          'uid': user.uid,
+          'pushToken': pushToken,
+          'upvoted': [],
+          'downvoted': [],
+          'commented': [],
+          'reportedPosts': []
+        });
+        GlobalController.get().userDocId = snapshot.id;
+      }
+    } catch (e) {
+      throw e;
     }
   }
 
@@ -452,10 +473,19 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 class SomethingWentWrong extends StatelessWidget {
+  SomethingWentWrong(this.callback);
+  final Function callback;
   @override
   Widget build(BuildContext context) {
     return Container(
-        child: Center(child: Text('Could not connect to server...')));
+        child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Center(child: Text('Could not connect to server...')),
+        SizedBox(height: 20),
+        RaisedButton(child: Text('TRY AGAIN'), onPressed: callback),
+      ],
+    ));
   }
 }
 

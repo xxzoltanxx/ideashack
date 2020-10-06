@@ -13,6 +13,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
   CardData cardData;
   String inputText = "";
   bool firstBuild = true;
+  bool shownErrorMessage = false;
   Function commentsCallback;
   TextEditingController messageTextController;
   Future<void> postingFuture;
@@ -27,6 +28,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
     try {
       double time = await getCurrentTimestampServer();
       String input = inputText;
+      try {
+        await Firestore.instance.collection('posts').doc(cardData.id).update({
+          'commentsNum': FieldValue.increment(1),
+        });
+      } catch (e) {
+        return Future.error(1);
+      }
       await Firestore.instance
           .collection('users')
           .doc(GlobalController.get().userDocId)
@@ -49,8 +57,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
   void buttonCallback() {
     bool profane = false;
     if (spamFilter.isProfane(inputText) || inputText.trim().length < 15) {
-      profane = true;
-      commentsCallback(cardData, profane);
+      commentsCallback(cardData, InfoSheet.Profane);
     }
     if (!profane) {
       setState(() {
@@ -73,7 +80,71 @@ class _CommentsScreenState extends State<CommentsScreen> {
       body: FutureBuilder(
           future: postingFuture,
           builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.none) {
+            if (snapshot.hasError) {
+              if (!shownErrorMessage) {
+                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                  commentsCallback(cardData, InfoSheet.Deleted);
+                });
+                shownErrorMessage = true;
+              }
+              return SafeArea(
+                  child: Container(
+                      decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                              colors: splashScreenColors,
+                              begin: Alignment.bottomLeft,
+                              end: Alignment.topRight)),
+                      child: GestureDetector(
+                        onTap: () {
+                          FocusScope.of(context).requestFocus(new FocusNode());
+                        },
+                        child: Column(
+                          children: [
+                            Expanded(
+                                flex: 5,
+                                child: Center(
+                                    child: Text('Post has been removed'))),
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: Container(
+                                      height: 20.0 * 24,
+                                      child: TextField(
+                                        controller: messageTextController,
+                                        onChanged: (string) {
+                                          setState(() {
+                                            inputText = string;
+                                          });
+                                        },
+                                        onEditingComplete: () {},
+                                        maxLines: 20.toInt(),
+                                        style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 20,
+                                        ),
+                                        decoration: InputDecoration(
+                                          filled: true,
+                                          counterText: "",
+                                          fillColor: Colors.white,
+                                        ),
+                                        maxLength: 245,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: RaisedButton(
+                                        child: Center(child: Text('Post')),
+                                        onPressed: null),
+                                  )
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      )));
+            } else if (snapshot.connectionState == ConnectionState.none) {
               return StreamBuilder(
                   stream: Firestore.instance
                       .collection('posts')
@@ -301,10 +372,9 @@ class _CommentsScreenState extends State<CommentsScreen> {
                   messageTextController.text = '';
                   inputText = '';
                   cardData.commented = true;
-                  cardData.comments = cardData.comments + 1;
                   postingFuture = null;
                 });
-                commentsCallback(cardData, false);
+                commentsCallback(cardData, InfoSheet.Commented);
               });
               return StreamBuilder(
                   stream: Firestore.instance

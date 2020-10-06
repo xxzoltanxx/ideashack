@@ -45,7 +45,7 @@ class _DMListState extends State<DMList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text("Your feed")),
+        appBar: AppBar(title: Text("Your direct messages")),
         body: SafeArea(
             child: Container(
           decoration: BoxDecoration(

@@ -24,8 +24,8 @@ import 'dart:io';
 import 'package:ideashack/SearchScreen.dart';
 import 'FeedOverlay.dart';
 import 'package:flutter_native_admob/flutter_native_admob.dart';
-
 import 'package:ideashack/MainScreenMisc.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +34,7 @@ void main() {
   SystemChrome.setEnabledSystemUIOverlays(
       [SystemUiOverlay.top, SystemUiOverlay.bottom]);
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
   runApp(MyApp());
 }
 
@@ -227,7 +228,6 @@ class _MainPageState extends State<MainPage>
 
   @override
   void initState() {
-    print("INITED THE STATE OF THE MAIN SCREEN");
     controllerAdmob.setTestDeviceIds(['738451C1DB43B39858E14A914334CF2A']);
     controllerAdmob.setAdUnitID('ca-app-pub-4102451006671600/2649770997');
     controllerAdmob.reloadAd();

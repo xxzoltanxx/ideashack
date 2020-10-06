@@ -83,7 +83,9 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
           'userid': widget.user.uid,
           'commentsNum': 0,
           'hidden': 0,
-          'hashtag': tag
+          'hashtag': tag,
+          'lastSeenComments': 0,
+          'lastCommentTime': 0
         });
         await _firestore
             .collection('users')
@@ -99,7 +101,9 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
           'postTime': timestamp,
           'userid': widget.user.uid,
           'commentsNum': 0,
-          'hidden': 0
+          'hidden': 0,
+          'lastSeenComments': 0,
+          'lastCommentTime': 0
         });
         await _firestore
             .collection('users')

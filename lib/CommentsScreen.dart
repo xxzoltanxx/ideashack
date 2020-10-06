@@ -46,9 +46,30 @@ class _CommentsScreenState extends State<CommentsScreen> {
           .doc(cardData.id)
           .collection('comments')
           .add({'comment': input, 'time': time});
-      await Firestore.instance.collection('posts').doc(cardData.id).update({
-        'commentsNum': FieldValue.increment(1),
-      });
+      await Firestore.instance.collection('posts').doc(cardData.id).update(
+          {'commentsNum': FieldValue.increment(1), 'lastCommentTime': time});
+      sendPushNotification();
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void sendPushNotification() async {
+    try {
+      QuerySnapshot userDataa = await Firestore.instance
+          .collection('users')
+          .where('uid', isEqualTo: cardData.posterId)
+          .get();
+      DocumentSnapshot userData = userDataa.docs[0];
+      print(userData.exists);
+      print(userData.get('pushToken'));
+      if (userData.exists && userData.get('pushToken') != null) {
+        GlobalController.get().callOnFcmApiSendPushNotifications(
+            [userData.get('pushToken')],
+            'New comment on your idea!',
+            'Someone posted a new comment on your idea!',
+            'comment');
+      }
     } catch (e) {
       print(e);
     }
@@ -64,6 +85,22 @@ class _CommentsScreenState extends State<CommentsScreen> {
         postingFuture = postComment(inputText);
       });
     }
+  }
+
+  void disposeAction() async {
+    var time = await getCurrentTimestampServer();
+    if (cardData.posterId == GlobalController.get().currentUserUid) {
+      Firestore.instance
+          .collection('posts')
+          .doc(cardData.id)
+          .update({'lastSeenComments': time});
+    }
+  }
+
+  @override
+  void dispose() {
+    disposeAction();
+    super.dispose();
   }
 
   @override

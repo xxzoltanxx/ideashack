@@ -247,7 +247,7 @@ class _MainPageState extends State<MainPage>
       }
     }
     if (state == AppLifecycleState.resumed) {
-      if (!fetchingData) {
+      if (!fetchingData && currentCardData == null) {
         setState(() {
           fetchNum = 0;
         });
@@ -552,11 +552,32 @@ class _MainPageState extends State<MainPage>
 
   void _settingModalBottomSheet(context, InfoSheet sheet) {
     ListTile info;
+    if (sheet == InfoSheet.CantRate) {
+      info = ListTile(
+          leading: Icon(Icons.thumb_up),
+          title: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: HashTagText(
+                decoratedStyle: TextStyle(color: Colors.blue),
+                basicStyle: TextStyle(),
+                text:
+                    '#register to rate ideas, you can only browse as an anonymous user!',
+                onTap: (string) {
+                  Navigator.pop(context);
+                  print("POPPED");
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context) {
+                    return RegistrationScreen(
+                      doSignInWithGoogle: true,
+                    );
+                  }));
+                }),
+          ));
+    }
     if (sheet == InfoSheet.Deleted) {
       info = ListTile(
           leading: Icon(Icons.comment), title: Text('Post was deleted!'));
-    }
-    if (sheet == InfoSheet.Commented) {
+    } else if (sheet == InfoSheet.Commented) {
       info = ListTile(
           leading: Icon(Icons.comment),
           title: Text('Succesfully posted a comment!'));
@@ -609,7 +630,6 @@ class _MainPageState extends State<MainPage>
       print("TRIGGERED2");
       fetchingData = false;
       searchSelected = false;
-      currentSelect = tabSelect;
       if (CardList.get().peekNextCard() == null) {
         fetchNum = fetchNum + 1;
       } else {
@@ -622,6 +642,11 @@ class _MainPageState extends State<MainPage>
   @override
   Widget build(BuildContext context) {
     if (firstBuild) {
+      if (GlobalController.get().currentUser.isAnonymous) {
+        WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+          _settingModalBottomSheet(context, InfoSheet.CantRate);
+        });
+      }
       print(currentCardData);
       user = ModalRoute.of(context).settings.arguments;
       firstBuild = false;
@@ -707,11 +732,12 @@ class _MainPageState extends State<MainPage>
             user != null &&
             !isFetchindComment) ||
         tabSelect != currentSelect) {
+      currentSelect = tabSelect;
       currentCardData = null;
       nextCardData = null;
       setState(() {
         fetchingData = true;
-        print("TRIGGERED");
+        print("IT WAS HERE");
         if (tabSelect == SelectTab.Trending) {
           if (adTimer != null) {
             adTimer.cancel();

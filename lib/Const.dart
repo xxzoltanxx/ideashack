@@ -30,7 +30,6 @@ CardData testCardData =
 const double TIME_TILL_DISCARD = MONTH / 4;
 const double MAX_POST_DAILY_LIMIT = 4;
 const double BASE_DAILY_POSTS = 3;
-const int TRENDING_CARD_LIMIT = 90;
 const int HASH_TAG_LIMIT = 30;
 const List<String> splashScreenText = [
   'Light your creativity',
@@ -81,6 +80,7 @@ String formatedNumberString(int num) {
 }
 
 enum InfoSheet {
+  CantRate,
   OneMessage,
   Register,
   Posted,
@@ -137,7 +137,7 @@ class GlobalController {
 
   int canMessage = 0;
   QueryDocumentSnapshot parameters;
-  double adLockTime = 8.0;
+  double adLockTime = 5.0;
   int MAX_SCORE = 100;
   String encryptionKey;
   int selectedIndex = 1;
@@ -155,7 +155,6 @@ class GlobalController {
   bool finishedAd = true;
   bool isAdLocked = false;
   bool openFromNotification = false;
-  Map notificationDictionary;
   NotificationData notificationData;
 
   bool shouldShowAd() {
@@ -238,6 +237,10 @@ class GlobalController {
 
   void checkLastTimestampsAndUpdateCounters(Function callback) async {
     //LAST SEEN NEEDS TO BE UPDATED JUST INSIDE THIS FUNCTION
+    if (GlobalController.get().currentUser.isAnonymous) {
+      callback(0);
+      return;
+    }
     try {
       final now = await getCurrentTimestampServer();
       DateTime time =

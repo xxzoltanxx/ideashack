@@ -57,7 +57,7 @@ class CardList {
             commented: commented));
       }
     } catch (e) {
-      print(e + "HELLO3");
+      print(e);
     }
     if (lambda != null) lambda();
   }
@@ -197,6 +197,7 @@ class CardList {
         }
       }
     } catch (e) {
+      cardsData.clear();
       print(e);
     }
     if (lambda != null) lambda();
@@ -257,6 +258,7 @@ class CardList {
 
   Future<void> getNextBatch({Function lambda, bool trending}) async {
     try {
+      print("GETTING NEXT BATCH");
       if (GlobalController.get().currentUser.isAnonymous) {
         QuerySnapshot snapshot;
         UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
@@ -296,6 +298,7 @@ class CardList {
                 .get();
           }
         }
+        print("GOT A SNAPSHOT");
         var doxs = snapshot.docs;
         cardsData.clear();
         for (var doc in doxs) {
@@ -406,6 +409,7 @@ class CardList {
         }
       }
     } catch (e) {
+      cardsData.clear();
       print(e);
     }
     if (lambda != null) lambda();

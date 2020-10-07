@@ -155,6 +155,11 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
         'senderUid': GlobalController.get().currentUserUid,
         'time': time
       });
+      await Firestore.instance
+          .collection('users')
+          .doc(GlobalController.get().userDocId)
+          .update({'canInitializeMessage': 0});
+      GlobalController.get().canMessage = 0;
       sendPush();
     } catch (e) {
       print(e);
@@ -189,7 +194,8 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
           [otherUserPushId],
           'New direct message!',
           'New chat message from $callsign',
-          GlobalController.get().currentUserUid);
+          GlobalController.get().currentUserUid,
+          NotificationData(postId, postInitializer, postAuthor));
     } catch (e) {
       print('could not send push');
     }

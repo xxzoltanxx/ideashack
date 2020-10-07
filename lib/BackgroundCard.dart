@@ -174,7 +174,12 @@ class BackgroundCard extends StatelessWidget {
                             children: [
                               InkWell(
                                   child: Text('Message',
-                                      style: cardThingsBelowTextStyle),
+                                      style: GlobalController.get()
+                                                  .canMessage ==
+                                              1
+                                          ? cardThingsBelowTextStyle
+                                          : cardThingsBelowTextStyle.copyWith(
+                                              color: Color(0x55894100))),
                                   onTap: null),
                               InkWell(
                                   onTap: null,

@@ -23,23 +23,6 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen> {
   Future<void> firebaseFuture;
 
-  void initFirebaseMessaging() {
-    FirebaseMessaging _firebaseMessaging =
-        GlobalController.get().firebaseMessaging;
-    _firebaseMessaging.configure(
-      onMessage: (Map<String, dynamic> message) async {
-        print("onMessage: $message");
-      },
-      onBackgroundMessage: myBackgroundMessageHandler,
-      onLaunch: (Map<String, dynamic> message) async {
-        print("onLaunch: $message");
-      },
-      onResume: (Map<String, dynamic> message) async {
-        print("onResume: $message");
-      },
-    );
-  }
-
   Future<void> initializeApp() async {
     try {
       await Firebase.initializeApp();
@@ -83,7 +66,6 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           if (snapshot.connectionState == ConnectionState.done) {
             var _auth = FirebaseAuth.instance;
             CardList.get().setInstance(Firestore.instance);
-            initFirebaseMessaging();
             return Scaffold(
                 body: Container(
                     decoration: BoxDecoration(
@@ -165,8 +147,10 @@ class _LoginScreenState extends State<LoginScreen> {
           possibleUser.docs.length > 0) {
         print(possibleUser.docs);
         String docId = possibleUser.docs[0].id;
-        await Firestore.instance.collection('users').doc(docId).update(
-            {'lastSeen': timestamp, 'uid': user.uid, 'pushToken': pushToken});
+        await Firestore.instance
+            .collection('users')
+            .doc(docId)
+            .update({'uid': user.uid, 'pushToken': pushToken});
         GlobalController.get().userDocId = docId;
         return;
       }
@@ -180,7 +164,8 @@ class _LoginScreenState extends State<LoginScreen> {
           'upvoted': [],
           'downvoted': [],
           'commented': [],
-          'reportedPosts': []
+          'reportedPosts': [],
+          'canInitializeMessage': 1
         });
         GlobalController.get().userDocId = snapshot.id;
       }

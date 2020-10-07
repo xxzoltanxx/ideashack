@@ -202,6 +202,59 @@ class CardList {
     if (lambda != null) lambda();
   }
 
+  Future<CardData> getCardDataForPost(String postID) async {
+    try {
+      var userDataSnapshotList = await _firestoreInstance
+          .collection('users')
+          .where('uid', isEqualTo: GlobalController.get().currentUserUid)
+          .get();
+      var userDataSnapshot = userDataSnapshotList.docs[0];
+
+      var upvotedSet = userDataSnapshot.get('upvoted').toSet();
+      var downvotedSet = userDataSnapshot.get('downvoted').toSet();
+      var commentedSet = userDataSnapshot.get('commented').toSet();
+      var reportedSet = userDataSnapshot.get('reportedPosts').toSet();
+      DocumentSnapshot snapshot;
+      UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
+      snapshot = await _firestoreInstance.collection('posts').doc(postID).get();
+      upvoteStatus = UpvotedStatus.DidntVote;
+      var upvoted = upvotedSet.contains(postID);
+      var downvoted = downvotedSet.contains(postID);
+      var commented = commentedSet.contains(postID);
+      var reported = reportedSet.contains(postID);
+      if (upvoted) {
+        upvoteStatus = UpvotedStatus.Upvoted;
+      } else if (downvoted) {
+        upvoteStatus = UpvotedStatus.Downvoted;
+      }
+      return CardData(
+        status: upvoteStatus,
+        comments: snapshot.get('commentsNum'),
+        commented: commented,
+        reported: reported,
+        text: snapshot.get('body'),
+        score: snapshot.get('score'),
+        author: snapshot.get('author'),
+        id: postID,
+        posterId: snapshot.get('userid'),
+      );
+    } catch (e) {
+      print(e);
+      return CardData(
+        text: "",
+        score: 0,
+        author: "",
+        id: "",
+        comments: 0,
+        status: UpvotedStatus.DidntVote,
+        commented: true,
+        posterId: "",
+        isAd: false,
+        reported: false,
+      );
+    }
+  }
+
   Future<void> getNextBatch({Function lambda, bool trending}) async {
     try {
       if (GlobalController.get().currentUser.isAnonymous) {

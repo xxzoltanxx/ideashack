@@ -29,18 +29,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
       double time = await getCurrentTimestampServer();
       String input = inputText;
       try {
-        await Firestore.instance.collection('posts').doc(cardData.id).update({
-          'commentsNum': FieldValue.increment(1),
-        });
+        DocumentSnapshot snapshot =
+            await Firestore.instance.collection('posts').doc(cardData.id).get();
+        if (!snapshot.exists) {
+          return Future.error(1);
+        }
       } catch (e) {
         return Future.error(1);
       }
-      await Firestore.instance
-          .collection('users')
-          .doc(GlobalController.get().userDocId)
-          .update({
-        'commented': FieldValue.arrayUnion([cardData.id])
-      });
       await Firestore.instance
           .collection('posts')
           .doc(cardData.id)
@@ -48,6 +44,12 @@ class _CommentsScreenState extends State<CommentsScreen> {
           .add({'comment': input, 'time': time});
       await Firestore.instance.collection('posts').doc(cardData.id).update(
           {'commentsNum': FieldValue.increment(1), 'lastCommentTime': time});
+      await Firestore.instance
+          .collection('users')
+          .doc(GlobalController.get().userDocId)
+          .update({
+        'commented': FieldValue.arrayUnion([cardData.id])
+      });
       sendPushNotification();
     } catch (e) {
       print(e);
@@ -68,7 +70,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
             [userData.get('pushToken')],
             'New comment on your idea!',
             'Someone posted a new comment on your idea!',
-            'comment');
+            'comment',
+            NotificationData(cardData.id, null, null));
       }
     } catch (e) {
       print(e);
@@ -90,10 +93,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
   void disposeAction() async {
     var time = await getCurrentTimestampServer();
     if (cardData.posterId == GlobalController.get().currentUserUid) {
-      Firestore.instance
-          .collection('posts')
-          .doc(cardData.id)
-          .update({'lastSeenComments': time});
+      try {
+        Firestore.instance
+            .collection('posts')
+            .doc(cardData.id)
+            .update({'lastSeenComments': time});
+      } catch (e) {
+        print(e);
+      }
     }
   }
 
@@ -324,27 +331,36 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                             flex: 3,
                                             child: Container(
                                               height: 20.0 * 24,
-                                              child: TextField(
-                                                controller:
-                                                    messageTextController,
-                                                onChanged: (string) {
-                                                  setState(() {
-                                                    inputText = string;
-                                                  });
-                                                },
-                                                onEditingComplete: () {},
-                                                maxLines: 20.toInt(),
-                                                style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 20,
-                                                ),
-                                                decoration: InputDecoration(
-                                                  filled: true,
-                                                  counterText: "",
-                                                  fillColor: Colors.white,
-                                                ),
-                                                maxLength: 245,
-                                              ),
+                                              child: cardData.commented
+                                                  ? Container(
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.grey,
+                                                      ),
+                                                      child: Center(
+                                                          child: Text(
+                                                              'You already commented on this post!')))
+                                                  : TextField(
+                                                      controller:
+                                                          messageTextController,
+                                                      onChanged: (string) {
+                                                        setState(() {
+                                                          inputText = string;
+                                                        });
+                                                      },
+                                                      onEditingComplete: () {},
+                                                      maxLines: 20.toInt(),
+                                                      style: TextStyle(
+                                                        color: Colors.black,
+                                                        fontSize: 20,
+                                                      ),
+                                                      decoration:
+                                                          InputDecoration(
+                                                        filled: true,
+                                                        counterText: "",
+                                                        fillColor: Colors.white,
+                                                      ),
+                                                      maxLength: 245,
+                                                    ),
                                             ),
                                           ),
                                           Expanded(

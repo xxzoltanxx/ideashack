@@ -81,6 +81,7 @@ String formatedNumberString(int num) {
 }
 
 enum InfoSheet {
+  OneMessage,
   Register,
   Posted,
   Commented,
@@ -114,6 +115,13 @@ class CardData {
   bool reported;
 }
 
+class NotificationData {
+  NotificationData(this.postId, this.postInitializer, this.postAuthor);
+  String postId;
+  String postInitializer;
+  String postAuthor;
+}
+
 const int MONTH = 2629743;
 
 class GlobalController {
@@ -127,6 +135,7 @@ class GlobalController {
     return _instance;
   }
 
+  int canMessage = 0;
   QueryDocumentSnapshot parameters;
   double adLockTime = 8.0;
   int MAX_SCORE = 100;
@@ -145,6 +154,9 @@ class GlobalController {
   bool isNextAd = false;
   bool finishedAd = true;
   bool isAdLocked = false;
+  bool openFromNotification = false;
+  Map notificationDictionary;
+  NotificationData notificationData;
 
   bool shouldShowAd() {
     return cardsSwiped % cardsToShowAd == 0;
@@ -158,20 +170,45 @@ class GlobalController {
     return currentUser.displayName;
   }
 
-  Future<bool> callOnFcmApiSendPushNotifications(
-      List<String> userToken, String title, String body, String tag) async {
+  Future<bool> callOnFcmApiSendPushNotifications(List<String> userToken,
+      String title, String body, String tag, NotificationData notifData) async {
     final postUrl = 'https://fcm.googleapis.com/fcm/send';
-    final data = {
-      "priority": "high",
-      "registration_ids": userToken,
-      "collapse_key": "type_a",
-      "notification": {
-        "title": title,
-        "body": body,
-        "sound": "default",
-        "tag": tag,
-      }
-    };
+    var data;
+    if (notifData.postAuthor != null) {
+      data = {
+        "priority": "high",
+        "registration_ids": userToken,
+        "collapse_key": "type_a",
+        "data": {
+          "click_action": "FLUTTER_NOTIFICATION_CLICK",
+          "author": notifData.postAuthor,
+          "postid": notifData.postId,
+          "initializer": notifData.postInitializer
+        },
+        "notification": {
+          "title": title,
+          "body": body,
+          "sound": "default",
+          "tag": tag,
+        }
+      };
+    } else {
+      data = {
+        "priority": "high",
+        "registration_ids": userToken,
+        "collapse_key": "type_a",
+        "data": {
+          "click_action": "FLUTTER_NOTIFICATION_CLICK",
+          "postid": notifData.postId,
+        },
+        "notification": {
+          "title": title,
+          "body": body,
+          "sound": "default",
+          "tag": tag,
+        }
+      };
+    }
 
     final headers = {
       'content-type': 'application/json',
@@ -199,12 +236,14 @@ class GlobalController {
     return fetchToken;
   }
 
-  void checkLastTimestampsAndUpdatePosts(Function callback) async {
+  void checkLastTimestampsAndUpdateCounters(Function callback) async {
+    //LAST SEEN NEEDS TO BE UPDATED JUST INSIDE THIS FUNCTION
     try {
       final now = await getCurrentTimestampServer();
       DateTime time =
           new DateTime.fromMillisecondsSinceEpoch((now * 1000).toInt());
-      final lastMidnight = new DateTime(time.year, time.month, time.day);
+      final lastMidnight =
+          new DateTime(time.year, time.month, time.day).toUtc();
       final nowseconds = now;
       final lastMidnightSeconds = lastMidnight.millisecondsSinceEpoch / 1000;
       var user = await Firestore.instance
@@ -217,13 +256,27 @@ class GlobalController {
       double lastSeen = user.docs[0].get('lastSeen');
       //lol
       int dailyyPosts = user.docs[0].get('dailyPosts').toInt();
+      int canMessage;
+      try {
+        canMessage = user.docs[0].get('canInitializeMessage');
+      } catch (e) {
+        if (canMessage == null) {
+          canMessage = 0;
+        }
+      }
       if (lastMidnightSeconds > lastSeen) {
         if (dailyyPosts < BASE_DAILY_POSTS) {
           await Firestore.instance.collection('users').doc(userDocId).update({
             'lastSeen': nowseconds,
             'dailyPosts': BASE_DAILY_POSTS,
+            'canInitializeMessage': 1
           });
+          canMessage = 1;
           dailyyPosts = BASE_DAILY_POSTS.toInt();
+        } else {
+          await Firestore.instance.collection('users').doc(userDocId).update({
+            'lastSeen': nowseconds,
+          });
         }
       } else {
         await Firestore.instance
@@ -231,6 +284,7 @@ class GlobalController {
             .doc(userDocId)
             .update({'lastSeen': nowseconds});
       }
+      this.canMessage = canMessage;
       dailyPosts = dailyyPosts;
       callback(dailyPosts);
     } catch (e) {

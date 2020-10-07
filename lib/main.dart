@@ -27,14 +27,51 @@ import 'package:flutter_native_admob/flutter_native_admob.dart';
 import 'package:ideashack/MainScreenMisc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
+void initFirebaseMessaging() {
+  FirebaseMessaging _firebaseMessaging =
+      GlobalController.get().firebaseMessaging;
+  _firebaseMessaging.configure(
+    onMessage: (Map<String, dynamic> message) async {
+      print("onMessage: $message");
+    },
+    onBackgroundMessage: myBackgroundMessageHandler,
+    onLaunch: (Map<String, dynamic> message) async {
+      GlobalController.get().openFromNotification = true;
+      print("onLaunch: $message");
+      if (message['data'].containsKey('initializer')) {
+        GlobalController.get().notificationData = NotificationData(
+            message['data']['postid'],
+            message['data']['initializer'],
+            message['data']['author']);
+      } else {
+        GlobalController.get().notificationData =
+            NotificationData(message['data']['postid'], null, null);
+      }
+    },
+    onResume: (Map<String, dynamic> message) async {
+      GlobalController.get().openFromNotification = true;
+      print(message['data']);
+      if (message['data'].containsKey('initializer')) {
+        GlobalController.get().notificationData = NotificationData(
+            message['data']['postid'],
+            message['data']['initializer'],
+            message['data']['author']);
+      } else {
+        GlobalController.get().notificationData =
+            NotificationData(message['data']['postid'], null, null);
+      }
+    },
+  );
+}
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  initFirebaseMessaging();
   SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light
       .copyWith(systemNavigationBarColor: Colors.white));
   SystemChrome.setEnabledSystemUIOverlays(
       [SystemUiOverlay.top, SystemUiOverlay.bottom]);
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
   runApp(MyApp());
 }
 
@@ -117,6 +154,8 @@ class _MainPageState extends State<MainPage>
   double adCounter = 0;
   Timer adTimer;
   Widget banner;
+  Future<CardData> commentToDisplay;
+  bool isFetchindComment = false;
   NativeAdmobController controllerAdmob = NativeAdmobController();
 
   final AlignmentSt defaultFrontCardAlign = AlignmentSt(0.0, 0.0);
@@ -180,22 +219,45 @@ class _MainPageState extends State<MainPage>
     });
   }
 
+  void fetchComment(String postid) async {
+    CardData data = await CardList.get().getCardDataForPost(postid);
+    setState(() {
+      isFetchindComment = false;
+    });
+    Navigator.pushNamed(context, '/comments',
+        arguments: <dynamic>[data, notificationCommentsCallback]);
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (GlobalController.get().openFromNotification) {
+      GlobalController.get().openFromNotification = false;
+      NotificationData data = GlobalController.get().notificationData;
+      if (data.postInitializer != null) {
+        Navigator.pushNamed(context, '/message', arguments: <dynamic>[
+          data.postId,
+          data.postInitializer,
+          data.postAuthor
+        ]);
+      } else {
+        setState(() {
+          isFetchindComment = true;
+        });
+        fetchComment(data.postId);
+      }
+    }
     if (state == AppLifecycleState.resumed) {
       if (!fetchingData) {
         setState(() {
           fetchNum = 0;
         });
       }
-      if (!GlobalController.get().fetchingDailyPosts &&
-          GlobalController.get().selectedIndex == 0) {
+      if (!GlobalController.get().fetchingDailyPosts) {
         setState(() {
           GlobalController.get().fetchingDailyPosts = true;
         });
-        print("HERE");
-        GlobalController.get()
-            .checkLastTimestampsAndUpdatePosts(onFetchUserTimestampsCallback);
+        GlobalController.get().checkLastTimestampsAndUpdateCounters(
+            onFetchUserTimestampsCallback);
       }
     }
   }
@@ -219,6 +281,10 @@ class _MainPageState extends State<MainPage>
     _settingModalBottomSheet(context, sheet);
   }
 
+  void notificationCommentsCallback(CardData data, InfoSheet sheet) {
+    _settingModalBottomSheet(context, sheet);
+  }
+
   void commentsCallbackUserPanel(bool profane) {
     if (profane)
       _settingModalBottomSheet(context, InfoSheet.Profane);
@@ -231,6 +297,7 @@ class _MainPageState extends State<MainPage>
     controllerAdmob.setTestDeviceIds(['738451C1DB43B39858E14A914334CF2A']);
     controllerAdmob.setAdUnitID('ca-app-pub-4102451006671600/2649770997');
     controllerAdmob.reloadAd();
+
     CardList.get().clear();
     KeyboardVisibilityNotification().addNewListener(onHide: () {
       SystemChrome.restoreSystemUIOverlays();
@@ -501,6 +568,14 @@ class _MainPageState extends State<MainPage>
       info = ListTile(
           leading: Icon(Icons.not_interested),
           title: Text('Comment is too profane to post!'));
+    } else if (sheet == InfoSheet.OneMessage) {
+      info = ListTile(
+          leading: Icon(Icons.not_interested),
+          title: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+                'We limited direct message initializations to one a day to prevent unnecessary feedback!'),
+          ));
     } else if (sheet == InfoSheet.Register) {
       info = ListTile(
           leading: Icon(Icons.remove_circle_outline),
@@ -550,6 +625,20 @@ class _MainPageState extends State<MainPage>
       print(currentCardData);
       user = ModalRoute.of(context).settings.arguments;
       firstBuild = false;
+      if (GlobalController.get().openFromNotification) {
+        GlobalController.get().openFromNotification = false;
+        NotificationData data = GlobalController.get().notificationData;
+        if (data.postInitializer != null) {
+          Navigator.pushNamed(context, '/message', arguments: <dynamic>[
+            data.postId,
+            data.postInitializer,
+            data.postAuthor
+          ]);
+        } else {
+          isFetchindComment = true;
+          fetchComment(data.postId);
+        }
+      }
     }
     if (currentCardData == null) {
       currentCardData = CardList.get().getNextCard();
@@ -575,7 +664,8 @@ class _MainPageState extends State<MainPage>
     if ((currentCardData == null &&
         CardList.get().lastDocumentSnapshot != null &&
         !fetchingData &&
-        user != null)) {
+        user != null &&
+        !isFetchindComment)) {
       setState(() {
         fetchingData = true;
         print("TRIGGERED");
@@ -584,6 +674,9 @@ class _MainPageState extends State<MainPage>
             adTimer.cancel();
             adTimer = null;
           }
+          GlobalController.get().fetchingDailyPosts = true;
+          GlobalController.get().checkLastTimestampsAndUpdateCounters(
+              onFetchUserTimestampsCallback);
           batchFuture =
               CardList.get().getNextBatch(lambda: FetchedData, trending: true);
         } else if (tabSelect == SelectTab.New) {
@@ -591,6 +684,9 @@ class _MainPageState extends State<MainPage>
             adTimer.cancel();
             adTimer = null;
           }
+          GlobalController.get().fetchingDailyPosts = true;
+          GlobalController.get().checkLastTimestampsAndUpdateCounters(
+              onFetchUserTimestampsCallback);
           batchFuture =
               CardList.get().getNextBatch(lambda: FetchedData, trending: false);
         } else {
@@ -598,6 +694,9 @@ class _MainPageState extends State<MainPage>
             adTimer.cancel();
             adTimer = null;
           }
+          GlobalController.get().fetchingDailyPosts = true;
+          GlobalController.get().checkLastTimestampsAndUpdateCounters(
+              onFetchUserTimestampsCallback);
           batchFuture =
               CardList.get().getByTag(lambda: FetchedData, tag: customSearch);
         }
@@ -605,7 +704,8 @@ class _MainPageState extends State<MainPage>
     } else if ((currentCardData == null &&
             fetchNum < 2 &&
             !fetchingData &&
-            user != null) ||
+            user != null &&
+            !isFetchindComment) ||
         tabSelect != currentSelect) {
       currentCardData = null;
       nextCardData = null;
@@ -617,6 +717,9 @@ class _MainPageState extends State<MainPage>
             adTimer.cancel();
             adTimer = null;
           }
+          GlobalController.get().fetchingDailyPosts = true;
+          GlobalController.get().checkLastTimestampsAndUpdateCounters(
+              onFetchUserTimestampsCallback);
           CardList.get().resetLastDocumentSnapshot();
           batchFuture =
               CardList.get().getNextBatch(lambda: FetchedData, trending: true);
@@ -625,6 +728,9 @@ class _MainPageState extends State<MainPage>
             adTimer.cancel();
             adTimer = null;
           }
+          GlobalController.get().fetchingDailyPosts = true;
+          GlobalController.get().checkLastTimestampsAndUpdateCounters(
+              onFetchUserTimestampsCallback);
           CardList.get().resetLastDocumentSnapshot();
           batchFuture =
               CardList.get().getNextBatch(lambda: FetchedData, trending: false);
@@ -633,12 +739,18 @@ class _MainPageState extends State<MainPage>
             adTimer.cancel();
             adTimer = null;
           }
+          GlobalController.get().fetchingDailyPosts = true;
+          GlobalController.get().checkLastTimestampsAndUpdateCounters(
+              onFetchUserTimestampsCallback);
           CardList.get().resetLastDocumentSnapshot();
           batchFuture =
               CardList.get().getByTag(lambda: FetchedData, tag: customSearch);
         }
       });
-    } else if (currentCardData != null && stackCards.length > 1) {
+    } else if (currentCardData != null &&
+        stackCards.length > 1 &&
+        !GlobalController.get().fetchingDailyPosts &&
+        !isFetchindComment) {
       if (currentCardData.isAd) {
         if (!GlobalController.get().isAdLocked &&
             !GlobalController.get().finishedAd) {
@@ -907,27 +1019,43 @@ class _MainPageState extends State<MainPage>
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       InkWell(
-                                          child: Text('Message',
-                                              style: cardThingsBelowTextStyle),
-                                          onTap: GlobalController.get()
-                                                  .currentUser
-                                                  .isAnonymous
-                                              ? () {
-                                                  _settingModalBottomSheet(
-                                                      context,
-                                                      InfoSheet.Register);
-                                                }
-                                              : () {
-                                                  Navigator.pushNamed(
-                                                      context, '/message',
-                                                      arguments: <dynamic>[
-                                                        currentCardData.id,
-                                                        GlobalController.get()
-                                                            .currentUserUid,
-                                                        currentCardData
-                                                            .posterId,
-                                                      ]);
-                                                }),
+                                        child: Text('Message',
+                                            style: GlobalController.get()
+                                                        .canMessage ==
+                                                    1
+                                                ? cardThingsBelowTextStyle
+                                                : cardThingsBelowTextStyle
+                                                    .copyWith(
+                                                        color:
+                                                            Color(0x55894100))),
+                                        onTap: GlobalController.get()
+                                                .currentUser
+                                                .isAnonymous
+                                            ? () {
+                                                _settingModalBottomSheet(
+                                                    context,
+                                                    InfoSheet.Register);
+                                              }
+                                            : GlobalController.get()
+                                                        .canMessage ==
+                                                    1
+                                                ? () {
+                                                    Navigator.pushNamed(
+                                                        context, '/message',
+                                                        arguments: <dynamic>[
+                                                          currentCardData.id,
+                                                          GlobalController.get()
+                                                              .currentUserUid,
+                                                          currentCardData
+                                                              .posterId,
+                                                        ]);
+                                                  }
+                                                : () {
+                                                    _settingModalBottomSheet(
+                                                        context,
+                                                        InfoSheet.OneMessage);
+                                                  },
+                                      ),
                                       InkWell(
                                           onTap: GlobalController.get()
                                                   .currentUser
@@ -1009,7 +1137,9 @@ class _MainPageState extends State<MainPage>
 
     if (GlobalController.get().selectedIndex == 1 &&
         !fetchingData &&
-        stackCards.length > 1) {
+        stackCards.length > 1 &&
+        !GlobalController.get().fetchingDailyPosts &&
+        !isFetchindComment) {
       bodyWidget = SafeArea(
         child: Column(
           children: [
@@ -1089,10 +1219,14 @@ class _MainPageState extends State<MainPage>
     } else if (GlobalController.get().selectedIndex == 0) {
       bodyWidget = IdeaAdd(
           IdeaAddCallback, user, GlobalController.get().fetchingDailyPosts);
-    } else if (GlobalController.get().selectedIndex == 2) {
+    } else if (GlobalController.get().selectedIndex == 2 &&
+        !isFetchindComment) {
       bodyWidget = UserCard(commentsCallbackUserPanel);
-    } else if ((fetchingData || stackCards.length < 1) &&
-        GlobalController.get().selectedIndex == 1) {
+    } else if (((fetchingData ||
+                GlobalController.get().fetchingDailyPosts ||
+                stackCards.length < 1) &&
+            GlobalController.get().selectedIndex == 1) ||
+        isFetchindComment) {
       bodyWidget = SafeArea(
         child: Column(
           children: [
@@ -1265,7 +1399,7 @@ class _MainPageState extends State<MainPage>
                 setState(() {
                   GlobalController.get().fetchingDailyPosts = true;
                 });
-                GlobalController.get().checkLastTimestampsAndUpdatePosts(
+                GlobalController.get().checkLastTimestampsAndUpdateCounters(
                     onFetchUserTimestampsCallback);
               }
               setState(() {

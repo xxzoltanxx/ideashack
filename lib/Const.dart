@@ -303,8 +303,8 @@ class GlobalController {
 }
 
 Future<double> getCurrentTimestampServer() async {
-  try {
-    if (GlobalController.get().initedTime == false) {
+  if (GlobalController.get().initedTime == false) {
+    try {
       print("INITED TIME");
       final DateTime localTime = DateTime.now();
       final int offset = await NTP.getNtpOffset(
@@ -313,15 +313,14 @@ Future<double> getCurrentTimestampServer() async {
       );
       GlobalController.get().timeOffset = offset;
       GlobalController.get().initedTime = true;
+    } catch (e) {
+      print(e);
     }
-    print("GOT TIME");
-    DateTime time = DateTime.now()
-        .add(Duration(milliseconds: GlobalController.get().timeOffset));
-    return time.millisecondsSinceEpoch / 1000;
-  } catch (e) {
-    print(e);
-    return 0;
   }
+  print("GOT TIME");
+  DateTime time = DateTime.now()
+      .add(Duration(milliseconds: GlobalController.get().timeOffset));
+  return time.millisecondsSinceEpoch / 1000;
 }
 
 final spamFilter = Filter();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:dotted_line/dotted_line.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'Const.dart';
@@ -135,9 +135,10 @@ class _CommentsScreenState extends State<CommentsScreen> {
                   child: Container(
                       decoration: BoxDecoration(
                           gradient: LinearGradient(
-                              colors: splashScreenColors,
-                              begin: Alignment.bottomLeft,
-                              end: Alignment.topRight)),
+                        colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      )),
                       child: GestureDetector(
                         onTap: () {
                           FocusScope.of(context).requestFocus(new FocusNode());
@@ -145,46 +146,102 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         child: Column(
                           children: [
                             Expanded(
-                                flex: 5,
-                                child: Center(
-                                    child: Text('Post has been removed'))),
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: Container(
-                                      height: 20.0 * 24,
-                                      child: TextField(
-                                        controller: messageTextController,
-                                        onChanged: (string) {
-                                          setState(() {
-                                            inputText = string;
-                                          });
-                                        },
-                                        onEditingComplete: () {},
-                                        maxLines: 20.toInt(),
-                                        style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 20,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                child: Column(
+                                  children: [
+                                    SizedBox(height: 30),
+                                    Row(
+                                      children: [
+                                        Image.asset(
+                                          'assets/score.png',
+                                          width: 40,
+                                          color: Colors.grey,
                                         ),
-                                        decoration: InputDecoration(
-                                          filled: true,
-                                          counterText: "",
-                                          fillColor: Colors.white,
-                                        ),
-                                        maxLength: 245,
-                                      ),
+                                        SizedBox(width: 10),
+                                        Text(cardData.score.toString(),
+                                            style:
+                                                enabledUpperBarStyle.copyWith(
+                                                    color: Colors.grey,
+                                                    fontSize: 25))
+                                      ],
                                     ),
-                                  ),
-                                  Expanded(
-                                    child: RaisedButton(
-                                        child: Center(child: Text('Post')),
-                                        onPressed: null),
-                                  )
-                                ],
+                                    SizedBox(height: 20),
+                                    Text(cardData.text,
+                                        style: disabledUpperBarStyle),
+                                    SizedBox(height: 20),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text('Comments',
+                                            style: enabledUpperBarStyle),
+                                        Icon(Icons.arrow_drop_down,
+                                            color: disabledUpperBarColor),
+                                      ],
+                                    ),
+                                    Divider(color: disabledUpperBarColor),
+                                    SizedBox(height: 20),
+                                    Expanded(
+                                        flex: 5,
+                                        child: Center(
+                                            child: Text(
+                                                'Post has been removed!',
+                                                style: disabledUpperBarStyle)))
+                                  ],
+                                ),
                               ),
-                            )
+                            ),
+                            Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  child: Column(
+                                    children: [
+                                      SizedBox(height: 10),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: 300,
+                                              ),
+                                              child: TextField(
+                                                decoration: InputDecoration(
+                                                    hintStyle:
+                                                        disabledUpperBarStyle,
+                                                    hintText: cardData.commented
+                                                        ? 'You already commented here..'
+                                                        : 'Add a comment...'),
+                                                maxLines: null,
+                                                style: disabledUpperBarStyle,
+                                                controller:
+                                                    messageTextController,
+                                                onChanged: (value) {
+                                                  inputText = value;
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                          FlatButton(
+                                              disabledColor: Colors.transparent,
+                                              color: Colors.transparent,
+                                              child: Center(
+                                                  child: Text('Post',
+                                                      style: TextStyle(
+                                                          color: Colors.grey))),
+                                              onPressed: null)
+                                        ],
+                                      ),
+                                      Divider(color: Colors.black),
+                                      SizedBox(height: 10),
+                                    ],
+                                  ),
+                                )),
                           ],
                         ),
                       )));
@@ -203,9 +260,10 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           child: Container(
                               decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                      colors: splashScreenColors,
-                                      begin: Alignment.bottomLeft,
-                                      end: Alignment.topRight)),
+                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              )),
                               child: GestureDetector(
                                 onTap: () {
                                   FocusScope.of(context)
@@ -214,10 +272,604 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 child: Column(
                                   children: [
                                     Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Column(
+                                          children: [
+                                            SizedBox(height: 30),
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/score.png',
+                                                  width: 40,
+                                                  color: Colors.grey,
+                                                ),
+                                                SizedBox(width: 10),
+                                                Text(cardData.score.toString(),
+                                                    style: enabledUpperBarStyle
+                                                        .copyWith(
+                                                            color: Colors.grey,
+                                                            fontSize: 25))
+                                              ],
+                                            ),
+                                            SizedBox(height: 20),
+                                            Text(cardData.text,
+                                                style: disabledUpperBarStyle),
+                                            SizedBox(height: 20),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text('Comments',
+                                                    style:
+                                                        enabledUpperBarStyle),
+                                                Icon(Icons.arrow_drop_down,
+                                                    color:
+                                                        disabledUpperBarColor),
+                                              ],
+                                            ),
+                                            Divider(
+                                                color: disabledUpperBarColor),
+                                            SizedBox(height: 20),
+                                            Expanded(
+                                                flex: 5,
+                                                child: Container(
+                                                    child: Center(
+                                                        child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Image.asset(
+                                                        'assets/logo.png',
+                                                        width: 200),
+                                                    SizedBox(height: 30),
+                                                    SpinKitThreeBounce(
+                                                      color: spinnerColor,
+                                                      size: 60,
+                                                    ),
+                                                  ],
+                                                ))))
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 20),
+                                          child: Column(
+                                            children: [
+                                              SizedBox(height: 10),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: ConstrainedBox(
+                                                      constraints:
+                                                          BoxConstraints(
+                                                        maxHeight: 300,
+                                                      ),
+                                                      child: TextField(
+                                                        decoration: InputDecoration(
+                                                            hintStyle:
+                                                                disabledUpperBarStyle,
+                                                            hintText: cardData
+                                                                    .commented
+                                                                ? 'You already commented here..'
+                                                                : 'Add a comment...'),
+                                                        maxLines: null,
+                                                        style:
+                                                            disabledUpperBarStyle,
+                                                        controller:
+                                                            messageTextController,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            inputText = value;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  FlatButton(
+                                                    disabledColor:
+                                                        Colors.transparent,
+                                                    color: Colors.transparent,
+                                                    child: Center(
+                                                        child: Text('Post',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .grey))),
+                                                    onPressed: null,
+                                                  )
+                                                ],
+                                              ),
+                                              Divider(color: Colors.black),
+                                              SizedBox(height: 10),
+                                            ],
+                                          ),
+                                        )),
+                                  ],
+                                ),
+                              )));
+                    } else if (snapshot.hasData) {
+                      List<Widget> comments = [];
+                      Widget noCommentsWidget;
+                      if (snapshot.data.docs.length == 0) {
+                        noCommentsWidget = (Center(
+                            child: Text('There are no comments yet.',
+                                style: disabledUpperBarStyle)));
+                      } else {
+                        for (var doc in snapshot.data.docs) {
+                          comments.add(Center(
+                              child: Comment(
+                                  comment: doc.get('comment'),
+                                  timestamp: doc.get('time'))));
+                        }
+                      }
+                      return SafeArea(
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              )),
+                              child: GestureDetector(
+                                onTap: () {
+                                  FocusScope.of(context)
+                                      .requestFocus(new FocusNode());
+                                },
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Column(
+                                          children: [
+                                            SizedBox(height: 30),
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/score.png',
+                                                  width: 40,
+                                                  color: Colors.grey,
+                                                ),
+                                                SizedBox(width: 10),
+                                                Text(cardData.score.toString(),
+                                                    style: enabledUpperBarStyle
+                                                        .copyWith(
+                                                            color: Colors.grey,
+                                                            fontSize: 25))
+                                              ],
+                                            ),
+                                            SizedBox(height: 20),
+                                            Text(cardData.text,
+                                                style: disabledUpperBarStyle),
+                                            SizedBox(height: 20),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text('Comments',
+                                                    style:
+                                                        enabledUpperBarStyle),
+                                                Icon(Icons.arrow_drop_down,
+                                                    color:
+                                                        disabledUpperBarColor),
+                                              ],
+                                            ),
+                                            Divider(
+                                                color: disabledUpperBarColor),
+                                            SizedBox(height: 20),
+                                            Expanded(
+                                                flex: 5,
+                                                child: noCommentsWidget != null
+                                                    ? noCommentsWidget
+                                                    : Center(
+                                                        child: ListView(
+                                                            shrinkWrap: false,
+                                                            reverse: false,
+                                                            children:
+                                                                comments))),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 20),
+                                          child: Column(
+                                            children: [
+                                              SizedBox(height: 10),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: ConstrainedBox(
+                                                      constraints:
+                                                          BoxConstraints(
+                                                        maxHeight: 300,
+                                                      ),
+                                                      child: TextField(
+                                                        decoration: InputDecoration(
+                                                            hintStyle:
+                                                                disabledUpperBarStyle,
+                                                            hintText: cardData
+                                                                    .commented
+                                                                ? 'You already commented here..'
+                                                                : 'Add a comment...'),
+                                                        maxLines: null,
+                                                        style:
+                                                            disabledUpperBarStyle,
+                                                        controller:
+                                                            messageTextController,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            inputText = value;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  FlatButton(
+                                                      disabledColor:
+                                                          Colors.transparent,
+                                                      color: Colors.transparent,
+                                                      child: Center(
+                                                          child: Text('Post',
+                                                              style: TextStyle(
+                                                                  color: (cardData
+                                                                              .commented ||
+                                                                          inputText.length <
+                                                                              15)
+                                                                      ? Colors
+                                                                          .grey
+                                                                      : Colors
+                                                                          .blue))),
+                                                      onPressed: (cardData
+                                                                  .commented ||
+                                                              inputText.length <
+                                                                  15)
+                                                          ? null
+                                                          : buttonCallback)
+                                                ],
+                                              ),
+                                              Divider(color: Colors.black),
+                                              SizedBox(height: 10),
+                                            ],
+                                          ),
+                                        )),
+                                  ],
+                                ),
+                              )));
+                    } else if (snapshot.hasError) {
+                      return SafeArea(
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              )),
+                              child: GestureDetector(
+                                onTap: () {
+                                  FocusScope.of(context)
+                                      .requestFocus(new FocusNode());
+                                },
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Column(
+                                          children: [
+                                            SizedBox(height: 30),
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/score.png',
+                                                  width: 40,
+                                                  color: Colors.grey,
+                                                ),
+                                                SizedBox(width: 10),
+                                                Text(cardData.score.toString(),
+                                                    style: enabledUpperBarStyle
+                                                        .copyWith(
+                                                            color: Colors.grey,
+                                                            fontSize: 25))
+                                              ],
+                                            ),
+                                            SizedBox(height: 20),
+                                            Text(cardData.text,
+                                                style: disabledUpperBarStyle),
+                                            SizedBox(height: 20),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text('Comments',
+                                                    style:
+                                                        enabledUpperBarStyle),
+                                                Icon(Icons.arrow_drop_down,
+                                                    color:
+                                                        disabledUpperBarColor),
+                                              ],
+                                            ),
+                                            Divider(
+                                                color: disabledUpperBarColor),
+                                            SizedBox(height: 20),
+                                            Expanded(
+                                                child: Center(
+                                                    child: Text(
+                                                        'Something went wrong with fetching the comments...',
+                                                        style:
+                                                            disabledUpperBarStyle)))
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 20),
+                                          child: Column(
+                                            children: [
+                                              SizedBox(height: 10),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: ConstrainedBox(
+                                                      constraints:
+                                                          BoxConstraints(
+                                                        maxHeight: 300,
+                                                      ),
+                                                      child: TextField(
+                                                        decoration: InputDecoration(
+                                                            hintStyle:
+                                                                disabledUpperBarStyle,
+                                                            hintText: cardData
+                                                                    .commented
+                                                                ? 'You already commented here..'
+                                                                : 'Add a comment...'),
+                                                        maxLines: null,
+                                                        style:
+                                                            disabledUpperBarStyle,
+                                                        controller:
+                                                            messageTextController,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            inputText = value;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  FlatButton(
+                                                      disabledColor:
+                                                          Colors.transparent,
+                                                      color: Colors.transparent,
+                                                      child: Center(
+                                                          child: Text('Post',
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .blue))),
+                                                      onPressed: (cardData
+                                                                  .commented ||
+                                                              inputText.length <
+                                                                  15)
+                                                          ? null
+                                                          : buttonCallback)
+                                                ],
+                                              ),
+                                              Divider(color: Colors.black),
+                                              SizedBox(height: 10),
+                                            ],
+                                          ),
+                                        )),
+                                  ],
+                                ),
+                              )));
+                    }
+                    return SafeArea(
+                        child: Container(
+                            decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                              colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                            )),
+                            child: GestureDetector(
+                              onTap: () {
+                                FocusScope.of(context)
+                                    .requestFocus(new FocusNode());
+                              },
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20),
+                                      child: Column(
+                                        children: [
+                                          SizedBox(height: 30),
+                                          Row(
+                                            children: [
+                                              Image.asset(
+                                                'assets/score.png',
+                                                width: 40,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text(cardData.score.toString(),
+                                                  style: enabledUpperBarStyle
+                                                      .copyWith(
+                                                          color: Colors.grey,
+                                                          fontSize: 25))
+                                            ],
+                                          ),
+                                          SizedBox(height: 20),
+                                          Text(cardData.text,
+                                              style: disabledUpperBarStyle),
+                                          SizedBox(height: 20),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text('Comments',
+                                                  style: enabledUpperBarStyle),
+                                              Icon(Icons.arrow_drop_down,
+                                                  color: disabledUpperBarColor),
+                                            ],
+                                          ),
+                                          Divider(color: disabledUpperBarColor),
+                                          SizedBox(height: 20),
+                                          Expanded(
+                                              child: Center(
+                                                  child: Text(
+                                                      'Something went wrong with fetching the comments...',
+                                                      style:
+                                                          disabledUpperBarStyle)))
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Column(
+                                          children: [
+                                            SizedBox(height: 10),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: ConstrainedBox(
+                                                    constraints: BoxConstraints(
+                                                      maxHeight: 300,
+                                                    ),
+                                                    child: TextField(
+                                                      decoration: InputDecoration(
+                                                          hintStyle:
+                                                              disabledUpperBarStyle,
+                                                          hintText: cardData
+                                                                  .commented
+                                                              ? 'You already commented here..'
+                                                              : 'Add a comment...'),
+                                                      maxLines: null,
+                                                      style:
+                                                          disabledUpperBarStyle,
+                                                      controller:
+                                                          messageTextController,
+                                                      onChanged: (value) {
+                                                        setState(() {
+                                                          inputText = value;
+                                                        });
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                                FlatButton(
+                                                    disabledColor:
+                                                        Colors.transparent,
+                                                    color: Colors.transparent,
+                                                    child: Center(
+                                                        child: Text('Post',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .blue))),
+                                                    onPressed: (cardData
+                                                                .commented ||
+                                                            inputText.length <
+                                                                15)
+                                                        ? null
+                                                        : buttonCallback)
+                                              ],
+                                            ),
+                                            Divider(color: Colors.black),
+                                            SizedBox(height: 10),
+                                          ],
+                                        ),
+                                      )),
+                                ],
+                              ),
+                            )));
+                  });
+            }
+            if (snapshot.connectionState == ConnectionState.waiting ||
+                snapshot.connectionState == ConnectionState.active) {
+              return SafeArea(
+                  child: Container(
+                      decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                        colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      )),
+                      child: GestureDetector(
+                        onTap: () {
+                          FocusScope.of(context).requestFocus(new FocusNode());
+                        },
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                child: Column(
+                                  children: [
+                                    SizedBox(height: 30),
+                                    Row(
+                                      children: [
+                                        Image.asset(
+                                          'assets/score.png',
+                                          width: 40,
+                                          color: Colors.grey,
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text(cardData.score.toString(),
+                                            style:
+                                                enabledUpperBarStyle.copyWith(
+                                                    color: Colors.grey,
+                                                    fontSize: 25))
+                                      ],
+                                    ),
+                                    SizedBox(height: 20),
+                                    Text(cardData.text,
+                                        style: disabledUpperBarStyle),
+                                    SizedBox(height: 20),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text('Comments',
+                                            style: enabledUpperBarStyle),
+                                        Icon(Icons.arrow_drop_down,
+                                            color: disabledUpperBarColor),
+                                      ],
+                                    ),
+                                    Divider(color: disabledUpperBarColor),
+                                    SizedBox(height: 20),
+                                    Expanded(
                                         flex: 5,
-                                        child: Container(
-                                            child: Center(
-                                                child: Column(
+                                        child: Center(
+                                            child: Column(
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
                                           children: [
@@ -229,196 +881,63 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                               size: 60,
                                             ),
                                           ],
-                                        )))),
-                                    Expanded(
-                                      child: Row(
+                                        )))
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  child: Column(
+                                    children: [
+                                      SizedBox(height: 10),
+                                      Row(
                                         children: [
                                           Expanded(
-                                            flex: 3,
-                                            child: Container(
-                                              height: 20.0 * 24,
+                                            child: ConstrainedBox(
+                                              constraints: BoxConstraints(
+                                                maxHeight: 300,
+                                              ),
                                               child: TextField(
+                                                decoration: InputDecoration(
+                                                    hintStyle:
+                                                        disabledUpperBarStyle,
+                                                    hintText: cardData.commented
+                                                        ? 'You already commented here..'
+                                                        : 'Add a comment...'),
+                                                maxLines: null,
+                                                style: disabledUpperBarStyle,
                                                 controller:
                                                     messageTextController,
-                                                onChanged: (string) {
-                                                  setState(() {
-                                                    inputText = string;
-                                                  });
+                                                onChanged: (value) {
+                                                  inputText = value;
                                                 },
-                                                onEditingComplete: () {},
-                                                maxLines: 20.toInt(),
-                                                style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 20,
-                                                ),
-                                                decoration: InputDecoration(
-                                                  filled: true,
-                                                  counterText: "",
-                                                  fillColor: Colors.white,
-                                                ),
-                                                maxLength: 245,
                                               ),
                                             ),
                                           ),
-                                          Expanded(
-                                              child: RaisedButton(
-                                            child: Center(child: Text('Post')),
-                                            onPressed: null,
-                                          ))
-                                        ],
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              )));
-                    } else if (snapshot.hasData) {
-                      List<Widget> comments = [];
-                      Widget noCommentsWidget;
-                      if (snapshot.data.docs.length == 0) {
-                        noCommentsWidget = (Center(
-                            child:
-                                Comment(comment: "There are no comments yet")));
-                      } else {
-                        for (var doc in snapshot.data.docs) {
-                          comments.add(Center(
-                              child: Comment(comment: doc.get('comment'))));
-                          comments.add(Padding(
-                            padding:
-                                const EdgeInsets.only(left: 40.0, right: 40.0),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Divider(
-                                color: Colors.red,
-                              ),
-                            ),
-                          ));
-                        }
-                      }
-                      return SafeArea(
-                          child: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                      colors: splashScreenColors,
-                                      begin: Alignment.bottomLeft,
-                                      end: Alignment.topRight)),
-                              child: GestureDetector(
-                                onTap: () {
-                                  FocusScope.of(context)
-                                      .requestFocus(new FocusNode());
-                                },
-                                child: Column(
-                                  children: [
-                                    Expanded(
-                                        flex: 5,
-                                        child: noCommentsWidget != null
-                                            ? noCommentsWidget
-                                            : Center(
-                                                child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 8.0,
-                                                    bottom: 8.0,
-                                                    left: 8.0,
-                                                    right: 8.0),
-                                                child: ListView(
-                                                    shrinkWrap: true,
-                                                    reverse: true,
-                                                    children: comments),
-                                              ))),
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            flex: 3,
-                                            child: Container(
-                                              height: 20.0 * 24,
-                                              child: cardData.commented
-                                                  ? Container(
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.grey,
-                                                      ),
-                                                      child: Center(
-                                                          child: Text(
-                                                              'You already commented on this post!')))
-                                                  : TextField(
-                                                      controller:
-                                                          messageTextController,
-                                                      onChanged: (string) {
-                                                        setState(() {
-                                                          inputText = string;
-                                                        });
-                                                      },
-                                                      onEditingComplete: () {},
-                                                      maxLines: 20.toInt(),
+                                          FlatButton(
+                                              disabledColor: Colors.transparent,
+                                              color: Colors.transparent,
+                                              child: Center(
+                                                  child: Text('Post',
                                                       style: TextStyle(
-                                                        color: Colors.black,
-                                                        fontSize: 20,
-                                                      ),
-                                                      decoration:
-                                                          InputDecoration(
-                                                        filled: true,
-                                                        counterText: "",
-                                                        fillColor: Colors.white,
-                                                      ),
-                                                      maxLength: 245,
-                                                    ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: RaisedButton(
-                                                child:
-                                                    Center(child: Text('Post')),
-                                                onPressed: (cardData
-                                                            .commented ||
-                                                        inputText.length < 15)
-                                                    ? null
-                                                    : buttonCallback),
-                                          )
+                                                          color: Colors.grey))),
+                                              onPressed: null)
                                         ],
                                       ),
-                                    )
-                                  ],
-                                ),
-                              )));
-                    } else if (snapshot.hasError) {
-                      return Container(
-                          child: Center(
-                              child: Text(
-                                  'Something went wrong with fetching the comments!')));
-                    }
-                    return Container(
-                        child: Center(
-                            child: Text(
-                                'Something went wrong with fetching the comments!')));
-                  });
-            }
-            if (snapshot.connectionState == ConnectionState.waiting ||
-                snapshot.connectionState == ConnectionState.active) {
-              return SafeArea(
-                child: Container(
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                          colors: splashScreenColors,
-                          begin: Alignment.bottomLeft,
-                          end: Alignment.topRight)),
-                  child: Column(children: [
-                    Expanded(
-                        flex: 5,
-                        child: Container(
-                            child: Center(
-                                child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Image.asset('assets/logo.png', width: 200),
-                            SizedBox(height: 30),
-                            SpinKitThreeBounce(
-                              color: spinnerColor,
-                              size: 60,
-                            ),
+                                      Divider(color: Colors.black),
+                                      SizedBox(height: 10),
+                                    ],
+                                  ),
+                                )),
                           ],
-                        ))))
-                  ]),
-                ),
-              );
+                        ),
+                      )));
             } else {
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
                 setState(() {
@@ -443,9 +962,10 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           child: Container(
                               decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                      colors: splashScreenColors,
-                                      begin: Alignment.bottomLeft,
-                                      end: Alignment.topRight)),
+                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              )),
                               child: GestureDetector(
                                 onTap: () {
                                   FocusScope.of(context)
@@ -454,60 +974,126 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 child: Column(
                                   children: [
                                     Expanded(
-                                        flex: 5,
-                                        child: Container(
-                                            child: Center(
-                                                child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Column(
                                           children: [
-                                            Image.asset('assets/logo.png',
-                                                width: 200),
                                             SizedBox(height: 30),
-                                            SpinKitThreeBounce(
-                                              color: spinnerColor,
-                                              size: 60,
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/score.png',
+                                                  width: 40,
+                                                  color: Colors.grey,
+                                                ),
+                                                SizedBox(width: 10),
+                                                Text(cardData.score.toString(),
+                                                    style: enabledUpperBarStyle
+                                                        .copyWith(
+                                                            color: Colors.grey,
+                                                            fontSize: 25))
+                                              ],
                                             ),
+                                            SizedBox(height: 20),
+                                            Text(cardData.text,
+                                                style: disabledUpperBarStyle),
+                                            SizedBox(height: 20),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text('Comments',
+                                                    style:
+                                                        enabledUpperBarStyle),
+                                                Icon(Icons.arrow_drop_down,
+                                                    color:
+                                                        disabledUpperBarColor),
+                                              ],
+                                            ),
+                                            Divider(
+                                                color: disabledUpperBarColor),
+                                            SizedBox(height: 20),
+                                            Expanded(
+                                                flex: 5,
+                                                child: Container(
+                                                    child: Center(
+                                                        child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Image.asset(
+                                                        'assets/logo.png',
+                                                        width: 200),
+                                                    SizedBox(height: 30),
+                                                    SpinKitThreeBounce(
+                                                      color: spinnerColor,
+                                                      size: 60,
+                                                    ),
+                                                  ],
+                                                ))))
                                           ],
-                                        )))),
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            flex: 3,
-                                            child: Container(
-                                              height: 20.0 * 24,
-                                              child: TextField(
-                                                controller:
-                                                    messageTextController,
-                                                onChanged: (string) {
-                                                  setState(() {
-                                                    inputText = string;
-                                                  });
-                                                },
-                                                onEditingComplete: () {},
-                                                maxLines: 20.toInt(),
-                                                style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 20,
-                                                ),
-                                                decoration: InputDecoration(
-                                                  filled: true,
-                                                  counterText: "",
-                                                  fillColor: Colors.white,
-                                                ),
-                                                maxLength: 245,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                              child: RaisedButton(
-                                            child: Center(child: Text('Post')),
-                                            onPressed: null,
-                                          ))
-                                        ],
+                                        ),
                                       ),
-                                    )
+                                    ),
+                                    Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 20),
+                                          child: Column(
+                                            children: [
+                                              SizedBox(height: 10),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: ConstrainedBox(
+                                                      constraints:
+                                                          BoxConstraints(
+                                                        maxHeight: 300,
+                                                      ),
+                                                      child: TextField(
+                                                        decoration: InputDecoration(
+                                                            hintStyle:
+                                                                disabledUpperBarStyle,
+                                                            hintText: cardData
+                                                                    .commented
+                                                                ? 'You already commented here..'
+                                                                : 'Add a comment...'),
+                                                        maxLines: null,
+                                                        style:
+                                                            disabledUpperBarStyle,
+                                                        controller:
+                                                            messageTextController,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            inputText = value;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  FlatButton(
+                                                    disabledColor:
+                                                        Colors.transparent,
+                                                    color: Colors.transparent,
+                                                    child: Center(
+                                                        child: Text('Post',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .grey))),
+                                                    onPressed: null,
+                                                  )
+                                                ],
+                                              ),
+                                              Divider(color: Colors.black),
+                                              SizedBox(height: 10),
+                                            ],
+                                          ),
+                                        )),
                                   ],
                                 ),
                               )));
@@ -516,31 +1102,24 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       Widget noCommentsWidget;
                       if (snapshot.data.docs.length == 0) {
                         noCommentsWidget = (Center(
-                            child:
-                                Comment(comment: "There are no comments yet")));
+                            child: Center(
+                                child: Text('There are no comments yet!'))));
                       } else {
                         for (var doc in snapshot.data.docs) {
                           comments.add(Center(
-                              child: Comment(comment: doc.get('comment'))));
-                          comments.add(Padding(
-                            padding:
-                                const EdgeInsets.only(left: 40.0, right: 40.0),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Divider(
-                                color: Colors.red,
-                              ),
-                            ),
-                          ));
+                              child: Comment(
+                                  comment: doc.get('comment'),
+                                  timestamp: doc.get('time'))));
                         }
                       }
                       return SafeArea(
                           child: Container(
                               decoration: BoxDecoration(
                                   gradient: LinearGradient(
-                                      colors: splashScreenColors,
-                                      begin: Alignment.bottomLeft,
-                                      end: Alignment.topRight)),
+                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              )),
                               child: GestureDetector(
                                 onTap: () {
                                   FocusScope.of(context)
@@ -549,77 +1128,384 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 child: Column(
                                   children: [
                                     Expanded(
-                                        flex: 5,
-                                        child: noCommentsWidget != null
-                                            ? noCommentsWidget
-                                            : Center(
-                                                child: Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 8.0,
-                                                    bottom: 8.0,
-                                                    left: 8.0,
-                                                    right: 8.0),
-                                                child: ListView(
-                                                    shrinkWrap: true,
-                                                    reverse: true,
-                                                    children: comments),
-                                              ))),
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            flex: 3,
-                                            child: Container(
-                                              height: 20.0 * 24,
-                                              child: TextField(
-                                                controller:
-                                                    messageTextController,
-                                                onChanged: (string) {
-                                                  setState(() {
-                                                    inputText = string;
-                                                  });
-                                                },
-                                                onEditingComplete: () {},
-                                                maxLines: 20.toInt(),
-                                                style: TextStyle(
-                                                  color: Colors.black,
-                                                  fontSize: 20,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Column(
+                                          children: [
+                                            SizedBox(height: 30),
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/score.png',
+                                                  width: 40,
+                                                  color: Colors.grey,
                                                 ),
-                                                decoration: InputDecoration(
-                                                  filled: true,
-                                                  counterText: "",
-                                                  fillColor: Colors.white,
-                                                ),
-                                                maxLength: 245,
-                                              ),
+                                                SizedBox(width: 10),
+                                                Text(cardData.score.toString(),
+                                                    style: enabledUpperBarStyle
+                                                        .copyWith(
+                                                            color: Colors.grey,
+                                                            fontSize: 25))
+                                              ],
                                             ),
-                                          ),
-                                          Expanded(
-                                            child: RaisedButton(
-                                                child:
-                                                    Center(child: Text('Post')),
-                                                onPressed: (cardData
-                                                            .commented ||
-                                                        inputText.length < 15)
-                                                    ? null
-                                                    : buttonCallback),
-                                          )
-                                        ],
+                                            SizedBox(height: 20),
+                                            Text(cardData.text,
+                                                style: disabledUpperBarStyle),
+                                            SizedBox(height: 20),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text('Comments',
+                                                    style:
+                                                        enabledUpperBarStyle),
+                                                Icon(Icons.arrow_drop_down,
+                                                    color:
+                                                        disabledUpperBarColor),
+                                              ],
+                                            ),
+                                            Divider(
+                                                color: disabledUpperBarColor),
+                                            SizedBox(height: 20),
+                                            Expanded(
+                                                flex: 5,
+                                                child: noCommentsWidget != null
+                                                    ? noCommentsWidget
+                                                    : Center(
+                                                        child: ListView(
+                                                            shrinkWrap: false,
+                                                            reverse: false,
+                                                            children:
+                                                                comments))),
+                                          ],
+                                        ),
                                       ),
-                                    )
+                                    ),
+                                    Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 20),
+                                          child: Column(
+                                            children: [
+                                              SizedBox(height: 10),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: ConstrainedBox(
+                                                      constraints:
+                                                          BoxConstraints(
+                                                        maxHeight: 300,
+                                                      ),
+                                                      child: TextField(
+                                                        decoration: InputDecoration(
+                                                            hintStyle:
+                                                                disabledUpperBarStyle,
+                                                            hintText: cardData
+                                                                    .commented
+                                                                ? 'You already commented here..'
+                                                                : 'Add a comment...'),
+                                                        maxLines: null,
+                                                        style:
+                                                            disabledUpperBarStyle,
+                                                        controller:
+                                                            messageTextController,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            inputText = value;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  FlatButton(
+                                                      disabledColor:
+                                                          Colors.transparent,
+                                                      color: Colors.transparent,
+                                                      child: Center(
+                                                          child: Text('Post',
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .blue))),
+                                                      onPressed: (cardData
+                                                                  .commented ||
+                                                              inputText.length <
+                                                                  15)
+                                                          ? null
+                                                          : buttonCallback)
+                                                ],
+                                              ),
+                                              Divider(color: Colors.black),
+                                              SizedBox(height: 10),
+                                            ],
+                                          ),
+                                        )),
                                   ],
                                 ),
                               )));
                     } else if (snapshot.hasError) {
-                      return Container(
-                          child: Center(
-                              child: Text(
-                                  'Something went wrong with fetching the comments!')));
+                      return SafeArea(
+                          child: Container(
+                              decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              )),
+                              child: GestureDetector(
+                                onTap: () {
+                                  FocusScope.of(context)
+                                      .requestFocus(new FocusNode());
+                                },
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Column(
+                                          children: [
+                                            SizedBox(height: 30),
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/score.png',
+                                                  width: 40,
+                                                  color: Colors.grey,
+                                                ),
+                                                SizedBox(width: 10),
+                                                Text(cardData.score.toString(),
+                                                    style: enabledUpperBarStyle
+                                                        .copyWith(
+                                                            color: Colors.grey,
+                                                            fontSize: 25))
+                                              ],
+                                            ),
+                                            SizedBox(height: 20),
+                                            Text(cardData.text,
+                                                style: disabledUpperBarStyle),
+                                            SizedBox(height: 20),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text('Comments',
+                                                    style:
+                                                        enabledUpperBarStyle),
+                                                Icon(Icons.arrow_drop_down,
+                                                    color:
+                                                        disabledUpperBarColor),
+                                              ],
+                                            ),
+                                            Divider(
+                                                color: disabledUpperBarColor),
+                                            SizedBox(height: 20),
+                                            Expanded(
+                                                child: Center(
+                                                    child: Text(
+                                                        'Something went wrong with fetching the comments...',
+                                                        style:
+                                                            disabledUpperBarStyle)))
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 20),
+                                          child: Column(
+                                            children: [
+                                              SizedBox(height: 10),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: ConstrainedBox(
+                                                      constraints:
+                                                          BoxConstraints(
+                                                        maxHeight: 300,
+                                                      ),
+                                                      child: TextField(
+                                                        decoration: InputDecoration(
+                                                            hintStyle:
+                                                                disabledUpperBarStyle,
+                                                            hintText: cardData
+                                                                    .commented
+                                                                ? 'You already commented here..'
+                                                                : 'Add a comment...'),
+                                                        maxLines: null,
+                                                        style:
+                                                            disabledUpperBarStyle,
+                                                        controller:
+                                                            messageTextController,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            inputText = value;
+                                                          });
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  FlatButton(
+                                                      disabledColor:
+                                                          Colors.transparent,
+                                                      color: Colors.transparent,
+                                                      child: Center(
+                                                          child: Text('Post',
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .blue))),
+                                                      onPressed: (cardData
+                                                                  .commented ||
+                                                              inputText.length <
+                                                                  15)
+                                                          ? null
+                                                          : buttonCallback)
+                                                ],
+                                              ),
+                                              Divider(color: Colors.black),
+                                              SizedBox(height: 10),
+                                            ],
+                                          ),
+                                        )),
+                                  ],
+                                ),
+                              )));
                     }
-                    return Container(
-                        child: Center(
-                            child: Text(
-                                'Something went wrong with fetching the comments!')));
+                    return SafeArea(
+                        child: Container(
+                            decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                              colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                            )),
+                            child: GestureDetector(
+                              onTap: () {
+                                FocusScope.of(context)
+                                    .requestFocus(new FocusNode());
+                              },
+                              child: Column(
+                                children: [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20),
+                                      child: Column(
+                                        children: [
+                                          SizedBox(height: 30),
+                                          Row(
+                                            children: [
+                                              Image.asset(
+                                                'assets/score.png',
+                                                width: 40,
+                                                color: Colors.grey,
+                                              ),
+                                              SizedBox(width: 10),
+                                              Text(cardData.score.toString(),
+                                                  style: enabledUpperBarStyle
+                                                      .copyWith(
+                                                          color: Colors.grey,
+                                                          fontSize: 25))
+                                            ],
+                                          ),
+                                          SizedBox(height: 20),
+                                          Text(cardData.text,
+                                              style: disabledUpperBarStyle),
+                                          SizedBox(height: 20),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text('Comments',
+                                                  style: enabledUpperBarStyle),
+                                              Icon(Icons.arrow_drop_down,
+                                                  color: disabledUpperBarColor),
+                                            ],
+                                          ),
+                                          Divider(color: disabledUpperBarColor),
+                                          SizedBox(height: 20),
+                                          Expanded(
+                                              child: Center(
+                                                  child: Text(
+                                                      'Something went wrong with fetching the comments...',
+                                                      style:
+                                                          disabledUpperBarStyle)))
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20),
+                                        child: Column(
+                                          children: [
+                                            SizedBox(height: 10),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: ConstrainedBox(
+                                                    constraints: BoxConstraints(
+                                                      maxHeight: 300,
+                                                    ),
+                                                    child: TextField(
+                                                      decoration: InputDecoration(
+                                                          hintStyle:
+                                                              disabledUpperBarStyle,
+                                                          hintText: cardData
+                                                                  .commented
+                                                              ? 'You already commented here..'
+                                                              : 'Add a comment...'),
+                                                      maxLines: null,
+                                                      style:
+                                                          disabledUpperBarStyle,
+                                                      controller:
+                                                          messageTextController,
+                                                      onChanged: (value) {
+                                                        setState(() {
+                                                          inputText = value;
+                                                        });
+                                                      },
+                                                    ),
+                                                  ),
+                                                ),
+                                                FlatButton(
+                                                    disabledColor:
+                                                        Colors.transparent,
+                                                    color: Colors.transparent,
+                                                    child: Center(
+                                                        child: Text('Post',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .blue))),
+                                                    onPressed: (cardData
+                                                                .commented ||
+                                                            inputText.length <
+                                                                15)
+                                                        ? null
+                                                        : buttonCallback)
+                                              ],
+                                            ),
+                                            Divider(color: Colors.black),
+                                            SizedBox(height: 10),
+                                          ],
+                                        ),
+                                      )),
+                                ],
+                              ),
+                            )));
                   });
             }
           }),
@@ -628,11 +1514,29 @@ class _CommentsScreenState extends State<CommentsScreen> {
 }
 
 class Comment extends StatelessWidget {
-  Comment({this.comment});
+  Comment({this.comment, this.timestamp}) {
+    DateTime time =
+        DateTime.fromMillisecondsSinceEpoch((this.timestamp * 1000).toInt());
+    date = '${time.day}.${time.month}.${time.year}';
+  }
   final String comment;
+  final double timestamp;
+  String date;
   @override
   Widget build(BuildContext context) {
-    return Text(comment,
-        style: AUTHOR_CARD_TEXT_STYLE, textAlign: TextAlign.center);
+    return Container(
+        child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Posted on: ' + date,
+            style: disabledUpperBarStyle.copyWith(
+                fontSize: 10, fontStyle: FontStyle.italic)),
+        SizedBox(height: 20),
+        Text(comment, style: enabledUpperBarStyle),
+        SizedBox(height: 20),
+        DottedLine(dashColor: disabledUpperBarColor),
+        SizedBox(height: 20),
+      ],
+    ));
   }
 }

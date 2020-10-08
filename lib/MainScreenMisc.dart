@@ -64,6 +64,55 @@ class LikeIndicator extends StatelessWidget {
   }
 }
 
+class DeleteIdeaPopup extends StatefulWidget {
+  DeleteIdeaPopup(this.future, this.callback);
+  Future<void> future;
+  Function callback;
+  @override
+  _DeleteIdeaPopupState createState() => _DeleteIdeaPopupState();
+}
+
+class _DeleteIdeaPopupState extends State<DeleteIdeaPopup> {
+  bool triggeredCallback = false;
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+        title: Text('Deleting idea...'),
+        content: FutureBuilder(
+          future: widget.future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting ||
+                snapshot.connectionState == ConnectionState.active) {
+              return Container(
+                width: 200,
+                height: 200,
+                child: Center(
+                    child: SpinKitThreeBounce(color: Colors.white, size: 50)),
+              );
+            }
+            if (snapshot.connectionState == ConnectionState.done) {
+              if (!triggeredCallback) {
+                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                  widget.callback();
+                });
+                triggeredCallback = true;
+              }
+              return Container(
+                  width: 200,
+                  height: 200,
+                  child: Center(child: Text('Deleted!')));
+            }
+            return Container(
+              width: 200,
+              height: 200,
+              child: Center(
+                  child: SpinKitThreeBounce(color: Colors.white, size: 50)),
+            );
+          },
+        ));
+  }
+}
+
 class ReportPopup extends StatefulWidget {
   ReportPopup(this.future, this.anonymous, this.reported);
   final bool reported;

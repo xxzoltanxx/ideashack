@@ -102,7 +102,8 @@ class CardData {
       this.commented,
       this.posterId,
       this.isAd = false,
-      this.reported = false});
+      this.reported = false,
+      @required this.time});
   bool isAd;
   String text;
   int score;
@@ -113,6 +114,7 @@ class CardData {
   bool commented;
   String posterId;
   bool reported;
+  double time;
 }
 
 class NotificationData {

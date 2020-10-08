@@ -54,7 +54,8 @@ class CardList {
             text: doc.get('body'),
             comments: doc.get('commentsNum'),
             posterId: doc.get('userid'),
-            commented: commented));
+            commented: commented,
+            time: doc.get('postTime')));
       }
     } catch (e) {
       print(e);
@@ -120,7 +121,8 @@ class CardList {
                 text: doc.get('body'),
                 status: upvoteStatus,
                 comments: doc.get('commentsNum'),
-                commented: commented));
+                commented: commented,
+                time: doc.get('postTime')));
           }
         }
         if (snapshot.docs.length < QUERY_SIZE) {
@@ -188,7 +190,8 @@ class CardList {
                 status: upvoteStatus,
                 comments: doc.get('commentsNum'),
                 commented: commented,
-                reported: reported));
+                reported: reported,
+                time: doc.get('postTime')));
           }
         }
         if (snapshot.docs.length < QUERY_SIZE) {
@@ -378,7 +381,8 @@ class CardList {
               status: upvoteStatus,
               comments: doc.get('commentsNum'),
               commented: commented,
-              reported: reported));
+              reported: reported,
+              time: doc.get('postTime')));
         }
         if (snapshot.docs.length < QUERY_SIZE) {
           lastDocumentSnapshot = null;
@@ -460,7 +464,8 @@ class CardList {
               status: upvoteStatus,
               comments: doc.get('commentsNum'),
               commented: commented,
-              reported: reported));
+              reported: reported,
+              time: doc.get('postTime')));
         }
         if (snapshot.docs.length < QUERY_SIZE) {
           lastDocumentSnapshot = null;

@@ -132,9 +132,8 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  bool fadingIn = true;
   AnimationController controller;
-  bool isLockedSwipe = true;
+  bool isLockedSwipe = false;
   bool deletingCard = false;
   List<Widget> stackCards = [];
   CardData currentCardData;
@@ -365,10 +364,6 @@ class _MainPageState extends State<MainPage>
 
     controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        if (fadingIn) {
-          fadingIn = false;
-          isLockedSwipe = false;
-        }
         if (deletingCard) {
           popCard();
           deletingCard = false;
@@ -683,8 +678,6 @@ class _MainPageState extends State<MainPage>
                   _settingModalBottomSheet(context, InfoSheet.Register);
                   return;
                 }
-                fadingIn = true;
-                controller.forward(from: 0.0);
                 if (number == 1) {
                   setState(() {
                     fetchNum = 0;
@@ -719,9 +712,7 @@ class _MainPageState extends State<MainPage>
                         colors: splashScreenColors,
                         begin: Alignment.bottomLeft,
                         end: Alignment.topRight)),
-                child: Opacity(
-                    opacity: fadingIn ? animation.value : 1,
-                    child: bodyWidget)),
+                child: bodyWidget),
           ));
     }
     if (firstBuild) {
@@ -1469,8 +1460,6 @@ class _MainPageState extends State<MainPage>
                 _settingModalBottomSheet(context, InfoSheet.Register);
                 return;
               }
-              fadingIn = true;
-              controller.forward(from: 0.0);
               if (number == 1) {
                 setState(() {
                   fetchNum = 0;
@@ -1505,8 +1494,7 @@ class _MainPageState extends State<MainPage>
                       colors: splashScreenColors,
                       begin: Alignment.bottomLeft,
                       end: Alignment.topRight)),
-              child: Opacity(
-                  opacity: fadingIn ? animation.value : 1, child: bodyWidget)),
+              child: bodyWidget),
         ));
   }
 }

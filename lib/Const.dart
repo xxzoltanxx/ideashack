@@ -135,6 +135,8 @@ class GlobalController {
     return _instance;
   }
 
+  bool initedTime = false;
+  int timeOffset = 0;
   int canMessage = 0;
   QueryDocumentSnapshot parameters;
   double adLockTime = 5.0;
@@ -253,6 +255,7 @@ class GlobalController {
           .collection('users')
           .where('uid', isEqualTo: currentUserUid)
           .get();
+      print("FETCHED POST");
       if (userDocId == null) {
         userDocId = user.docs[0].id;
       }
@@ -272,14 +275,16 @@ class GlobalController {
           await Firestore.instance.collection('users').doc(userDocId).update({
             'lastSeen': nowseconds,
             'dailyPosts': BASE_DAILY_POSTS,
-            'canInitializeMessage': 1
+            'canInitializeMessage': 1,
+            'lastSeen': nowseconds
           });
-          canMessage = 1;
           dailyyPosts = BASE_DAILY_POSTS.toInt();
-        } else {
+        } else if (canMessage == 0) {
           await Firestore.instance.collection('users').doc(userDocId).update({
             'lastSeen': nowseconds,
+            'canInitializeMessage': 1,
           });
+          canMessage = 1;
         }
       } else {
         await Firestore.instance
@@ -298,13 +303,25 @@ class GlobalController {
 }
 
 Future<double> getCurrentTimestampServer() async {
-  final DateTime localTime = DateTime.now();
-  final int offset = await NTP.getNtpOffset(
-    lookUpAddress: 'time.google.com',
-    localTime: localTime,
-  );
-  DateTime time = DateTime.now().add(Duration(milliseconds: offset));
-  return time.millisecondsSinceEpoch / 1000;
+  try {
+    if (GlobalController.get().initedTime == false) {
+      print("INITED TIME");
+      final DateTime localTime = DateTime.now();
+      final int offset = await NTP.getNtpOffset(
+        lookUpAddress: 'time.cloudflare.com',
+        localTime: localTime,
+      );
+      GlobalController.get().timeOffset = offset;
+      GlobalController.get().initedTime = true;
+    }
+    print("GOT TIME");
+    DateTime time = DateTime.now()
+        .add(Duration(milliseconds: GlobalController.get().timeOffset));
+    return time.millisecondsSinceEpoch / 1000;
+  } catch (e) {
+    print(e);
+    return 0;
+  }
 }
 
 final spamFilter = Filter();

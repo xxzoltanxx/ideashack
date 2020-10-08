@@ -26,7 +26,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   Future<void> initializeApp() async {
     try {
       await Firebase.initializeApp();
-      Firestore.instance.settings = Settings(persistenceEnabled: false);
+      Firestore.instance.settings = Settings(
+        persistenceEnabled: false,
+      );
       print("INITIALIZED");
     } catch (e) {
       print("EXCEPTION");

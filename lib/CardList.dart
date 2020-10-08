@@ -134,6 +134,7 @@ class CardList {
             .where('uid', isEqualTo: GlobalController.get().currentUserUid)
             .get();
         var userDataSnapshot = userDataSnapshotList.docs[0];
+        await doTimecheck(userDataSnapshot);
         var upvotedSet = userDataSnapshot.get('upvoted').toSet();
         var downvotedSet = userDataSnapshot.get('downvoted').toSet();
         var commentedSet = userDataSnapshot.get('commented').toSet();
@@ -198,7 +199,6 @@ class CardList {
       }
     } catch (e) {
       cardsData.clear();
-      print(e);
     }
     if (lambda != null) lambda();
   }
@@ -240,7 +240,6 @@ class CardList {
         posterId: snapshot.get('userid'),
       );
     } catch (e) {
-      print(e);
       return CardData(
         text: "",
         score: 0,
@@ -256,13 +255,71 @@ class CardList {
     }
   }
 
-  Future<void> getNextBatch({Function lambda, bool trending}) async {
+  Future<void> doTimecheck(var userDataSnapshot) async {
+    try {
+      print("STARTED TIMECHECK");
+      var now = await getCurrentTimestampServer();
+      DateTime time =
+          new DateTime.fromMillisecondsSinceEpoch((now * 1000).toInt());
+      final lastMidnight =
+          new DateTime(time.year, time.month, time.day).toUtc();
+      final nowseconds = now;
+      final lastMidnightSeconds = lastMidnight.millisecondsSinceEpoch / 1000;
+      print("FETCHED POST");
+      if (GlobalController.get().userDocId == null) {
+        GlobalController.get().userDocId = userDataSnapshot.id;
+      }
+      double lastSeen = userDataSnapshot.get('lastSeen');
+      //lol
+      int dailyyPosts = userDataSnapshot.get('dailyPosts').toInt();
+      int canMessage;
+      try {
+        canMessage = userDataSnapshot.get('canInitializeMessage');
+      } catch (e) {
+        if (canMessage == null) {
+          canMessage = 0;
+        }
+      }
+      if (lastMidnightSeconds > lastSeen) {
+        if (dailyyPosts < BASE_DAILY_POSTS) {
+          await Firestore.instance
+              .collection('users')
+              .doc(GlobalController.get().userDocId)
+              .update({
+            'lastSeen': nowseconds,
+            'dailyPosts': BASE_DAILY_POSTS,
+            'canInitializeMessage': 1,
+            'lastSeen': nowseconds
+          });
+          dailyyPosts = BASE_DAILY_POSTS.toInt();
+        } else if (canMessage == 0) {
+          await Firestore.instance
+              .collection('users')
+              .doc(GlobalController.get().userDocId)
+              .update({
+            'lastSeen': nowseconds,
+            'canInitializeMessage': 1,
+          });
+          canMessage = 1;
+        }
+      } else {
+        await Firestore.instance
+            .collection('users')
+            .doc(GlobalController.get().userDocId)
+            .update({'lastSeen': nowseconds});
+      }
+      GlobalController.get().canMessage = canMessage;
+      GlobalController.get().dailyPosts = dailyyPosts;
+    } catch (e) {}
+  }
+
+  Future<void> getNextBatch(
+      {Function lambda, bool trending, Function debugFunc = null}) async {
     try {
       print("GETTING NEXT BATCH");
       if (GlobalController.get().currentUser.isAnonymous) {
         QuerySnapshot snapshot;
         UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
-        var timestamp = await getCurrentTimestampServer();
         if (!trending) {
           if (lastDocumentSnapshot != null) {
             snapshot = await _firestoreInstance
@@ -335,7 +392,7 @@ class CardList {
             .where('uid', isEqualTo: GlobalController.get().currentUserUid)
             .get();
         var userDataSnapshot = userDataSnapshotList.docs[0];
-
+        await doTimecheck(userDataSnapshot);
         var upvotedSet = userDataSnapshot.get('upvoted').toSet();
         var downvotedSet = userDataSnapshot.get('downvoted').toSet();
         var commentedSet = userDataSnapshot.get('commented').toSet();
@@ -377,6 +434,10 @@ class CardList {
                 .get();
           }
         }
+        print("GOT A SNAPSHOT");
+        if (debugFunc != null) {
+          debugFunc();
+        }
         var doxs = snapshot.docs;
         cardsData.clear();
         for (var doc in doxs) {
@@ -410,7 +471,6 @@ class CardList {
       }
     } catch (e) {
       cardsData.clear();
-      print(e);
     }
     if (lambda != null) lambda();
   }

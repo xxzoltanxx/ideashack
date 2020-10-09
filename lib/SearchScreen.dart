@@ -152,16 +152,26 @@ class _SearchBarState extends State<SearchBar> {
   Future<QuerySnapshot> snapshot;
   String searchString = "#";
   TextEditingController controller;
+  Stream<QuerySnapshot> querySnapshot;
   GlobalKey key;
+  GlobalKey key1;
+  GlobalKey key2;
   @override
   void initState() {
     key = GlobalKey<AutoCompleteTextFieldState<String>>();
+    key1 = GlobalKey<AutoCompleteTextFieldState<String>>();
+    key2 = GlobalKey<AutoCompleteTextFieldState<String>>();
     snapshot = Firestore.instance
         .collection('hashtags')
         .orderBy('popularity', descending: true)
         .limit(HASH_TAG_LIMIT)
         .get();
     controller = TextEditingController(text: searchString);
+    querySnapshot = Firestore.instance
+        .collection('hashtags')
+        .orderBy('popularity', descending: true)
+        .limit(5)
+        .snapshots();
     super.initState();
   }
 
@@ -178,11 +188,69 @@ class _SearchBarState extends State<SearchBar> {
           if (snapshot.connectionState == ConnectionState.active ||
               snapshot.connectionState == ConnectionState.waiting) {
             return Container(
-                child: Center(
-                    child: Text(
-              'Fetching tags...',
-              style: disabledUpperBarStyle,
-            )));
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 50,
+                        child: StreamBuilder(
+                            stream: querySnapshot,
+                            builder: (context, snapshot) {
+                              List<String> suggestions = [];
+                              if (snapshot.data != null &&
+                                  snapshot.data.docs != null)
+                                for (var doc in snapshot.data.docs) {
+                                  suggestions.add(doc.get('tag'));
+                                }
+                              return SimpleAutoCompleteTextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Search tags...',
+                                  enabledBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(
+                                    color: Colors.grey,
+                                  )),
+                                  disabledBorder: UnderlineInputBorder(
+                                      borderSide: BorderSide(
+                                    color: Colors.grey,
+                                  )),
+                                  border: UnderlineInputBorder(
+                                      borderSide: BorderSide(
+                                    color: Colors.grey,
+                                  )),
+                                ),
+                                style: TextStyle(color: disabledUpperBarColor),
+                                suggestionsAmount: 5,
+                                textSubmitted: (string) {
+                                  print('submited');
+                                  searchString = string;
+                                  callback();
+                                },
+                                controller: controller,
+                                key: key2,
+                                suggestions: suggestions,
+                                textChanged: (str) {
+                                  setState(() {
+                                    querySnapshot = Firestore.instance
+                                        .collection('hashtags')
+                                        .where('tag',
+                                            isGreaterThanOrEqualTo: str)
+                                        .where('tag',
+                                            isLessThanOrEqualTo: str + '\uf8ff')
+                                        .limit(HASH_TAG_LIMIT)
+                                        .snapshots();
+                                    searchString = str;
+                                  });
+                                },
+                              );
+                            }),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
           if (snapshot.hasError) {
             return Container(
@@ -220,7 +288,7 @@ class _SearchBarState extends State<SearchBar> {
                               callback();
                             },
                             onFocusChanged: (hasFocus) {},
-                            key: key,
+                            key: key1,
                             suggestions: [],
                             textChanged: (str) {
                               searchString = str;
@@ -233,10 +301,6 @@ class _SearchBarState extends State<SearchBar> {
                 ),
               );
             } else {
-              List<String> suggestions = [];
-              for (var doc in snapshot.data.docs) {
-                suggestions.add(doc.get('tag'));
-              }
               return Container(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -245,36 +309,66 @@ class _SearchBarState extends State<SearchBar> {
                       Expanded(
                         child: Container(
                           height: 50,
-                          child: SimpleAutoCompleteTextField(
-                            decoration: InputDecoration(
-                              hintText: 'Search tags...',
-                              enabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                color: Colors.grey,
-                              )),
-                              disabledBorder: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                color: Colors.grey,
-                              )),
-                              border: UnderlineInputBorder(
-                                  borderSide: BorderSide(
-                                color: Colors.grey,
-                              )),
-                            ),
-                            style: TextStyle(color: disabledUpperBarColor),
-                            suggestionsAmount: 5,
-                            textSubmitted: (string) {
-                              print('submited');
-                              searchString = string;
-                              callback();
-                            },
-                            controller: controller,
-                            key: key,
-                            suggestions: suggestions,
-                            textChanged: (str) {
-                              searchString = str;
-                            },
-                          ),
+                          child: StreamBuilder(
+                              stream: querySnapshot,
+                              builder: (context, snapshot) {
+                                List<String> suggestionss = [];
+                                if (snapshot.data != null &&
+                                    snapshot.data.docs != null)
+                                  for (var doc in snapshot.data.docs) {
+                                    suggestionss.add(doc.get('tag'));
+                                  }
+                                AutoCompleteTextFieldState<String> state =
+                                    key.currentState;
+                                if (state != null) {
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((timeStamp) {
+                                    state.updateSuggestions(suggestionss);
+                                  });
+                                }
+                                return SimpleAutoCompleteTextField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Search tags...',
+                                    enabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                      color: Colors.grey,
+                                    )),
+                                    disabledBorder: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                      color: Colors.grey,
+                                    )),
+                                    border: UnderlineInputBorder(
+                                        borderSide: BorderSide(
+                                      color: Colors.grey,
+                                    )),
+                                  ),
+                                  style:
+                                      TextStyle(color: disabledUpperBarColor),
+                                  suggestionsAmount: 5,
+                                  textSubmitted: (string) {
+                                    print('submited');
+                                    searchString = string;
+                                    callback();
+                                  },
+                                  controller: controller,
+                                  key: key,
+                                  suggestions: suggestionss,
+                                  textChanged: (str) {
+                                    setState(() {
+                                      querySnapshot = Firestore.instance
+                                          .collection('hashtags')
+                                          .where('tag',
+                                              isGreaterThanOrEqualTo: str)
+                                          .where('tag',
+                                              isLessThanOrEqualTo:
+                                                  str + '\uf8ff')
+                                          .limit(HASH_TAG_LIMIT)
+                                          .snapshots();
+                                      searchString = str;
+                                    });
+                                  },
+                                );
+                              }),
                         ),
                       ),
                     ],

@@ -167,7 +167,8 @@ class _MainPageState extends State<MainPage>
   AlignmentSt frontCardAlign;
   double frontCardRot = 0.0;
 
-  Future<void> reportPost() async {
+  Future<void> reportPost(
+      String reason, String reporterId, String objection) async {
     try {
       var docs = await Firestore.instance
           .collection('reportedPosts')
@@ -178,8 +179,20 @@ class _MainPageState extends State<MainPage>
           await Firestore.instance.collection('reportedPosts').add(
               {'postid': currentCardData.id, 'anonReports': 1, 'reports': 0});
         } else {
-          await Firestore.instance.collection('reportedPosts').add(
-              {'postid': currentCardData.id, 'reports': 1, 'anonReports': 0});
+          var ref = await Firestore.instance.collection('reportedPosts').add({
+            'postid': currentCardData.id,
+            'reports': 1,
+            'anonReports': 0,
+          });
+          await Firestore.instance
+              .collection('reportedPosts')
+              .doc(ref.id)
+              .collection('reports')
+              .add({
+            'reason': reason,
+            'reporterId': reporterId,
+            'objection': objection
+          });
         }
       } else {
         if (user.isAnonymous) {
@@ -192,6 +205,15 @@ class _MainPageState extends State<MainPage>
               .collection('reportedPosts')
               .doc(docs.docs[0].id)
               .update({'reports': FieldValue.increment(1)});
+          await Firestore.instance
+              .collection('reportedPosts')
+              .doc(docs.docs[0].id)
+              .collection('reports')
+              .add({
+            'reason': reason,
+            'reporterId': reporterId,
+            'objection': objection
+          });
         }
       }
       if (!user.isAnonymous) {
@@ -212,9 +234,10 @@ class _MainPageState extends State<MainPage>
     showDialog(
         context: context,
         builder: (_) => ReportPopup(
-            !currentCardData.reported ? reportPost() : null,
-            user.isAnonymous,
-            currentCardData.reported));
+              user.isAnonymous,
+              currentCardData.reported,
+              !currentCardData.reported ? reportPost : null,
+            ));
   }
 
   void onFetchUserTimestampsCallback(int newPosts) {

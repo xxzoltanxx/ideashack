@@ -8,6 +8,7 @@ import 'package:social_share/social_share.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:typed_data';
+import 'package:ideashack/Const.dart';
 
 class DislikeIndicator extends StatelessWidget {
   DislikeIndicator(this.animationProgress, this.didSwipe, this.opacity);
@@ -114,20 +115,48 @@ class _DeleteIdeaPopupState extends State<DeleteIdeaPopup> {
 }
 
 class ReportPopup extends StatefulWidget {
-  ReportPopup(this.future, this.anonymous, this.reported);
+  ReportPopup(this.anonymous, this.reported, this.reportFunction);
   final bool reported;
-  final Future<void> future;
   final bool anonymous;
+  final Function reportFunction;
   @override
   _ReportPopupState createState() => _ReportPopupState();
 }
 
+enum ReportReason { Spam, IlicitContent, Advertisment, Other }
+
 class _ReportPopupState extends State<ReportPopup> {
+  ReportReason reason = ReportReason.Spam;
+  String objectification;
+  String textReason = 'Advertisement';
+
+  Future<void> reportFuture;
+
+  Future<void> report() async {
+    try {
+      await widget.reportFunction(reason.toString(),
+          GlobalController.get().currentUserUid, objectification);
+    } catch (e) {}
+  }
+
+  void onSubmit() {
+    setState(() {
+      reportFuture = report();
+    });
+  }
+
+  ReportReason parseReason(String str) {
+    if (str == 'Advertisement') return ReportReason.Advertisment;
+    if (str == 'Spam') return ReportReason.Spam;
+    if (str == 'Illicit content') return ReportReason.IlicitContent;
+    if (str == 'Other') return ReportReason.Other;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.reported) {
       return AlertDialog(
-          title: Text("Reporting..."),
+          title: Text("Reporting"),
           content: Container(
               width: 200,
               height: 200,
@@ -138,13 +167,75 @@ class _ReportPopupState extends State<ReportPopup> {
               ))));
     }
     return AlertDialog(
-        title: Text("Reporting..."),
+        title: Text("Reporting"),
         content: FutureBuilder(
-          future: widget.future,
+          future: reportFuture,
           builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.none) {
+              return Container(
+                  height: 300,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Center(child: Text('Reason for report:')),
+                      SizedBox(height: 20),
+                      Center(
+                          child: Text(
+                              'Bear in mind that unnecessary reports will get you banned',
+                              style: TextStyle(fontSize: 10))),
+                      DropdownButton<String>(
+                        value: textReason,
+                        items: <ReportReason>[
+                          ReportReason.Spam,
+                          ReportReason.Advertisment,
+                          ReportReason.IlicitContent,
+                          ReportReason.Other
+                        ].map((ReportReason value) {
+                          var text = "";
+                          switch (value) {
+                            case ReportReason.Advertisment:
+                              text = 'Advertisement';
+                              break;
+                            case ReportReason.Spam:
+                              text = 'Spam';
+                              break;
+                            case ReportReason.IlicitContent:
+                              text = 'Illicit content';
+                              break;
+                            case ReportReason.Other:
+                              text = 'Other';
+                              break;
+                          }
+                          return new DropdownMenuItem<String>(
+                            value: text,
+                            child: new Text(text),
+                          );
+                        }).toList(),
+                        onChanged: (String str) {
+                          setState(() {
+                            this.reason = parseReason(str);
+                            textReason = str;
+                          });
+                        },
+                      ),
+                      TextField(
+                          maxLength: 200,
+                          decoration: InputDecoration(
+                              hintText: 'Explain your reason...'),
+                          onChanged: (String newStr) {
+                            objectification = newStr;
+                          }),
+                      RaisedButton(
+                          onPressed: onSubmit,
+                          child: Center(child: Text('Submit'))),
+                    ],
+                  ));
+            }
             if (snapshot.connectionState == ConnectionState.waiting ||
                 snapshot.connectionState == ConnectionState.active) {
               return Container(
+                  width: 200,
+                  height: 200,
                   child: Center(
                       child:
                           SpinKitThreeBounce(size: 50, color: Colors.white)));

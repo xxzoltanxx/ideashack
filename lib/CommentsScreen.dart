@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'Const.dart';
+import 'MainScreenMisc.dart';
 
 class CommentsScreen extends StatefulWidget {
   @override
@@ -407,7 +409,9 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           comments.add(Center(
                               child: Comment(
                                   comment: doc.get('comment'),
-                                  timestamp: doc.get('time'))));
+                                  timestamp: doc.get('time'),
+                                  postId: cardData.id,
+                                  commentId: doc.id)));
                         }
                       }
                       return SafeArea(
@@ -1109,7 +1113,9 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           comments.add(Center(
                               child: Comment(
                                   comment: doc.get('comment'),
-                                  timestamp: doc.get('time'))));
+                                  timestamp: doc.get('time'),
+                                  postId: cardData.id,
+                                  commentId: doc.id)));
                         }
                       }
                       return SafeArea(
@@ -1513,27 +1519,127 @@ class _CommentsScreenState extends State<CommentsScreen> {
   }
 }
 
-class Comment extends StatelessWidget {
-  Comment({this.comment, this.timestamp}) {
+class Comment extends StatefulWidget {
+  Comment({this.comment, this.timestamp, this.postId, this.commentId}) {
     DateTime time =
         DateTime.fromMillisecondsSinceEpoch((this.timestamp * 1000).toInt());
     date = '${time.day}.${time.month}.${time.year}';
   }
+
   final String comment;
   final double timestamp;
+  final String postId;
+  final String commentId;
   String date;
+
+  @override
+  _CommentState createState() => _CommentState();
+}
+
+class _CommentState extends State<Comment> {
+  Future<void> reportPost(
+      String reason, String reporterId, String objection) async {
+    try {
+      User user = GlobalController.get().currentUser;
+      var docs = await Firestore.instance
+          .collection('reportedPosts')
+          .where('postid', isEqualTo: widget.postId)
+          .get();
+      String postDocId = "";
+      if (docs.docs.length == 0) {
+        var ref = await Firestore.instance
+            .collection('reportedPosts')
+            .add({'postid': widget.postId, 'anonReports': 0, 'reports': 0});
+        postDocId = ref.id;
+      } else {
+        postDocId = docs.docs[0].id;
+      }
+      var commentReported = await Firestore.instance
+          .collection('reportedPosts')
+          .doc(postDocId)
+          .collection('comments')
+          .where('commentId', isEqualTo: widget.commentId)
+          .get();
+
+      String commentDocId;
+      if (commentReported.docs.length == 0) {
+        DocumentReference doc;
+        if (user.isAnonymous) {
+          doc = await Firestore.instance
+              .collection('reportedPosts')
+              .doc(postDocId)
+              .collection('comments')
+              .add({
+            'commentId': widget.commentId,
+            'anonReports': 1,
+            'reports': 0
+          });
+        } else {
+          doc = await Firestore.instance
+              .collection('reportedPosts')
+              .doc(postDocId)
+              .collection('comments')
+              .add({
+            'commentId': widget.commentId,
+            'anonReports': 0,
+            'reports': 1
+          });
+        }
+        commentDocId = doc.id;
+      } else {
+        commentDocId = commentReported.docs[0].id;
+      }
+      if (!user.isAnonymous) {
+        await Firestore.instance
+            .collection('reportedPosts')
+            .doc(postDocId)
+            .collection('comments')
+            .doc(commentDocId)
+            .collection('reports')
+            .add({
+          'reporterId': GlobalController.get().currentUserUid,
+          'reason': reason,
+          'objection': objection
+        });
+      }
+    } catch (e) {
+      print(e);
+      throw 1;
+    }
+  }
+
+  void openReportScreen() {
+    showDialog(
+        context: context,
+        builder: (_) => ReportPopup(
+              GlobalController.get().currentUser.isAnonymous,
+              false,
+              reportPost,
+            ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
         child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Posted on: ' + date,
+        Text('Posted on: ' + widget.date,
             style: disabledUpperBarStyle.copyWith(
                 fontSize: 10, fontStyle: FontStyle.italic)),
         SizedBox(height: 20),
-        Text(comment, style: enabledUpperBarStyle),
+        Text(widget.comment, style: enabledUpperBarStyle),
         SizedBox(height: 20),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FlatButton(
+                onPressed: openReportScreen,
+                child: Center(
+                    child: Text('Report',
+                        style: disabledUpperBarStyle.copyWith(fontSize: 10))))
+          ],
+        ),
         DottedLine(dashColor: disabledUpperBarColor),
         SizedBox(height: 20),
       ],

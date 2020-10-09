@@ -339,9 +339,8 @@ class _MainPageState extends State<MainPage>
 
   @override
   void initState() {
-    controllerAdmob.setTestDeviceIds(['738451C1DB43B39858E14A914334CF2A']);
+    //controllerAdmob.setTestDeviceIds(['738451C1DB43B39858E14A914334CF2A']);
     controllerAdmob.setAdUnitID('ca-app-pub-4102451006671600/2649770997');
-    controllerAdmob.reloadAd();
 
     ConnectionStatusSingleton connectionStatus =
         ConnectionStatusSingleton.getInstance();

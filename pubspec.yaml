@@ -45,7 +45,8 @@ dependencies:
   social_share: ^2.0.5
   dotted_line: ^2.0.1
   flutter_native_admob: ^2.1.0+3
-  ntp: ^1.0.7
+  ntp:
+    git: 'https://github.com/knezzz/ntp.git'
   connectivity: ^0.4.9+3
 
 dev_dependencies:

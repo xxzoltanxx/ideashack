@@ -877,22 +877,9 @@ class _MainPageState extends State<MainPage>
                 child: Container(
                   decoration: BoxDecoration(
                       gradient: LinearGradient(
-                          begin: FractionalOffset.bottomLeft,
-                          end: FractionalOffset.topRight,
-                          colors: [
-                            Color.lerp(
-                                bottomLeftStart,
-                                bottomLeftEnd,
-                                (currentCardData.score.toDouble() /
-                                        GlobalController.get().MAX_SCORE)
-                                    .clamp(0.0, 1.0)),
-                            Color.lerp(
-                                topRightStart,
-                                topRightEnd,
-                                (currentCardData.score.toDouble() /
-                                        GlobalController.get().MAX_SCORE)
-                                    .clamp(0.0, 1.0)),
-                          ]),
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)]),
                       boxShadow: [
                         BoxShadow(
                           blurRadius: 20.0,
@@ -904,46 +891,74 @@ class _MainPageState extends State<MainPage>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(height: 30),
-                      Text('Thanks for supporting us!'),
-                      SizedBox(height: 30),
-                      Text(GlobalController.get().isAdLocked
-                          ? 'Take a break for ${adCounter.toInt()} seconds!'
-                          : 'Keep swiping!'),
-                      SizedBox(height: 30),
                       Flexible(
                         child: Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(20.0),
                           child: Container(
-                              decoration:
-                                  BoxDecoration(color: Colors.black45, boxShadow: [
-                                BoxShadow(color: Colors.black45, blurRadius: 20)
-                              ]),
+                              decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border(
+                                      top: BorderSide(color: Colors.black),
+                                      bottom: BorderSide(color: Colors.black),
+                                      left: BorderSide(color: Colors.black),
+                                      right: BorderSide(color: Colors.black))),
                               child: Center(
-                                  child: NativeAdmob(
-                                      error: Center(
-                                          child: Text('No ads to display',
-                                              style: TextStyle(
-                                                  color: Colors.white))),
-                                      adUnitID:
-                                          'ca-app-pub-4102451006671600/2649770997',
-                                      controller: controllerAdmob,
-                                      loading: Center(
-                                          child: SpinKitThreeBounce(
-                                              size: 20, color: Colors.white)),
-                                      type: NativeAdmobType.full,
-                                      options: NativeAdmobOptions(
-                                          callToActionStyle: NativeTextStyle(
-                                              color: Colors.white),
-                                          adLabelTextStyle: NativeTextStyle(
-                                              color: Colors.white),
-                                          bodyTextStyle: NativeTextStyle(
-                                              color: Colors.white),
-                                          headlineTextStyle: NativeTextStyle(color: Colors.white),
-                                          advertiserTextStyle: NativeTextStyle(color: Colors.white),
-                                          storeTextStyle: NativeTextStyle(color: Colors.white),
-                                          showMediaContent: true)))),
+                                  child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: NativeAdmob(
+                                    error: Center(
+                                        child: Text('No ads to display!',
+                                            style: disabledUpperBarStyle)),
+                                    adUnitID:
+                                        'ca-app-pub-4102451006671600/2649770997',
+                                    controller: controllerAdmob,
+                                    loading: Center(
+                                        child: SpinKitThreeBounce(
+                                            size: 20, color: Colors.white)),
+                                    type: NativeAdmobType.full,
+                                    options: NativeAdmobOptions(
+                                        callToActionStyle: NativeTextStyle(
+                                            color: Colors.black),
+                                        adLabelTextStyle: NativeTextStyle(
+                                            color: Colors.black),
+                                        bodyTextStyle: NativeTextStyle(
+                                            color: Colors.black),
+                                        headlineTextStyle: NativeTextStyle(
+                                            color: Colors.black),
+                                        advertiserTextStyle: NativeTextStyle(
+                                            color: Colors.black),
+                                        storeTextStyle: NativeTextStyle(
+                                            color: Colors.black),
+                                        showMediaContent: true)),
+                              ))),
                         ),
                       ),
+                      Text('We are grateful for your support.',
+                          style: disabledUpperBarStyle),
+                      Text('Spark will continue in...',
+                          style: enabledUpperBarStyle),
+                      SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Divider(color: Colors.grey),
+                      ),
+                      SizedBox(height: 20),
+                      GlobalController.get().isAdLocked
+                          ? Text('${adCounter.toInt()}s',
+                              style: enabledUpperBarStyle)
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.arrow_left,
+                                    color: enabledUpperBarColor),
+                                SizedBox(width: 10),
+                                Text('Swipe', style: enabledUpperBarStyle),
+                                SizedBox(width: 10),
+                                Icon(Icons.arrow_right,
+                                    color: enabledUpperBarColor)
+                              ],
+                            ),
+                      SizedBox(height: 20),
                     ],
                   )),
                 ),
@@ -1115,76 +1130,96 @@ class _MainPageState extends State<MainPage>
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
-                                      InkWell(
-                                        child: Text('Message',
-                                            style: GlobalController.get()
-                                                        .canMessage ==
-                                                    1
-                                                ? cardThingsBelowTextStyle
-                                                : cardThingsBelowTextStyle
-                                                    .copyWith(
-                                                        color:
-                                                            Color(0x55894100))),
-                                        onTap: GlobalController.get()
-                                                .currentUser
-                                                .isAnonymous
-                                            ? () {
-                                                _settingModalBottomSheet(
-                                                    context,
-                                                    InfoSheet.Register);
-                                              }
-                                            : GlobalController.get()
-                                                        .canMessage ==
-                                                    1
+                                      Container(
+                                        width: 90,
+                                        child: Center(
+                                          child: InkWell(
+                                            child: Text('Message',
+                                                style: GlobalController.get()
+                                                            .canMessage ==
+                                                        1
+                                                    ? cardThingsBelowTextStyle
+                                                    : cardThingsBelowTextStyle
+                                                        .copyWith(
+                                                            color: Color(
+                                                                0x55894100))),
+                                            onTap: GlobalController.get()
+                                                    .currentUser
+                                                    .isAnonymous
                                                 ? () {
-                                                    Navigator.pushNamed(
-                                                        context, '/message',
-                                                        arguments: <dynamic>[
-                                                          currentCardData.id,
-                                                          GlobalController.get()
-                                                              .currentUserUid,
-                                                          currentCardData
-                                                              .posterId,
-                                                        ]);
-                                                  }
-                                                : () {
                                                     _settingModalBottomSheet(
                                                         context,
-                                                        InfoSheet.OneMessage);
-                                                  },
+                                                        InfoSheet.Register);
+                                                  }
+                                                : GlobalController.get()
+                                                            .canMessage ==
+                                                        1
+                                                    ? () {
+                                                        Navigator.pushNamed(
+                                                            context, '/message',
+                                                            arguments: <
+                                                                dynamic>[
+                                                              currentCardData
+                                                                  .id,
+                                                              GlobalController
+                                                                      .get()
+                                                                  .currentUserUid,
+                                                              currentCardData
+                                                                  .posterId,
+                                                            ]);
+                                                      }
+                                                    : () {
+                                                        _settingModalBottomSheet(
+                                                            context,
+                                                            InfoSheet
+                                                                .OneMessage);
+                                                      },
+                                          ),
+                                        ),
                                       ),
-                                      InkWell(
-                                          onTap: GlobalController.get()
-                                                  .currentUser
-                                                  .isAnonymous
-                                              ? () {
-                                                  _settingModalBottomSheet(
-                                                      context,
-                                                      InfoSheet.Register);
-                                                }
-                                              : () {
-                                                  Navigator.pushNamed(
-                                                      context, '/comments',
-                                                      arguments: <dynamic>[
-                                                        currentCardData,
-                                                        commentsCallback
-                                                      ]);
-                                                },
-                                          child: Text('Comment',
-                                              style: cardThingsBelowTextStyle)),
-                                      InkWell(
-                                          onTap: () {
-                                            repaint = mainWidgetKey
-                                                .currentContext
-                                                .findRenderObject();
-                                            showDialog(
-                                                context: context,
-                                                builder: (_) => SharePopup(
-                                                    repaint,
-                                                    currentCardData.text));
-                                          },
-                                          child: Text('Share',
-                                              style: cardThingsBelowTextStyle))
+                                      Container(
+                                        width: 90,
+                                        child: InkWell(
+                                            onTap: GlobalController.get()
+                                                    .currentUser
+                                                    .isAnonymous
+                                                ? () {
+                                                    _settingModalBottomSheet(
+                                                        context,
+                                                        InfoSheet.Register);
+                                                  }
+                                                : () {
+                                                    Navigator.pushNamed(
+                                                        context, '/comments',
+                                                        arguments: <dynamic>[
+                                                          currentCardData,
+                                                          commentsCallback
+                                                        ]);
+                                                  },
+                                            child: Text(
+                                              'Comment',
+                                              style: cardThingsBelowTextStyle,
+                                              textAlign: TextAlign.center,
+                                            )),
+                                      ),
+                                      Container(
+                                        width: 90,
+                                        child: InkWell(
+                                            onTap: () {
+                                              repaint = mainWidgetKey
+                                                  .currentContext
+                                                  .findRenderObject();
+                                              showDialog(
+                                                  context: context,
+                                                  builder: (_) => SharePopup(
+                                                      repaint,
+                                                      currentCardData.text));
+                                            },
+                                            child: Text('Share',
+                                                textAlign: TextAlign.center,
+                                                style:
+                                                    cardThingsBelowTextStyle)),
+                                      )
                                     ],
                                   ),
                                 )

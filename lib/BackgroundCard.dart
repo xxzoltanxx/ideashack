@@ -12,46 +12,48 @@ class BackgroundCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (cardData.isAd) {
       return Container(
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-                begin: FractionalOffset.bottomLeft,
-                end: FractionalOffset.topRight,
-                colors: [
-                  Color.lerp(
-                      bottomLeftStart,
-                      bottomLeftEnd,
-                      (0.toDouble() / GlobalController.get().MAX_SCORE)
-                          .clamp(0.0, 1.0)),
-                  Color.lerp(
-                      topRightStart,
-                      topRightEnd,
-                      (0.toDouble() / GlobalController.get().MAX_SCORE)
-                          .clamp(0.0, 1.0)),
-                ]),
-          ),
-          child: Center(
-              child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(height: 20),
-              Text('Thanks for supporting us!'),
-              SizedBox(height: 30),
-              Text(
-                  'Take a break for ${GlobalController.get().adLockTime.toInt()} seconds!'),
-              SizedBox(height: 30),
-              Flexible(
-                  child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  decoration: BoxDecoration(color: Colors.black45, boxShadow: [
-                    BoxShadow(color: Colors.black45, blurRadius: 20)
-                  ]),
-                ),
-              ))
-            ],
-          )),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+              begin: Alignment.bottomCenter,
+              end: Alignment.topCenter,
+              colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)]),
         ),
+        child: Center(
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(height: 30),
+            Flexible(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Container(
+                    decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border(
+                            top: BorderSide(color: Colors.black),
+                            bottom: BorderSide(color: Colors.black),
+                            left: BorderSide(color: Colors.black),
+                            right: BorderSide(color: Colors.black))),
+                    child: Center(
+                        child: Center(
+                            child: Text('Oh no! An ad!',
+                                style: disabledUpperBarStyle)))),
+              ),
+            ),
+            Text('We are grateful for your support.',
+                style: disabledUpperBarStyle),
+            Text('Spark will continue in...', style: enabledUpperBarStyle),
+            SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Divider(color: Colors.grey),
+            ),
+            SizedBox(height: 20),
+            Text('${GlobalController.get().adLockTime.toInt()}s',
+                style: enabledUpperBarStyle),
+            SizedBox(height: 20),
+          ],
+        )),
       );
     }
 
@@ -172,22 +174,38 @@ class BackgroundCard extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              InkWell(
-                                  child: Text('Message',
-                                      style: GlobalController.get()
-                                                  .canMessage ==
-                                              1
-                                          ? cardThingsBelowTextStyle
-                                          : cardThingsBelowTextStyle.copyWith(
-                                              color: Color(0x55894100))),
-                                  onTap: null),
-                              InkWell(
-                                  onTap: null,
-                                  child: Text('Comment',
-                                      style: cardThingsBelowTextStyle)),
-                              InkWell(
-                                  child: Text('Share',
-                                      style: cardThingsBelowTextStyle))
+                              Container(
+                                width: 90,
+                                child: Center(
+                                  child: InkWell(
+                                      child: Text('Message',
+                                          style: GlobalController.get()
+                                                      .canMessage ==
+                                                  1
+                                              ? cardThingsBelowTextStyle
+                                              : cardThingsBelowTextStyle
+                                                  .copyWith(
+                                                      color:
+                                                          Color(0x55894100))),
+                                      onTap: null),
+                                ),
+                              ),
+                              Container(
+                                width: 90,
+                                child: InkWell(
+                                    onTap: null,
+                                    child: Text('Comment',
+                                        style: cardThingsBelowTextStyle,
+                                        textAlign: TextAlign.center)),
+                              ),
+                              Container(
+                                width: 90,
+                                child: Center(
+                                  child: InkWell(
+                                      child: Text('Share',
+                                          style: cardThingsBelowTextStyle)),
+                                ),
+                              )
                             ],
                           ),
                         )

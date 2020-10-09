@@ -309,15 +309,24 @@ Future<double> getCurrentTimestampServer() async {
     try {
       print("INITED TIME");
       final DateTime localTime = DateTime.now();
-      final int offset = await NTP.getNtpOffset(
-        lookUpAddress: 'time.cloudflare.com',
-        localTime: localTime,
-      );
+      int offset = 0;
+      bool error = false;
+      do {
+        error = false;
+        try {
+          offset = await NTP.getNtpOffset(
+            timeout: Duration(seconds: 5),
+            lookUpAddress: 'time.cloudflare.com',
+            localTime: localTime,
+          );
+        } catch (e) {
+          error = true;
+        }
+      } while (error == true);
+
       GlobalController.get().timeOffset = offset;
       GlobalController.get().initedTime = true;
-    } catch (e) {
-      print(e);
-    }
+    } catch (e) {}
   }
   print("GOT TIME");
   DateTime time = DateTime.now()

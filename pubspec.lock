@@ -341,9 +341,11 @@ packages:
   ntp:
     dependency: "direct main"
     description:
-      name: ntp
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "."
+      ref: HEAD
+      resolved-ref: "78e4fa24767dfe650967d3911e0e168aa495b9bd"
+      url: "https://github.com/knezzz/ntp.git"
+    source: git
     version: "1.0.7"
   path:
     dependency: transitive

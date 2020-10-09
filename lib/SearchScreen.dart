@@ -156,6 +156,7 @@ class _SearchBarState extends State<SearchBar> {
   GlobalKey key;
   GlobalKey key1;
   GlobalKey key2;
+  bool hasFocus = false;
   @override
   void initState() {
     key = GlobalKey<AutoCompleteTextFieldState<String>>();
@@ -323,10 +324,15 @@ class _SearchBarState extends State<SearchBar> {
                                 if (state != null) {
                                   WidgetsBinding.instance
                                       .addPostFrameCallback((timeStamp) {
-                                    state.updateSuggestions(suggestionss);
+                                    state.updateSuggestionsFocus(
+                                        suggestions: suggestionss,
+                                        hasFocus: hasFocus);
                                   });
                                 }
                                 return SimpleAutoCompleteTextField(
+                                  onFocusChanged: (focus) {
+                                    hasFocus = focus;
+                                  },
                                   decoration: InputDecoration(
                                     hintText: 'Search tags...',
                                     enabledBorder: UnderlineInputBorder(

@@ -162,6 +162,7 @@ class _MainPageState extends State<MainPage>
   bool isFetchindComment = false;
   NativeAdmobController controllerAdmob = NativeAdmobController();
   StreamSubscription _connectionChangeStream;
+  GlobalKey adKey;
 
   final AlignmentSt defaultFrontCardAlign = AlignmentSt(0.0, 0.0);
   AlignmentSt frontCardAlign;
@@ -339,9 +340,11 @@ class _MainPageState extends State<MainPage>
 
   @override
   void initState() {
-    //controllerAdmob.setTestDeviceIds(['738451C1DB43B39858E14A914334CF2A']);
-    controllerAdmob.setAdUnitID('ca-app-pub-4102451006671600/2649770997');
-
+    adKey = GlobalKey();
+    controllerAdmob = NativeAdmobController();
+    controllerAdmob.setAdUnitID(
+      'ca-app-pub-4102451006671600/2649770997',
+    );
     ConnectionStatusSingleton connectionStatus =
         ConnectionStatusSingleton.getInstance();
     _connectionChangeStream =
@@ -468,6 +471,7 @@ class _MainPageState extends State<MainPage>
       currentCardData = nextCardData;
       print("PUSHED");
       if (GlobalController.get().shouldShowAd()) {
+        controllerAdmob.reloadAd(forceRefresh: true);
         GlobalController.get().isNextAd = true;
         nextCardData = CardData(
             author: "Trash",
@@ -905,6 +909,7 @@ class _MainPageState extends State<MainPage>
                                   child: Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: NativeAdmob(
+                                    key: adKey,
                                     error: Center(
                                         child: Text('No ads to display!',
                                             style: disabledUpperBarStyle)),

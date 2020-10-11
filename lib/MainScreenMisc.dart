@@ -9,6 +9,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:typed_data';
 import 'package:ideashack/Const.dart';
+import 'Analytics.dart';
 
 class DislikeIndicator extends StatelessWidget {
   DislikeIndicator(this.animationProgress, this.didSwipe, this.opacity);
@@ -345,6 +346,7 @@ class _SharePopupState extends State<SharePopup> {
                               "#000000",
                               "https://www.google.com",
                             );
+                      AnalyticsController.get().shareTabClicked('facebook');
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -362,6 +364,7 @@ class _SharePopupState extends State<SharePopup> {
                           url: 'http://test.com',
                           trailingText:
                               'download Spark for more brilliant ideas');
+                      AnalyticsController.get().shareTabClicked('twitter');
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -376,6 +379,7 @@ class _SharePopupState extends State<SharePopup> {
                     onTap: () {
                       SocialShare.shareInstagramStory(pathStr, "#ffffff",
                           "#000000", "https://deep-link-url");
+                      AnalyticsController.get().shareTabClicked('instagram');
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -392,6 +396,7 @@ class _SharePopupState extends State<SharePopup> {
                           '${widget.text} - download Spark for more brilliant ideas',
                           url: "",
                           trailingText: "");
+                      AnalyticsController.get().shareTabClicked('sms');
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -304,6 +304,11 @@ class GlobalController {
   }
 }
 
+double getCurrentTimestampLocal() {
+  final DateTime localTime = DateTime.now();
+  return localTime.millisecondsSinceEpoch / 1000;
+}
+
 Future<double> getCurrentTimestampServer() async {
   if (GlobalController.get().initedTime == false) {
     try {

@@ -45,6 +45,10 @@ dependencies:
   social_share: ^2.0.5
   dotted_line: ^2.0.1
   flutter_native_admob: ^2.1.0+3
+  shared_preferences: ^0.5.12
+  admob_consent: ^1.1.0
+  firebase_analytics: ^6.0.2
+
   ntp:
     git: 'https://github.com/knezzz/ntp.git'
   connectivity: ^0.4.9+3

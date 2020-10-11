@@ -4,6 +4,7 @@ import 'package:autocomplete_textfield/autocomplete_textfield.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:dotted_line/dotted_line.dart';
+import 'Analytics.dart';
 
 class SearchScreen extends StatefulWidget {
   SearchScreen(this.callback);
@@ -111,6 +112,7 @@ class TagData extends StatelessWidget {
   final Function callback;
   @override
   void tabCallback() {
+    AnalyticsController.get().searchIdeaHashtagClicked(tag);
     callback(tag);
   }
 
@@ -226,6 +228,8 @@ class _SearchBarState extends State<SearchBar> {
                                 textSubmitted: (string) {
                                   print('submited');
                                   searchString = string;
+                                  AnalyticsController.get()
+                                      .hashTagSearched(string);
                                   callback();
                                 },
                                 controller: controller,
@@ -285,6 +289,7 @@ class _SearchBarState extends State<SearchBar> {
                             style: TextStyle(color: disabledUpperBarColor),
                             suggestionsAmount: 5,
                             textSubmitted: (string) {
+                              AnalyticsController.get().hashTagSearched(string);
                               searchString = string;
                               callback();
                             },
@@ -352,6 +357,8 @@ class _SearchBarState extends State<SearchBar> {
                                       TextStyle(color: disabledUpperBarColor),
                                   suggestionsAmount: 5,
                                   textSubmitted: (string) {
+                                    AnalyticsController.get()
+                                        .hashTagSearched(string);
                                     print('submited');
                                     searchString = string;
                                     callback();

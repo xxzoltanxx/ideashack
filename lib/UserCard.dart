@@ -9,6 +9,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:ideashack/MainScreenMisc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'Analytics.dart';
 
 class UserCard extends StatefulWidget {
   UserCard(this.modalFunction);
@@ -52,8 +53,10 @@ class _UserCardState extends State<UserCard> {
   }
 
   void cardCallback() {
+    print("HAYU");
     setState(() {
       fetched = false;
+      ideas.clear();
       if (!GlobalController.get().currentUser.isAnonymous) {
         CardList.get().getUserCardsData(lambda: onCompleteFetch);
       }
@@ -86,6 +89,7 @@ class _UserCardState extends State<UserCard> {
                     height: 50,
                     child: RaisedButton(
                         onPressed: () {
+                          AnalyticsController.get().userPanelRegisterTapped();
                           Navigator.pushReplacement(context,
                               MaterialPageRoute(builder: (context) {
                             return RegistrationScreen(
@@ -243,6 +247,7 @@ class IdeaUserCard extends StatelessWidget {
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           InkWell(
               onTap: () {
+                AnalyticsController.get().deleteIdeaTapped(cardData.id);
                 deleteIdea(context);
               },
               child: Text('Delete Idea',
@@ -250,6 +255,7 @@ class IdeaUserCard extends StatelessWidget {
                       fontWeight: FontWeight.bold))),
           InkWell(
               onTap: () {
+                AnalyticsController.get().viewCommentsTapped(cardData.id);
                 Navigator.pushNamed(context, '/comments',
                     arguments: <dynamic>[cardData, modalFunction]);
               },

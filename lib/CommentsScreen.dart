@@ -5,6 +5,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'Const.dart';
 import 'MainScreenMisc.dart';
+import 'Analytics.dart';
 
 class CommentsScreen extends StatefulWidget {
   @override
@@ -39,7 +40,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
       } catch (e) {
         return Future.error(1);
       }
-      await Firestore.instance
+      var ref = await Firestore.instance
           .collection('posts')
           .doc(cardData.id)
           .collection('comments')
@@ -52,6 +53,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
           .update({
         'commented': FieldValue.arrayUnion([cardData.id])
       });
+      AnalyticsController.get().postedComment(cardData.id, ref.id);
       sendPushNotification();
     } catch (e) {
       print(e);
@@ -1609,6 +1611,8 @@ class _CommentState extends State<Comment> {
   }
 
   void openReportScreen() {
+    AnalyticsController.get()
+        .reportTappedComment(widget.postId, widget.commentId);
     showDialog(
         context: context,
         builder: (_) => ReportPopup(

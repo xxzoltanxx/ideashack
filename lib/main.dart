@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -28,6 +27,10 @@ import 'package:ideashack/MainScreenMisc.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'ConnectivityManager.dart';
 import 'package:async/async.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:admob_consent/admob_consent.dart';
+import 'Analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 void initFirebaseMessaging() {
   FirebaseMessaging _firebaseMessaging =
@@ -65,8 +68,13 @@ void initFirebaseMessaging() {
   );
 }
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  AnalyticsController.get().init();
+  Firestore.instance.settings = Settings(
+    persistenceEnabled: false,
+  );
   ConnectionStatusSingleton connectionStatus =
       ConnectionStatusSingleton.getInstance();
   connectionStatus.initialize();
@@ -92,6 +100,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorObservers: [AnalyticsController.get().observer],
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
           textTheme: TextTheme(
@@ -164,6 +173,26 @@ class _MainPageState extends State<MainPage>
   StreamSubscription _connectionChangeStream;
   GlobalKey adKey;
 
+  void saveShowedEula() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('showedEula', true);
+  }
+
+  void getShouldShowEula() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      bool shouldShowEula = !(prefs.getBool('showedEula') ?? false);
+      if (shouldShowEula) {
+        final AdmobConsent admobConsent = AdmobConsent();
+        admobConsent.show();
+        admobConsent.onConsentFormObtained.listen((o) {
+          AnalyticsController.get().consentGiven();
+          saveShowedEula();
+        });
+      }
+    });
+  }
+
   final AlignmentSt defaultFrontCardAlign = AlignmentSt(0.0, 0.0);
   AlignmentSt frontCardAlign;
   double frontCardRot = 0.0;
@@ -232,6 +261,7 @@ class _MainPageState extends State<MainPage>
   }
 
   void reportPostButtonClicked() {
+    AnalyticsController.get().reportTappedPost(currentCardData.id);
     showDialog(
         context: context,
         builder: (_) => ReportPopup(
@@ -340,6 +370,7 @@ class _MainPageState extends State<MainPage>
 
   @override
   void initState() {
+    getShouldShowEula();
     adKey = GlobalKey();
     controllerAdmob = NativeAdmobController();
     controllerAdmob.setAdUnitID(
@@ -391,6 +422,7 @@ class _MainPageState extends State<MainPage>
       if (status == AnimationStatus.completed) {
         if (deletingCard) {
           popCard();
+          AnalyticsController.get().swiped();
           deletingCard = false;
         }
         isLockedSwipe = false;
@@ -496,6 +528,9 @@ class _MainPageState extends State<MainPage>
   }
 
   void buildCards() {
+    if (currentCardData == null) {
+      AnalyticsController.get().browseEndReached();
+    }
     stackCards.clear();
     if (currentCardData != null && nextCardData != null) {
       stackCards.add(BackgroundCard(cardData: nextCardData));
@@ -577,6 +612,7 @@ class _MainPageState extends State<MainPage>
       await Firestore.instance.collection('posts').doc(id).update({
         'score': FieldValue.increment(1),
       });
+      AnalyticsController.get().upvoted(currentCardData.id);
     } catch (e) {
       print(e);
     }
@@ -594,6 +630,7 @@ class _MainPageState extends State<MainPage>
       await Firestore.instance.collection('posts').doc(id).update({
         'score': FieldValue.increment(-1),
       });
+      AnalyticsController.get().downvoted(currentCardData.id);
     } catch (e) {
       print(e);
     }
@@ -612,6 +649,7 @@ class _MainPageState extends State<MainPage>
                 text:
                     '#register to rate ideas, you can only browse as an anonymous user!',
                 onTap: (string) {
+                  AnalyticsController.get().registerModalPopupTapped();
                   Navigator.pop(context);
                   print("POPPED");
                   Navigator.pushReplacement(context,
@@ -664,6 +702,8 @@ class _MainPageState extends State<MainPage>
                 }));
               }));
     }
+    String sheetStr = parseSheet(sheet);
+    AnalyticsController.get().modalPopupShown(sheetStr);
     showModalBottomSheet(
         isDismissible: true,
         context: context,
@@ -672,6 +712,33 @@ class _MainPageState extends State<MainPage>
             child: info,
           );
         });
+  }
+
+  String parseSheet(InfoSheet sheet) {
+    switch (sheet) {
+      case InfoSheet.CantRate:
+        return "cantrate";
+        break;
+      case InfoSheet.Commented:
+        return "commented";
+        break;
+      case InfoSheet.Deleted:
+        return "deleted";
+        break;
+      case InfoSheet.OneMessage:
+        return "onemessage";
+        break;
+      case InfoSheet.Posted:
+        return "posted";
+        break;
+      case InfoSheet.Profane:
+        return "profane";
+        break;
+      case InfoSheet.Register:
+        return "register";
+        break;
+    }
+    return "undefined";
   }
 
   void FetchedData() {
@@ -794,6 +861,7 @@ class _MainPageState extends State<MainPage>
           adTimer.cancel();
           adTimer = null;
         }
+        AnalyticsController.get().loadingBatch();
         batchFuture = CancelableOperation.fromFuture(
             CardList.get().getNextBatch(lambda: FetchedData, trending: true));
       } else if (tabSelect == SelectTab.New) {
@@ -801,6 +869,7 @@ class _MainPageState extends State<MainPage>
           adTimer.cancel();
           adTimer = null;
         }
+        AnalyticsController.get().loadingBatch();
         batchFuture = CancelableOperation.fromFuture(
             CardList.get().getNextBatch(lambda: FetchedData, trending: false));
       } else {
@@ -808,6 +877,7 @@ class _MainPageState extends State<MainPage>
           adTimer.cancel();
           adTimer = null;
         }
+        AnalyticsController.get().loadingBatch();
         batchFuture = CancelableOperation.fromFuture(
             CardList.get().getByTag(lambda: FetchedData, tag: customSearch));
       }
@@ -827,6 +897,7 @@ class _MainPageState extends State<MainPage>
           adTimer.cancel();
           adTimer = null;
         }
+        AnalyticsController.get().loadingBatch();
         CardList.get().resetLastDocumentSnapshot();
         batchFuture = CancelableOperation.fromFuture(
             CardList.get().getNextBatch(lambda: FetchedData, trending: true));
@@ -835,6 +906,7 @@ class _MainPageState extends State<MainPage>
           adTimer.cancel();
           adTimer = null;
         }
+        AnalyticsController.get().loadingBatch();
         CardList.get().resetLastDocumentSnapshot();
         batchFuture = CancelableOperation.fromFuture(
             CardList.get().getNextBatch(lambda: FetchedData, trending: false));
@@ -843,6 +915,7 @@ class _MainPageState extends State<MainPage>
           adTimer.cancel();
           adTimer = null;
         }
+        AnalyticsController.get().loadingBatch();
         CardList.get().resetLastDocumentSnapshot();
         batchFuture = CancelableOperation.fromFuture(
             CardList.get().getByTag(lambda: FetchedData, tag: customSearch));
@@ -855,6 +928,7 @@ class _MainPageState extends State<MainPage>
         if (!GlobalController.get().isAdLocked &&
             !GlobalController.get().finishedAd) {
           GlobalController.get().isAdLocked = true;
+          AnalyticsController.get().adShown();
           adCounter = GlobalController.get().adLockTime;
           adTimer = Timer.periodic(Duration(seconds: 1), (t) {
             setState(() {
@@ -1056,11 +1130,17 @@ class _MainPageState extends State<MainPage>
                                                         .currentUser
                                                         .isAnonymous
                                                     ? () {
+                                                        AnalyticsController
+                                                                .get()
+                                                            .commentTapped();
                                                         _settingModalBottomSheet(
                                                             context,
                                                             InfoSheet.Register);
                                                       }
                                                     : () {
+                                                        AnalyticsController
+                                                                .get()
+                                                            .commentTapped();
                                                         Navigator.pushNamed(
                                                             context,
                                                             '/comments',
@@ -1093,6 +1173,8 @@ class _MainPageState extends State<MainPage>
                                     Center(
                                       child: HashTagText(
                                         onTap: (string) {
+                                          AnalyticsController.get()
+                                              .hashTagCardClicked(string);
                                           customSearchFunc(string.trim());
                                         },
                                         textAlign: TextAlign.center,
@@ -1151,6 +1233,8 @@ class _MainPageState extends State<MainPage>
                                                     .currentUser
                                                     .isAnonymous
                                                 ? () {
+                                                    AnalyticsController.get()
+                                                        .messageTapped();
                                                     _settingModalBottomSheet(
                                                         context,
                                                         InfoSheet.Register);
@@ -1159,6 +1243,9 @@ class _MainPageState extends State<MainPage>
                                                             .canMessage ==
                                                         1
                                                     ? () {
+                                                        AnalyticsController
+                                                                .get()
+                                                            .messageTapped();
                                                         Navigator.pushNamed(
                                                             context, '/message',
                                                             arguments: <
@@ -1210,6 +1297,8 @@ class _MainPageState extends State<MainPage>
                                         width: 90,
                                         child: InkWell(
                                             onTap: () {
+                                              AnalyticsController.get()
+                                                  .shareClicked();
                                               repaint = mainWidgetKey
                                                   .currentContext
                                                   .findRenderObject();
@@ -1288,6 +1377,7 @@ class _MainPageState extends State<MainPage>
                         onTap: () {
                           searchSelected = false;
                           setTrendingFunc(false);
+                          AnalyticsController.get().tabSelected('Newest');
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(4.0),
@@ -1308,6 +1398,7 @@ class _MainPageState extends State<MainPage>
                         onTap: () {
                           searchSelected = false;
                           setTrendingFunc(true);
+                          AnalyticsController.get().tabSelected('Trending');
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(4.0),
@@ -1441,6 +1532,7 @@ class _MainPageState extends State<MainPage>
                           onTap: () {
                             searchSelected = false;
                             setTrendingFunc(false);
+                            AnalyticsController.get().tabSelected('Newest');
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(4.0),
@@ -1461,6 +1553,7 @@ class _MainPageState extends State<MainPage>
                           onTap: () {
                             searchSelected = false;
                             setTrendingFunc(true);
+                            AnalyticsController.get().tabSelected('Trending');
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(4.0),
@@ -1523,11 +1616,17 @@ class _MainPageState extends State<MainPage>
                 return;
               }
               if (number == 1) {
+                AnalyticsController.get().browseIdeaEntered();
                 setState(() {
                   fetchNum = 0;
                 });
               }
+              if (number == 2) {
+                AnalyticsController.get().userPanelEntered();
+              }
+
               if (number == 0) {
+                AnalyticsController.get().shareIdeaEntered();
                 setState(() {
                   GlobalController.get().fetchingDailyPosts = true;
                 });

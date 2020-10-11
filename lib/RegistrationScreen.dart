@@ -1,5 +1,4 @@
 import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -9,9 +8,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:async';
 import 'CardList.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:social_share/social_share.dart';
-import 'package:flutter/services.dart' show PlatformException;
+import 'Analytics.dart';
 
 class RegistrationScreen extends StatefulWidget {
   RegistrationScreen({this.doSignInWithGoogle = false});
@@ -21,77 +19,23 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  Future<void> firebaseFuture;
-
-  Future<void> initializeApp() async {
-    try {
-      await Firebase.initializeApp();
-      Firestore.instance.settings = Settings(
-        persistenceEnabled: false,
-      );
-      print("INITIALIZED");
-    } catch (e) {
-      print("EXCEPTION");
-      return Future.error("COULDNT INIT FIREBASE");
-    }
-  }
-
   @override
   void initState() {
-    firebaseFuture = initializeApp();
     super.initState();
-  }
-
-  void retryConnection() {
-    setState(() {
-      firebaseFuture = initializeApp();
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-        // Initialize FlutterFire
-        future: firebaseFuture,
-        builder: (context, snapshot) {
-          // Check for errors
-          if (snapshot.hasError) {
-            return Scaffold(
-                body: Container(
-                    decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                            colors: splashScreenColors,
-                            begin: Alignment.bottomLeft,
-                            end: Alignment.topRight)),
-                    child: SomethingWentWrong(retryConnection)));
-          }
-          // Once complete, show your application
-          if (snapshot.connectionState == ConnectionState.done) {
-            var _auth = FirebaseAuth.instance;
-            CardList.get().setInstance(Firestore.instance);
-            return Scaffold(
-                body: Container(
-                    decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                            colors: splashScreenColors,
-                            begin: Alignment.bottomLeft,
-                            end: Alignment.topRight)),
-                    child: LoginScreen(_auth, widget.doSignInWithGoogle)));
-          }
-          return Scaffold(
-              body: SafeArea(
-            child: Container(
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        colors: splashScreenColors,
-                        begin: Alignment.bottomLeft,
-                        end: Alignment.topRight)),
-                child: Loading()),
-          ));
-          print("HELLO");
-
-          // Otherwise, show something whilst waiting for initialization to complete
-        });
+    var _auth = FirebaseAuth.instance;
+    CardList.get().setInstance(Firestore.instance);
+    return Scaffold(
+        body: Container(
+            decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    colors: splashScreenColors,
+                    begin: Alignment.bottomLeft,
+                    end: Alignment.topRight)),
+            child: LoginScreen(_auth, widget.doSignInWithGoogle)));
   }
 }
 
@@ -172,6 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
         });
         GlobalController.get().userDocId = snapshot.id;
       }
+      AnalyticsController.get().logInCompletedEvent();
     } catch (e) {
       throw e;
     }
@@ -191,6 +136,7 @@ class _LoginScreenState extends State<LoginScreen> {
           assert(user.uid == currentUser.uid);
           GlobalController.get().currentUserUid = user.uid;
           GlobalController.get().currentUser = user;
+          AnalyticsController.get().setUserId();
           await checkOrSetupNewUser(currentUser);
         } catch (e) {
           print(e);
@@ -207,6 +153,7 @@ class _LoginScreenState extends State<LoginScreen> {
         assert(user.uid == currentUser.uid);
         GlobalController.get().currentUserUid = user.uid;
         GlobalController.get().currentUser = user;
+        AnalyticsController.get().setUserId();
         await checkOrSetupNewUser(currentUser);
       } catch (e) {
         print(e);
@@ -246,6 +193,8 @@ class _LoginScreenState extends State<LoginScreen> {
       assert(user.uid == currentUser.uid);
       GlobalController.get().currentUserUid = user.uid;
       GlobalController.get().currentUser = user;
+      AnalyticsController.get().userRegistered();
+      AnalyticsController.get().setUserId();
       await checkOrSetupNewUser(currentUser);
     } catch (e) {
       return Future.error("FAILED TO SIGN IN CONVENTIONALLY!");
@@ -254,10 +203,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void initState() {
-    super.initState();
     if (!widget.doSignInWithGoogle) {
+      AnalyticsController.get().logAppLaunched();
       initialFuture = checkForSignIn();
     }
+    super.initState();
   }
 
   @override

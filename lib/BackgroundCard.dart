@@ -179,9 +179,12 @@ class BackgroundCard extends StatelessWidget {
                                 child: Center(
                                   child: InkWell(
                                       child: Text('Message',
-                                          style: GlobalController.get()
-                                                      .canMessage ==
-                                                  1
+                                          style: ((GlobalController.get()
+                                                          .canMessage ==
+                                                      1) &&
+                                                  (cardData.posterId !=
+                                                      GlobalController.get()
+                                                          .currentUserUid))
                                               ? cardThingsBelowTextStyle
                                               : cardThingsBelowTextStyle
                                                   .copyWith(

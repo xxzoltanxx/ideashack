@@ -9,6 +9,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:dotted_line/dotted_line.dart';
 import 'package:ideashack/MainScreenMisc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ideashack/FeedOverlay.dart';
 import 'Analytics.dart';
 
 class UserCard extends StatefulWidget {
@@ -153,7 +154,7 @@ class _UserCardState extends State<UserCard> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.person, size: 100, color: Colors.grey),
+                      Image.asset('assets/userpanel.png', width: 100),
                     ],
                   ),
                   Row(
@@ -238,6 +239,7 @@ class IdeaUserCard extends StatelessWidget {
               Text(cardData.comments.toString(),
                   style: enabledUpperBarStyle.copyWith(
                       color: Colors.grey, fontSize: 25)),
+              CommentsOverlay(cardData.id),
             ],
           ),
         ]),

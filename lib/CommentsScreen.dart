@@ -94,9 +94,9 @@ class _CommentsScreenState extends State<CommentsScreen> {
     }
   }
 
-  void disposeAction() async {
-    var time = await getCurrentTimestampServer();
+  void syncTimeAction() async {
     if (cardData.posterId == GlobalController.get().currentUserUid) {
+      var time = await getCurrentTimestampServer();
       try {
         Firestore.instance
             .collection('posts')
@@ -110,7 +110,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
 
   @override
   void dispose() {
-    disposeAction();
+    syncTimeAction();
     super.dispose();
   }
 
@@ -122,9 +122,15 @@ class _CommentsScreenState extends State<CommentsScreen> {
       List<dynamic> list = ModalRoute.of(context).settings.arguments;
       cardData = list[0];
       commentsCallback = list[1];
+      syncTimeAction();
     }
     return Scaffold(
-      appBar: AppBar(title: Text('Viewing comments')),
+      appBar: AppBar(
+          iconTheme: IconThemeData(color: Colors.black),
+          backgroundColor: Colors.white,
+          elevation: 5.0,
+          title:
+              Text('Viewing comments', style: TextStyle(color: Colors.black))),
       body: FutureBuilder(
           future: postingFuture,
           builder: (context, snapshot) {

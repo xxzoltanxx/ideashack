@@ -80,6 +80,9 @@ flutter:
     - assets/upvoted.png
     - assets/search.png
     - assets/shareidea.png
+    - assets/mail-active.png
+    - assets/mail-inactive.png
+    - assets/userpanel.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

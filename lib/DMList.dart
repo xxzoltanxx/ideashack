@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:ideashack/Const.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:dotted_line/dotted_line.dart';
 
 class DMList extends StatefulWidget {
   @override
@@ -45,14 +45,20 @@ class _DMListState extends State<DMList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(title: Text("Your direct messages")),
+        appBar: AppBar(
+            iconTheme: IconThemeData(color: Colors.black),
+            backgroundColor: Colors.white,
+            elevation: 5.0,
+            title: Text('Your direct messages',
+                style: TextStyle(color: Colors.black))),
         body: SafeArea(
             child: Container(
           decoration: BoxDecoration(
               gradient: LinearGradient(
-                  colors: splashScreenColors,
-                  begin: Alignment.bottomLeft,
-                  end: Alignment.topRight)),
+            colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+          )),
           child: StreamBuilder(
               stream: grabDMSnapshots,
               builder: (context, snapshot) {
@@ -74,121 +80,156 @@ class _DMListState extends State<DMList> {
                         .orderBy('time', descending: true)
                         .snapshots();
 
-                    chatWidgets.add(StreamBuilder(
-                        stream: lastMessageFirstListStream,
-                        builder: (context, snapshot) {
-                          if (snapshot.data == null ||
-                              snapshot.data.docs.length == 0) {
-                            return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Container(
-                                    child: Padding(
-                                  padding: const EdgeInsets.all(20.0),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Expanded(
-                                          child: Text("Fetching Message...",
-                                              style: AUTHOR_CARD_TEXT_STYLE)),
-                                    ],
-                                  ),
-                                )));
-                          } else {
-                            var lastMessageFirstList = snapshot.data;
-                            snapshot.data.docs[0].get('text');
-                            bool shouldHighlight = false;
-
-                            bool isInitializer = false;
-                            if (post.get('initializerId') ==
-                                GlobalController.get().currentUserUid) {
-                              isInitializer = true;
-                            }
-                            double timestampToCompare;
-                            if (isInitializer) {
-                              timestampToCompare =
-                                  post.get('lastSeenInitializer');
+                    chatWidgets.add(Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: StreamBuilder(
+                          stream: lastMessageFirstListStream,
+                          builder: (context, snapshot) {
+                            if (snapshot.data == null ||
+                                snapshot.data.docs.length == 0) {
+                              return FetchingBubble();
                             } else {
-                              timestampToCompare = post.get('lastSeenAuthor');
+                              var lastMessageFirstList = snapshot.data;
+                              snapshot.data.docs[0].get('text');
+                              bool shouldHighlight = false;
+
+                              bool isInitializer = false;
+                              if (post.get('initializerId') ==
+                                  GlobalController.get().currentUserUid) {
+                                isInitializer = true;
+                              }
+                              double timestampToCompare;
+                              if (isInitializer) {
+                                timestampToCompare =
+                                    post.get('lastSeenInitializer');
+                              } else {
+                                timestampToCompare = post.get('lastSeenAuthor');
+                              }
+                              if (lastMessageFirstList.docs[0].get('time') >
+                                  timestampToCompare) {
+                                shouldHighlight = true;
+                              }
+                              var lastMessage =
+                                  lastMessageFirstList.docs[0].get('text');
+                              DMData data = DMData(
+                                  post.get('postId'),
+                                  post.get('initializerId'),
+                                  post.get('postAuthorId'),
+                                  lastMessage,
+                                  shouldHighlight,
+                                  post.get('conversationPartner'));
+
+                              double lastTimestamp =
+                                  lastMessageFirstList.docs[0].get('time');
+                              bool lastMessageIsAnon = (lastMessageFirstList
+                                      .docs[0]
+                                      .get('senderUid') !=
+                                  GlobalController.get().currentUserUid);
+                              return DMBubble(
+                                  initializerID: data.postInitializer,
+                                  authorId: data.postAuthor,
+                                  callsign: data.conversationPartner,
+                                  lastMessage: data.lastMessage,
+                                  lastMessageAnon: lastMessageIsAnon,
+                                  lastMessageTimestamp: lastTimestamp,
+                                  postId: data.postId,
+                                  shouldHighlight: data.shouldHiglight);
                             }
-                            if (lastMessageFirstList.docs[0].get('time') >
-                                timestampToCompare) {
-                              shouldHighlight = true;
-                            }
-                            var lastMessage =
-                                lastMessageFirstList.docs[0].get('text');
-                            DMData data = DMData(
-                                post.get('postId'),
-                                post.get('initializerId'),
-                                post.get('postAuthorId'),
-                                truncateWithEllipsis(15, lastMessage),
-                                shouldHighlight,
-                                post.get('conversationPartner'));
-                            return InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/message',
-                                    arguments: <dynamic>[
-                                      data.postId,
-                                      data.postInitializer,
-                                      data.postAuthor
-                                    ]);
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Container(
-                                    decoration: BoxDecoration(
-                                      boxShadow: data.shouldHiglight
-                                          ? [
-                                              BoxShadow(
-                                                  color: Colors.white,
-                                                  blurRadius: 5)
-                                            ]
-                                          : [],
-                                      color: Colors.orangeAccent,
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(20.0),
-                                      child: IntrinsicHeight(
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            Expanded(
-                                                flex: 3,
-                                                child: Text(data.lastMessage,
-                                                    style: data.shouldHiglight
-                                                        ? AUTHOR_CARD_TEXT_STYLE
-                                                            .copyWith(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold)
-                                                        : AUTHOR_CARD_TEXT_STYLE)),
-                                            SizedBox(width: 20),
-                                            VerticalDivider(
-                                                width: 2,
-                                                indent: 2,
-                                                endIndent: 2,
-                                                color: Colors.red),
-                                            SizedBox(width: 20),
-                                            Expanded(
-                                                flex: 2,
-                                                child: Text(
-                                                    '${data.conversationPartner}',
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    )))
-                                          ],
-                                        ),
-                                      ),
-                                    )),
-                              ),
-                            );
-                          }
-                        }));
+                          }),
+                    ));
                   }
                   return ListView(children: chatWidgets);
                 }
               }),
         )));
+  }
+}
+
+class FetchingBubble extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(height: 10),
+        Row(
+          children: [
+            SizedBox(width: 30),
+            Text('unknown', style: enabledUpperBarStyle),
+          ],
+        ),
+        SizedBox(height: 10),
+        Text('Fetching message...',
+            style: disabledUpperBarStyle, overflow: TextOverflow.ellipsis),
+        Text('unknown',
+            style: disabledUpperBarStyle.copyWith(
+                fontSize: 10, fontStyle: FontStyle.italic)),
+        SizedBox(height: 10),
+        DottedLine(dashColor: disabledUpperBarColor),
+      ],
+    ));
+  }
+}
+
+class DMBubble extends StatelessWidget {
+  DMBubble(
+      {this.initializerID,
+      this.authorId,
+      this.postId,
+      this.callsign,
+      this.lastMessage,
+      this.lastMessageTimestamp,
+      this.lastMessageAnon,
+      this.shouldHighlight}) {
+    DateTime time = DateTime.fromMillisecondsSinceEpoch(
+        (lastMessageTimestamp * 1000).toInt());
+    date = '${time.day}.${time.month}.${time.year}';
+  }
+
+  String date;
+  String initializerID;
+  String authorId;
+  String postId;
+  String callsign;
+  String lastMessage;
+  double lastMessageTimestamp;
+  bool lastMessageAnon;
+  bool shouldHighlight;
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        Navigator.pushNamed(context, '/message',
+            arguments: <dynamic>[postId, initializerID, authorId]);
+      },
+      child: Container(
+          child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 10),
+          Row(
+            children: [
+              SizedBox(width: 30),
+              Text(callsign, style: enabledUpperBarStyle),
+            ],
+          ),
+          SizedBox(height: 10),
+          Text(
+              lastMessageAnon
+                  ? 'Somebody: ' + lastMessage
+                  : 'You: ' + lastMessage,
+              style: shouldHighlight
+                  ? enabledUpperBarStyle
+                  : disabledUpperBarStyle,
+              overflow: TextOverflow.ellipsis),
+          Text(date,
+              style: disabledUpperBarStyle.copyWith(
+                  fontSize: 10, fontStyle: FontStyle.italic)),
+          SizedBox(height: 10),
+          DottedLine(dashColor: disabledUpperBarColor),
+        ],
+      )),
+    );
   }
 }

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'Const.dart';
 import 'package:faker/faker.dart';
+import 'Analytics.dart';
 
 class DmScreen extends StatefulWidget {
   @override
@@ -99,6 +100,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
         'sender': GlobalController.get().currentUser.displayName,
         'senderUid': GlobalController.get().currentUserUid,
       });
+      AnalyticsController.get().dmSent();
       sendPush();
     } catch (e) {
       print(e);
@@ -160,6 +162,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
           .doc(GlobalController.get().userDocId)
           .update({'canInitializeMessage': 0});
       GlobalController.get().canMessage = 0;
+      AnalyticsController.get().dmInitialized();
       sendPush();
     } catch (e) {
       print(e);
@@ -220,7 +223,6 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
         .doc(thisDocumentReference)
         .collection('messages')
         .get();
-    print(res.docs[0].data());
 
     commentsStream = Firestore.instance
         .collection('directMessages')
@@ -296,22 +298,30 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
       firstBuild = false;
     }
     return Scaffold(
-        appBar: AppBar(title: Text('Direct Message'), actions: [
-          Center(
-              child: Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: RaisedButton(
-                onPressed: commentsStream == null ? null : buttonCallback,
-                child: Text(blockText)),
-          ))
-        ]),
+        appBar: AppBar(
+            actions: [
+              Center(
+                  child: Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: RaisedButton(
+                    onPressed: commentsStream == null ? null : buttonCallback,
+                    child: Text(blockText)),
+              ))
+            ],
+            actionsIconTheme: IconThemeData(color: Colors.black),
+            iconTheme: IconThemeData(color: Colors.black),
+            backgroundColor: Colors.white,
+            elevation: 5.0,
+            title:
+                Text('Direct message ', style: TextStyle(color: Colors.black))),
         body: SafeArea(
             child: Container(
                 decoration: BoxDecoration(
                     gradient: LinearGradient(
-                        colors: splashScreenColors,
-                        begin: Alignment.bottomLeft,
-                        end: Alignment.topRight)),
+                  colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                )),
                 child: FutureBuilder(
                   future: fetchDmFuture,
                   builder: (context, snapshot) {
@@ -338,38 +348,54 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                         Expanded(
                             flex: 8,
                             child: Container(
-                                child:
-                                    Center(child: Text('Start messaging!')))),
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: <Widget>[
-                                Expanded(
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      maxHeight: 300,
-                                    ),
-                                    child: TextField(
-                                      maxLines: null,
-                                      controller: messageTextController,
-                                      onChanged: (value) {
-                                        messageText = value;
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                FlatButton(
-                                  onPressed: initialSendButtonCallback,
-                                  child: Text(
-                                    'Send',
-                                  ),
-                                ),
-                              ],
+                                child: Center(
+                                    child: Text('Start messaging!',
+                                        style: disabledUpperBarStyle)))),
+                        Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
                             ),
-                          ),
-                        )
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child: Column(
+                                children: [
+                                  SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            maxHeight: 300,
+                                          ),
+                                          child: TextField(
+                                            decoration: InputDecoration(
+                                                hintStyle:
+                                                    disabledUpperBarStyle),
+                                            maxLines: null,
+                                            style: disabledUpperBarStyle,
+                                            controller: messageTextController,
+                                            onChanged: (value) {
+                                              messageText = value;
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      FlatButton(
+                                          disabledColor: Colors.transparent,
+                                          color: Colors.transparent,
+                                          child: Center(
+                                              child: Text('Send',
+                                                  style: TextStyle(
+                                                      color: Colors.blue))),
+                                          onPressed: initialSendButtonCallback)
+                                    ],
+                                  ),
+                                  Divider(color: Colors.black),
+                                  SizedBox(height: 10),
+                                ],
+                              ),
+                            ))
                       ]);
                     } else if (snapshot.hasError &&
                         snapshot.error ==
@@ -380,34 +406,53 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                             child: Container(
                                 child: Center(
                                     child: Text(
-                                        'Failed to initialize, try again!')))),
+                                        'Failed to initialize, try again!',
+                                        style: disabledUpperBarStyle)))),
                         Container(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: <Widget>[
-                              Expanded(
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    maxHeight: 300,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                            ),
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child: Column(
+                                children: [
+                                  SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            maxHeight: 300,
+                                          ),
+                                          child: TextField(
+                                            decoration: InputDecoration(
+                                                hintStyle:
+                                                    disabledUpperBarStyle),
+                                            maxLines: null,
+                                            style: disabledUpperBarStyle,
+                                            controller: messageTextController,
+                                            onChanged: (value) {
+                                              messageText = value;
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      FlatButton(
+                                          disabledColor: Colors.transparent,
+                                          color: Colors.transparent,
+                                          child: Center(
+                                              child: Text('Send',
+                                                  style: TextStyle(
+                                                      color: Colors.blue))),
+                                          onPressed: initialSendButtonCallback)
+                                    ],
                                   ),
-                                  child: TextField(
-                                    maxLines: null,
-                                    controller: messageTextController,
-                                    onChanged: (value) {
-                                      messageText = value;
-                                    },
-                                  ),
-                                ),
+                                  Divider(color: Colors.black),
+                                  SizedBox(height: 10),
+                                ],
                               ),
-                              FlatButton(
-                                onPressed: initialSendButtonCallback,
-                                child: Text(
-                                  'Send',
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
+                            ))
                       ]);
                     } else if (snapshot.connectionState ==
                         ConnectionState.done) {
@@ -429,7 +474,6 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                   .toSet()
                                   .contains(
                                       GlobalController.get().currentUserUid);
-                              print(isBlocked);
                               if (isBlocked) {
                                 blockText = "Unblock";
                                 buttonCallback = unblockCallback;
@@ -483,7 +527,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                             GlobalController.get()
                                                 .currentUserUid)
                                         ? 'You'
-                                        : 'Anon',
+                                        : 'Someone',
                                     text: doc.get('text'),
                                     isMe: doc.get('senderUid') ==
                                         GlobalController.get().currentUserUid));
@@ -497,36 +541,51 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                     children: messageBubbles,
                                   ));
                             }),
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: <Widget>[
-                                Expanded(
-                                  child: ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                      maxHeight: 300,
-                                    ),
-                                    child: TextField(
-                                      maxLines: null,
-                                      controller: messageTextController,
-                                      onChanged: (value) {
-                                        messageText = value;
-                                      },
-                                    ),
-                                  ),
-                                ),
-                                FlatButton(
-                                  onPressed: sendNormal,
-                                  child: Text(
-                                    'Send',
-                                  ),
-                                ),
-                              ],
+                        Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
                             ),
-                          ),
-                        )
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child: Column(
+                                children: [
+                                  SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            maxHeight: 300,
+                                          ),
+                                          child: TextField(
+                                            decoration: InputDecoration(
+                                                hintStyle:
+                                                    disabledUpperBarStyle),
+                                            maxLines: null,
+                                            style: disabledUpperBarStyle,
+                                            controller: messageTextController,
+                                            onChanged: (value) {
+                                              messageText = value;
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      FlatButton(
+                                          disabledColor: Colors.transparent,
+                                          color: Colors.transparent,
+                                          child: Center(
+                                              child: Text('Send',
+                                                  style: TextStyle(
+                                                      color: Colors.blue))),
+                                          onPressed: sendNormal)
+                                    ],
+                                  ),
+                                  Divider(color: Colors.black),
+                                  SizedBox(height: 10),
+                                ],
+                              ),
+                            )),
                       ]);
                     }
                     return Container(
@@ -566,7 +625,7 @@ class MessageBubble extends StatelessWidget {
             sender,
             style: TextStyle(
               fontSize: 12.0,
-              color: Colors.white,
+              color: Colors.black,
             ),
           ),
           Material(

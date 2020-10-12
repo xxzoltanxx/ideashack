@@ -369,6 +369,23 @@ class _MainPageState extends State<MainPage>
   }
 
   @override
+  void didChangeDependencies() {
+    precacheImage(AssetImage('assets/bell-active.png'), context);
+    precacheImage(AssetImage('assets/bell-inactive.png'), context);
+    precacheImage(AssetImage('assets/comments.png'), context);
+    precacheImage(AssetImage('assets/downvoted.png'), context);
+    precacheImage(AssetImage('assets/mail-active.png'), context);
+    precacheImage(AssetImage('assets/mail-inactive.png'), context);
+    precacheImage(AssetImage('assets/score.png'), context);
+    precacheImage(AssetImage('assets/search.png'), context);
+    precacheImage(AssetImage('assets/shareidea.png'), context);
+    precacheImage(AssetImage('assets/thumbs-up.png'), context);
+    precacheImage(AssetImage('assets/upvoted.png'), context);
+    precacheImage(AssetImage('assets/userpanel.png'), context);
+    super.didChangeDependencies();
+  }
+
+  @override
   void initState() {
     getShouldShowEula();
     adKey = GlobalKey();
@@ -376,6 +393,7 @@ class _MainPageState extends State<MainPage>
     controllerAdmob.setAdUnitID(
       'ca-app-pub-4102451006671600/2649770997',
     );
+    controllerAdmob.reloadAd(forceRefresh: true);
     ConnectionStatusSingleton connectionStatus =
         ConnectionStatusSingleton.getInstance();
     _connectionChangeStream =
@@ -445,6 +463,10 @@ class _MainPageState extends State<MainPage>
   }
 
   void checkForNextCard() {
+    if (GlobalController.get().finishedAd) {
+      GlobalController.get().finishedAd = true;
+      controllerAdmob.reloadAd(forceRefresh: true);
+    }
     if (GlobalController.get().isNextAd) {
       GlobalController.get().isAdLocked = false;
       if (adTimer != null) {
@@ -496,6 +518,10 @@ class _MainPageState extends State<MainPage>
 
   void popCard() {
     setState(() {
+      if (currentCardData.isAd) {
+        controllerAdmob.reloadAd(forceRefresh: true);
+        GlobalController.get().finishedAd = true;
+      }
       GlobalController.get().cardsSwiped =
           GlobalController.get().cardsSwiped + 1;
       frontCardAlign = defaultFrontCardAlign;
@@ -503,7 +529,6 @@ class _MainPageState extends State<MainPage>
       currentCardData = nextCardData;
       print("PUSHED");
       if (GlobalController.get().shouldShowAd()) {
-        controllerAdmob.reloadAd(forceRefresh: true);
         GlobalController.get().isNextAd = true;
         nextCardData = CardData(
             author: "Trash",
@@ -1221,9 +1246,14 @@ class _MainPageState extends State<MainPage>
                                         child: Center(
                                           child: InkWell(
                                             child: Text('Message',
-                                                style: GlobalController.get()
-                                                            .canMessage ==
-                                                        1
+                                                style: ((GlobalController.get()
+                                                                .canMessage ==
+                                                            1) &&
+                                                        (currentCardData
+                                                                .posterId !=
+                                                            GlobalController
+                                                                    .get()
+                                                                .currentUserUid))
                                                     ? cardThingsBelowTextStyle
                                                     : cardThingsBelowTextStyle
                                                         .copyWith(
@@ -1239,9 +1269,14 @@ class _MainPageState extends State<MainPage>
                                                         context,
                                                         InfoSheet.Register);
                                                   }
-                                                : GlobalController.get()
-                                                            .canMessage ==
-                                                        1
+                                                : ((GlobalController.get()
+                                                                .canMessage ==
+                                                            1) &&
+                                                        (currentCardData
+                                                                .posterId !=
+                                                            GlobalController
+                                                                    .get()
+                                                                .currentUserUid))
                                                     ? () {
                                                         AnalyticsController
                                                                 .get()

@@ -81,7 +81,7 @@ class AnalyticsController {
     Map<String, dynamic> parameters = getBaseData();
     parameters.addAll({'tag': hashtag});
     analytics.logEvent(
-        name: 'searchIDeaHashtagSearched', parameters: parameters);
+        name: 'searchIdeaHashtagSearched', parameters: parameters);
   }
 
   void hashTagCardClicked(String hashtag) {
@@ -177,5 +177,13 @@ class AnalyticsController {
 
   void swiped() {
     analytics.logEvent(name: 'swiped', parameters: getBaseData());
+  }
+
+  void dmSent() {
+    analytics.logEvent(name: 'dmSent', parameters: getBaseData());
+  }
+
+  void dmInitialized() {
+    analytics.logEvent(name: 'dmInitialized', parameters: getBaseData());
   }
 }

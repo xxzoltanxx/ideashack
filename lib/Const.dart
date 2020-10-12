@@ -156,7 +156,7 @@ class GlobalController {
   int cardsSwiped = 1;
   int cardsToShowAd = 15;
   bool isNextAd = false;
-  bool finishedAd = true;
+  bool finishedAd = false;
   bool isAdLocked = false;
   bool openFromNotification = false;
   NotificationData notificationData;
@@ -247,6 +247,7 @@ class GlobalController {
     }
     try {
       final now = await getCurrentTimestampServer();
+      GlobalController.get().timeOnStartup = now;
       DateTime time =
           new DateTime.fromMillisecondsSinceEpoch((now * 1000).toInt());
       final lastMidnight =

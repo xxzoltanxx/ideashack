@@ -2,6 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ideashack/Const.dart';
 
+class CommentsOverlay extends StatefulWidget {
+  CommentsOverlay(this.postId);
+  String postId;
+  @override
+  _CommentsOverlayState createState() => _CommentsOverlayState();
+}
+
+class _CommentsOverlayState extends State<CommentsOverlay> {
+  Stream<DocumentSnapshot> commentsStream;
+
+  @override
+  void initState() {
+    commentsStream =
+        Firestore.instance.collection('posts').doc(widget.postId).snapshots();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+        stream: commentsStream,
+        builder: (context, snapshot) {
+          if (snapshot.data == null) {
+            return Image.asset(
+              'assets/bell-inactive.png',
+              width: 25,
+            );
+          } else {
+            if (snapshot.data.get('lastSeenComments') <
+                snapshot.data.get('lastCommentTime')) {
+              return Image.asset('assets/bell-active.png', width: 25);
+            }
+            return Image.asset('assets/bell-inactive.png', width: 25);
+          }
+        });
+  }
+}
+
 class FeedOverlay extends StatefulWidget {
   @override
   _FeedOverlayState createState() => _FeedOverlayState();
@@ -34,7 +72,7 @@ class _FeedOverlayState extends State<FeedOverlay> {
             builder: (context, snapshot) {
               if (snapshot.data == null) {
                 return Image.asset(
-                  'assets/bell-inactive.png',
+                  'assets/mail-inactive.png',
                   width: 25,
                 );
               } else {
@@ -50,10 +88,10 @@ class _FeedOverlayState extends State<FeedOverlay> {
                     relevantTimestamp = snapshotDoc.get('lastSeenAuthor');
                   }
                   if (snapshotDoc.get('lastMessage') > relevantTimestamp) {
-                    return Image.asset('assets/bell-active.png', width: 25);
+                    return Image.asset('assets/mail-active.png', width: 25);
                   }
                 }
-                return Image.asset('assets/bell-inactive.png', width: 25);
+                return Image.asset('assets/mail-inactive.png', width: 25);
               }
             }),
       ),

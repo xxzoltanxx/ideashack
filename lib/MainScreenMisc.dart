@@ -273,16 +273,32 @@ class _ReportPopupState extends State<ReportPopup> {
 
 class CommentPopup extends StatefulWidget {
   CommentPopup(
-      {this.postId, this.commentId, this.commentIdSeen, this.idMapping});
+      {this.postId,
+      this.commentId,
+      this.commentIdSeen,
+      this.idMapping,
+      this.keyMapping});
   final String postId;
   final String commentId;
   final String commentIdSeen;
   final Map<String, int> idMapping;
+  final Map<int, String> keyMapping;
   @override
   _CommentPopupState createState() => _CommentPopupState();
 }
 
 class _CommentPopupState extends State<CommentPopup> {
+  @override
+  void initState() {
+    postId = widget.postId;
+    commentId = widget.commentId;
+    commentIdSeen = widget.commentIdSeen;
+    super.initState();
+  }
+
+  String postId;
+  String commentId;
+  String commentIdSeen;
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -290,13 +306,12 @@ class _CommentPopupState extends State<CommentPopup> {
       content: FutureBuilder(
         future: Firestore.instance
             .collection('posts')
-            .doc(widget.postId)
+            .doc(postId)
             .collection('comments')
-            .doc(widget.commentId)
+            .doc(commentId)
             .get(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.done) {
-            print(widget.commentId);
             DocumentSnapshot docSnap = snapshot.data;
             if (!docSnap.exists) {
               return Container(
@@ -316,32 +331,44 @@ class _CommentPopupState extends State<CommentPopup> {
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,
                 )),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text('Posted on: ' + date,
-                            style: disabledUpperBarStyle.copyWith(
-                                fontSize: 10, fontStyle: FontStyle.italic)),
-                        SizedBox(width: 20),
-                        Text('Comment id: ' + widget.commentIdSeen,
-                            style: disabledUpperBarStyle.copyWith(
-                                fontSize: 10, fontStyle: FontStyle.italic))
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    HashTagText(
-                      text: text,
-                      basicStyle: enabledUpperBarStyle,
-                      decoratedStyle:
-                          enabledUpperBarStyle.copyWith(color: Colors.red),
-                    ),
-                    SizedBox(height: 20),
-                    DottedLine(dashColor: disabledUpperBarColor),
-                    SizedBox(height: 20),
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text('Posted on: ' + date,
+                              style: disabledUpperBarStyle.copyWith(
+                                  fontSize: 10, fontStyle: FontStyle.italic)),
+                          SizedBox(width: 20),
+                          Text('Comment id: ' + commentIdSeen,
+                              style: disabledUpperBarStyle.copyWith(
+                                  fontSize: 10, fontStyle: FontStyle.italic))
+                        ],
+                      ),
+                      SizedBox(height: 20),
+                      HashTagText(
+                        text: text,
+                        basicStyle: enabledUpperBarStyle,
+                        decoratedStyle:
+                            enabledUpperBarStyle.copyWith(color: Colors.red),
+                        onTap: (id) {
+                          String idConverted =
+                              replaceIdsWithHashtags(id, widget.keyMapping);
+                          var idConvertedList = extractHashTags(idConverted);
+                          setState(() {
+                            commentId = idConvertedList[0].substring(1);
+                            commentIdSeen = id;
+                          });
+                        },
+                      ),
+                      SizedBox(height: 20),
+                      DottedLine(dashColor: disabledUpperBarColor),
+                      SizedBox(height: 20),
+                    ],
+                  ),
                 ));
           }
           return Container(

@@ -2009,6 +2009,7 @@ class _CommentState extends State<Comment> {
                   context: context,
                   builder: (_) {
                     return CommentPopup(
+                        keyMapping: widget.keyMapping,
                         commentId: idConvertedList[0].substring(1),
                         commentIdSeen: id,
                         postId: widget.postId,

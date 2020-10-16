@@ -1174,6 +1174,7 @@ class _MainPageState extends State<MainPage>
                 snapshot.data.data() != null) {
               currentCardData.comments = snapshot.data.get('commentsNum');
               currentCardData.score = snapshot.data.get('score');
+              currentCardData.hidden = snapshot.data.get('hidden');
             }
             return (Container(
               child: Transform.rotate(

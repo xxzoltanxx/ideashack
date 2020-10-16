@@ -108,7 +108,8 @@ class CardData {
       this.posterId,
       this.isAd = false,
       this.reported = false,
-      @required this.time});
+      @required this.time,
+      this.hidden});
   bool isAd;
   String text;
   int score;
@@ -120,6 +121,7 @@ class CardData {
   String posterId;
   bool reported;
   double time;
+  int hidden;
 }
 
 class NotificationData {

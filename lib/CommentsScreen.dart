@@ -197,6 +197,131 @@ class _CommentsScreenState extends State<CommentsScreen> {
       syncTimeAction();
     }
 
+    if (cardData.hidden == 1) {
+      return Scaffold(
+          appBar: AppBar(
+              iconTheme: IconThemeData(color: Colors.black),
+              backgroundColor: Colors.white,
+              elevation: 5.0,
+              title: Text('Viewing comments',
+                  style: TextStyle(color: Colors.black))),
+          body: SafeArea(
+              child: Container(
+                  decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                    colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  )),
+                  child: GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context).requestFocus(new FocusNode());
+                    },
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Column(
+                              children: [
+                                SizedBox(height: 30),
+                                Row(
+                                  children: [
+                                    Image.asset(
+                                      'assets/score.png',
+                                      width: 40,
+                                      color: Colors.grey,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text(cardData.score.toString(),
+                                        style: enabledUpperBarStyle.copyWith(
+                                            color: Colors.grey, fontSize: 25))
+                                  ],
+                                ),
+                                SizedBox(height: 20),
+                                Text(cardData.text,
+                                    style: disabledUpperBarStyle),
+                                SizedBox(height: 20),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Comments',
+                                        style: enabledUpperBarStyle),
+                                    Icon(Icons.arrow_drop_down,
+                                        color: disabledUpperBarColor),
+                                  ],
+                                ),
+                                Divider(color: disabledUpperBarColor),
+                                SizedBox(height: 20),
+                                Expanded(
+                                    flex: 5,
+                                    child: Center(
+                                        child: Text('Post has been removed!',
+                                            style: disabledUpperBarStyle)))
+                              ],
+                            ),
+                          ),
+                        ),
+                        Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                            ),
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              child: Column(
+                                children: [
+                                  SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ConstrainedBox(
+                                          constraints: BoxConstraints(
+                                            maxHeight: 300,
+                                          ),
+                                          child: HashTagTextField(
+                                            key: key,
+                                            decoration: InputDecoration(
+                                                counterText: "",
+                                                hintStyle:
+                                                    disabledUpperBarStyle,
+                                                hintText: 'Add a comment...'),
+                                            maxLines: null,
+                                            basicStyle: disabledUpperBarStyle,
+                                            decoratedStyle:
+                                                disabledUpperBarStyle.copyWith(
+                                                    color: Colors.red),
+                                            maxLength: 245,
+                                            controller: messageTextController,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                inputText = value;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      FlatButton(
+                                          disabledColor: Colors.transparent,
+                                          color: Colors.transparent,
+                                          child: Center(
+                                              child: Text('Post',
+                                                  style: TextStyle(
+                                                      color: Colors.grey))),
+                                          onPressed: null)
+                                    ],
+                                  ),
+                                  Divider(color: Colors.black),
+                                  SizedBox(height: 10),
+                                ],
+                              ),
+                            )),
+                      ],
+                    ),
+                  ))));
+    }
+
     return Scaffold(
       appBar: AppBar(
           iconTheme: IconThemeData(color: Colors.black),

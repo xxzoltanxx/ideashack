@@ -175,6 +175,7 @@ class CardList {
           }
           if (!skipPost) {
             cardsData.add(CardData(
+                hidden: doc.get('hidden'),
                 posterId: doc.get('userid'),
                 id: doc.id,
                 author: doc.get('author'),
@@ -222,6 +223,7 @@ class CardList {
         upvoteStatus = UpvotedStatus.Downvoted;
       }
       return CardData(
+        hidden: snapshot.get('hidden'),
         status: upvoteStatus,
         comments: snapshot.get('commentsNum'),
         reported: reported,
@@ -233,6 +235,7 @@ class CardList {
       );
     } catch (e) {
       return CardData(
+        hidden: 1,
         text: "Post has been deleted.",
         score: 0,
         author: "",
@@ -360,6 +363,7 @@ class CardList {
             upvoteStatus = UpvotedStatus.Downvoted;
           }
           cardsData.add(CardData(
+              hidden: doc.get('hidden'),
               posterId: doc.get('userid'),
               id: doc.id,
               author: doc.get('author'),
@@ -440,6 +444,7 @@ class CardList {
             upvoteStatus = UpvotedStatus.Downvoted;
           }
           cardsData.add(CardData(
+              hidden: doc.get('hidden'),
               posterId: doc.get('userid'),
               id: doc.id,
               author: doc.get('author'),

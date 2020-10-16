@@ -369,7 +369,9 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                             maxHeight: 300,
                                           ),
                                           child: TextField(
+                                            maxLength: 245,
                                             decoration: InputDecoration(
+                                                counterText: "",
                                                 hintStyle:
                                                     disabledUpperBarStyle),
                                             maxLines: null,
@@ -426,7 +428,9 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                             maxHeight: 300,
                                           ),
                                           child: TextField(
+                                            maxLength: 245,
                                             decoration: InputDecoration(
+                                                counterText: "",
                                                 hintStyle:
                                                     disabledUpperBarStyle),
                                             maxLines: null,
@@ -559,7 +563,9 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                             maxHeight: 300,
                                           ),
                                           child: TextField(
+                                            maxLength: 245,
                                             decoration: InputDecoration(
+                                                counterText: "",
                                                 hintStyle:
                                                     disabledUpperBarStyle),
                                             maxLines: null,

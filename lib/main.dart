@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,6 +32,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:admob_consent/admob_consent.dart';
 import 'Analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:wc_flutter_share/wc_flutter_share.dart';
+import 'NotificationList.dart';
 
 void initFirebaseMessaging() {
   FirebaseMessaging _firebaseMessaging =
@@ -121,7 +124,8 @@ class MyApp extends StatelessWidget {
         '/auth': (context) => RegistrationScreen(),
         '/comments': (context) => CommentsScreen(),
         '/message': (context) => DmScreen(),
-        '/feed': (context) => DMList()
+        '/feed': (context) => DMList(),
+        '/notifications': (context) => NotificationList()
       },
       initialRoute: '/auth',
     );
@@ -161,7 +165,6 @@ class _MainPageState extends State<MainPage>
   CancelableOperation batchFuture;
   bool searchSelected = false;
   String customSearch = "";
-  RenderRepaintBoundary repaint;
   GlobalKey mainWidgetKey;
   double adCounter = 0;
   Timer adTimer;
@@ -172,6 +175,88 @@ class _MainPageState extends State<MainPage>
   NativeAdmobController controllerAdmob = NativeAdmobController();
   StreamSubscription _connectionChangeStream;
   GlobalKey adKey;
+  bool sharing = false;
+
+  void shareCardData() async {
+    Widget shareWidget = Material(
+        child: Container(
+      width: 800,
+      height: 800,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+            begin: FractionalOffset.bottomLeft,
+            end: FractionalOffset.topRight,
+            colors: splashScreenColors),
+      ),
+      child: Center(
+          child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: HashTagText(
+                            onTap: null,
+                            textAlign: TextAlign.center,
+                            text: currentCardData.text,
+                            basicStyle:
+                                MAIN_CARD_TEXT_STYLE.copyWith(fontSize: 50),
+                            decoratedStyle: MAIN_CARD_TEXT_STYLE.copyWith(
+                                fontSize: 50, color: Colors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.all(cardthingspadding),
+                    child: Divider(
+                      color: cardThingsTextStyle.color,
+                    ),
+                  ),
+                ],
+              ),
+              Align(
+                alignment: Alignment.topLeft,
+                child: Transform.rotate(
+                    angle: 0,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset('assets/logo.png', width: 150),
+                        Text('Share your idea!', style: cardThingsTextStyle)
+                      ],
+                    )),
+              ),
+            ],
+          ),
+        ),
+      )),
+    ));
+
+    Uint8List imageData = await createImageFromWidget(shareWidget,
+        logicalSize: Size(800, 800), imageSize: Size(800, 800));
+    try {
+      await WcFlutterShare.share(
+          sharePopupTitle: 'Share',
+          fileName: 'spark.png',
+          mimeType: 'image/png',
+          bytesOfFile: imageData);
+    } catch (e) {
+      print(e);
+    }
+    setState(() {
+      sharing = false;
+    });
+  }
 
   void saveShowedEula() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -346,11 +431,8 @@ class _MainPageState extends State<MainPage>
     _settingModalBottomSheet(context, sheet);
   }
 
-  void commentsCallbackUserPanel(bool profane) {
-    if (profane)
-      _settingModalBottomSheet(context, InfoSheet.Profane);
-    else
-      _settingModalBottomSheet(context, InfoSheet.Commented);
+  void commentsCallbackUserPanel(CardData data, InfoSheet sheet) {
+    _settingModalBottomSheet(context, sheet);
   }
 
   void connectionChanged(dynamic hasConnection) {
@@ -503,6 +585,12 @@ class _MainPageState extends State<MainPage>
       GlobalController.get().dailyPosts = GlobalController.get().dailyPosts - 1;
       GlobalController.get().selectedIndex = 1;
       fetchNum = 0;
+      currentCardData = null;
+      nextCardData = null;
+      CardList.get().resetLastDocumentSnapshot();
+      CardList.get().clear();
+      searchSelected = false;
+      tabSelect = SelectTab.New;
     });
     _settingModalBottomSheet(context, InfoSheet.Posted);
   }
@@ -663,6 +751,11 @@ class _MainPageState extends State<MainPage>
 
   void _settingModalBottomSheet(context, InfoSheet sheet) {
     ListTile info;
+    if (sheet == InfoSheet.PostLimitReached) {
+      info = ListTile(
+          leading: Icon(Icons.not_interested),
+          title: Text('Post reached comment limit!'));
+    }
     if (sheet == InfoSheet.CantRate) {
       info = ListTile(
           leading: Icon(Icons.thumb_up),
@@ -741,6 +834,9 @@ class _MainPageState extends State<MainPage>
 
   String parseSheet(InfoSheet sheet) {
     switch (sheet) {
+      case InfoSheet.PostLimitReached:
+        return "postlimitreached";
+        break;
       case InfoSheet.CantRate:
         return "cantrate";
         break;
@@ -974,97 +1070,94 @@ class _MainPageState extends State<MainPage>
             child: Transform.translate(
               offset:
                   Offset(frontCardAlign.x * 20, (frontCardAlign.x.abs()) * 10),
-              child: RepaintBoundary(
-                key: mainWidgetKey,
-                child: Container(
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                          begin: Alignment.bottomCenter,
-                          end: Alignment.topCenter,
-                          colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)]),
-                      boxShadow: [
-                        BoxShadow(
-                          blurRadius: 20.0,
-                          color: Color.fromARGB(boxColor.toInt(), 0, 0, 0),
-                        )
-                      ]),
-                  child: Center(
-                      child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(height: 30),
-                      Flexible(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Container(
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border(
-                                      top: BorderSide(color: Colors.black),
-                                      bottom: BorderSide(color: Colors.black),
-                                      left: BorderSide(color: Colors.black),
-                                      right: BorderSide(color: Colors.black))),
-                              child: Center(
-                                  child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: NativeAdmob(
-                                    key: adKey,
-                                    error: Center(
-                                        child: Text('No ads to display!',
-                                            style: disabledUpperBarStyle)),
-                                    adUnitID:
-                                        'ca-app-pub-4102451006671600/2649770997',
-                                    controller: controllerAdmob,
-                                    loading: Center(
-                                        child: SpinKitThreeBounce(
-                                            size: 20, color: Colors.white)),
-                                    type: NativeAdmobType.full,
-                                    options: NativeAdmobOptions(
-                                        callToActionStyle: NativeTextStyle(
-                                            color: Colors.black),
-                                        adLabelTextStyle: NativeTextStyle(
-                                            color: Colors.black),
-                                        bodyTextStyle: NativeTextStyle(
-                                            color: Colors.black),
-                                        headlineTextStyle: NativeTextStyle(
-                                            color: Colors.black),
-                                        advertiserTextStyle: NativeTextStyle(
-                                            color: Colors.black),
-                                        storeTextStyle: NativeTextStyle(
-                                            color: Colors.black),
-                                        showMediaContent: true)),
-                              ))),
-                        ),
+              child: Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)]),
+                    boxShadow: [
+                      BoxShadow(
+                        blurRadius: 20.0,
+                        color: Color.fromARGB(boxColor.toInt(), 0, 0, 0),
+                      )
+                    ]),
+                child: Center(
+                    child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(height: 30),
+                    Flexible(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Container(
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border(
+                                    top: BorderSide(color: Colors.black),
+                                    bottom: BorderSide(color: Colors.black),
+                                    left: BorderSide(color: Colors.black),
+                                    right: BorderSide(color: Colors.black))),
+                            child: Center(
+                                child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: NativeAdmob(
+                                  key: adKey,
+                                  error: Center(
+                                      child: Text('No ads to display!',
+                                          style: disabledUpperBarStyle)),
+                                  adUnitID:
+                                      'ca-app-pub-4102451006671600/2649770997',
+                                  controller: controllerAdmob,
+                                  loading: Center(
+                                      child: SpinKitThreeBounce(
+                                          size: 20, color: Colors.white)),
+                                  type: NativeAdmobType.full,
+                                  options: NativeAdmobOptions(
+                                      callToActionStyle:
+                                          NativeTextStyle(color: Colors.black),
+                                      adLabelTextStyle:
+                                          NativeTextStyle(color: Colors.black),
+                                      bodyTextStyle:
+                                          NativeTextStyle(color: Colors.black),
+                                      headlineTextStyle:
+                                          NativeTextStyle(color: Colors.black),
+                                      advertiserTextStyle:
+                                          NativeTextStyle(color: Colors.black),
+                                      storeTextStyle:
+                                          NativeTextStyle(color: Colors.black),
+                                      showMediaContent: true)),
+                            ))),
                       ),
-                      Text('We are grateful for your support.',
-                          style: disabledUpperBarStyle),
-                      Text('Spark will continue in...',
-                          style: enabledUpperBarStyle),
-                      SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Divider(color: Colors.grey),
-                      ),
-                      SizedBox(height: 20),
-                      GlobalController.get().isAdLocked
-                          ? Text('${adCounter.toInt()}s',
-                              style: enabledUpperBarStyle)
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.arrow_left,
-                                    color: enabledUpperBarColor),
-                                SizedBox(width: 10),
-                                Text('Swipe', style: enabledUpperBarStyle),
-                                SizedBox(width: 10),
-                                Icon(Icons.arrow_right,
-                                    color: enabledUpperBarColor)
-                              ],
-                            ),
-                      SizedBox(height: 20),
-                    ],
-                  )),
-                ),
+                    ),
+                    Text('We are grateful for your support.',
+                        style: disabledUpperBarStyle),
+                    Text('Spark will continue in...',
+                        style: enabledUpperBarStyle),
+                    SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Divider(color: Colors.grey),
+                    ),
+                    SizedBox(height: 20),
+                    GlobalController.get().isAdLocked
+                        ? Text('${adCounter.toInt()}s',
+                            style: enabledUpperBarStyle)
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.arrow_left,
+                                  color: enabledUpperBarColor),
+                              SizedBox(width: 10),
+                              Text('Swipe', style: enabledUpperBarStyle),
+                              SizedBox(width: 10),
+                              Icon(Icons.arrow_right,
+                                  color: enabledUpperBarColor)
+                            ],
+                          ),
+                    SizedBox(height: 20),
+                  ],
+                )),
               ),
             ),
           ),
@@ -1331,22 +1424,26 @@ class _MainPageState extends State<MainPage>
                                       Container(
                                         width: 90,
                                         child: InkWell(
-                                            onTap: () {
-                                              AnalyticsController.get()
-                                                  .shareClicked();
-                                              repaint = mainWidgetKey
-                                                  .currentContext
-                                                  .findRenderObject();
-                                              showDialog(
-                                                  context: context,
-                                                  builder: (_) => SharePopup(
-                                                      repaint,
-                                                      currentCardData.text));
-                                            },
-                                            child: Text('Share',
-                                                textAlign: TextAlign.center,
-                                                style:
-                                                    cardThingsBelowTextStyle)),
+                                            onTap: sharing
+                                                ? null
+                                                : () {
+                                                    setState(() {
+                                                      sharing = true;
+                                                    });
+                                                    AnalyticsController.get()
+                                                        .shareClicked();
+                                                    shareCardData();
+                                                  },
+                                            child: Text(
+                                              'Share',
+                                              style: ((!sharing)
+                                                  ? cardThingsBelowTextStyle
+                                                  : cardThingsBelowTextStyle
+                                                      .copyWith(
+                                                          color: Color(
+                                                              0x55894100))),
+                                              textAlign: TextAlign.center,
+                                            )),
                                       )
                                     ],
                                   ),
@@ -1467,6 +1564,7 @@ class _MainPageState extends State<MainPage>
                         ),
                       ),
                       Expanded(child: Container()),
+                      NotificationOverlay(),
                       FeedOverlay(),
                     ],
                   ),
@@ -1532,6 +1630,7 @@ class _MainPageState extends State<MainPage>
                         child: Text('Search', style: disabledOnReloadStyle),
                       ),
                       Expanded(child: Container()),
+                      NotificationOverlay(),
                       FeedOverlay(),
                     ],
                   ),
@@ -1627,6 +1726,7 @@ class _MainPageState extends State<MainPage>
                           ),
                         ),
                         Expanded(child: Container()),
+                        NotificationOverlay(),
                         FeedOverlay(),
                       ],
                     ),

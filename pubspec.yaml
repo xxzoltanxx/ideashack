@@ -41,13 +41,12 @@ dependencies:
   faker: ^1.2.1
   hashtagable: ^1.0.2
   autocomplete_textfield: ^1.7.3
-  path_provider: ^1.6.18
-  social_share: ^2.0.5
   dotted_line: ^2.0.1
   flutter_native_admob: ^2.1.0+3
   shared_preferences: ^0.5.12
   admob_consent: ^1.1.0
   firebase_analytics: ^6.0.2
+  wc_flutter_share: ^0.2.2
 
   ntp:
     git: 'https://github.com/knezzz/ntp.git'

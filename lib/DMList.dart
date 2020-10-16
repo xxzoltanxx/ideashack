@@ -4,11 +4,6 @@ import 'package:ideashack/Const.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dotted_line/dotted_line.dart';
 
-class DMList extends StatefulWidget {
-  @override
-  _DMListState createState() => _DMListState();
-}
-
 class DMData {
   DMData(this.postId, this.postInitializer, this.postAuthor, this.lastMessage,
       this.shouldHiglight, this.conversationPartner);
@@ -18,6 +13,11 @@ class DMData {
   String lastMessage;
   bool shouldHiglight;
   String conversationPartner;
+}
+
+class DMList extends StatefulWidget {
+  @override
+  _DMListState createState() => _DMListState();
 }
 
 class _DMListState extends State<DMList> {

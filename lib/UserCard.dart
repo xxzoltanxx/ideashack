@@ -54,7 +54,6 @@ class _UserCardState extends State<UserCard> {
   }
 
   void cardCallback() {
-    print("HAYU");
     setState(() {
       fetched = false;
       ideas.clear();

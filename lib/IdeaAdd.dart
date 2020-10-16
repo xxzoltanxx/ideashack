@@ -184,6 +184,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
+                          NotificationOverlay(),
                           FeedOverlay(),
                         ],
                       ),

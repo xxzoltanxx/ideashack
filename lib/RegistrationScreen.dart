@@ -8,7 +8,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:async';
 import 'CardList.dart';
-import 'package:social_share/social_share.dart';
 import 'Analytics.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -63,7 +62,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> checkOrSetupNewUser(User user) async {
     try {
-      SocialShare.checkInstalledAppsForShare();
       QuerySnapshot parametersArray =
           await Firestore.instance.collection('parameters').get();
       GlobalController.get().parameters = parametersArray.docs[0];
@@ -153,6 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
         assert(user.uid == currentUser.uid);
         GlobalController.get().currentUserUid = user.uid;
         GlobalController.get().currentUser = user;
+        print(user.isAnonymous);
         AnalyticsController.get().setUserId();
         await checkOrSetupNewUser(currentUser);
       } catch (e) {
@@ -315,9 +314,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         arguments: user));
               });
               return Container(
-                  child: Center(child: Text('You\'re logged in!')));
+                  child: Center(
+                      child: Text(user.isAnonymous
+                          ? 'Welcome!'
+                          : 'You\'re logged in!')));
             }
-            print("REACHED HERE");
             return Container(
                 child: Center(
                     child: Column(
@@ -391,7 +392,10 @@ class _LoginScreenState extends State<LoginScreen> {
               WidgetsBinding.instance.addPostFrameCallback((duration) =>
                   Navigator.popAndPushNamed(context, '/main', arguments: user));
             });
-            return Container(child: Center(child: Text('You\'re logged in!')));
+            return Container(
+                child: Center(
+                    child: Text(
+                        user.isAnonymous ? 'Welcome!' : 'You\'re logged in!')));
           }
           return Container(
               child: Center(

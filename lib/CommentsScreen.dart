@@ -6,6 +6,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'Const.dart';
 import 'MainScreenMisc.dart';
 import 'Analytics.dart';
+import 'package:hashtagable/hashtagable.dart';
+import 'package:wc_flutter_share/wc_flutter_share.dart';
+import 'dart:typed_data';
 
 class CommentsScreen extends StatefulWidget {
   @override
@@ -20,6 +23,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
   Function commentsCallback;
   TextEditingController messageTextController;
   Future<void> postingFuture;
+  GlobalKey key = GlobalKey();
+  Map<int, String> keyMapping = {};
+  Map<String, int> idMapping = {};
+  GlobalKey listViewGlobalKey = GlobalKey();
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -27,12 +35,62 @@ class _CommentsScreenState extends State<CommentsScreen> {
     super.initState();
   }
 
+  void sendNotificationReplied(String commentId, String input) async {
+    try {
+      var repliedTo = await Firestore.instance
+          .collection('posts')
+          .doc(cardData.id)
+          .collection('comments')
+          .doc(commentId)
+          .get();
+      print(repliedTo.data());
+      String uid = repliedTo.get('uid');
+      QuerySnapshot userDataa = await Firestore.instance
+          .collection('users')
+          .where('uid', isEqualTo: uid)
+          .get();
+      DocumentSnapshot userData = userDataa.docs[0];
+
+      print(input);
+      var time = await getCurrentTimestampServer();
+      await Firestore.instance
+          .collection('users')
+          .doc(userData.id)
+          .collection('notifications')
+          .add({
+        'type': 'reply',
+        'text': input,
+        'time': time,
+        'clicked': 0,
+        'postId': cardData.id
+      });
+
+      if (userData.exists && userData.get('pushToken') != null) {
+        GlobalController.get().callOnFcmApiSendPushNotifications(
+            [userData.get('pushToken')],
+            'New reply to your comment',
+            'Someone replied to your comment!',
+            'comment',
+            NotificationData(cardData.id, null, null));
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
   Future<void> postComment(String inputText) async {
     try {
+      FocusScope.of(context).requestFocus(new FocusNode());
+      inputText = replaceIdsWithHashtags(inputText, keyMapping);
+      List<String> commentIds = extractHashTags(inputText);
+      for (String commentId in commentIds) {
+        sendNotificationReplied(commentId.substring(1), inputText);
+      }
       double time = await getCurrentTimestampServer();
       String input = inputText;
+      DocumentSnapshot snapshot;
       try {
-        DocumentSnapshot snapshot =
+        snapshot =
             await Firestore.instance.collection('posts').doc(cardData.id).get();
         if (!snapshot.exists) {
           return Future.error(1);
@@ -40,18 +98,20 @@ class _CommentsScreenState extends State<CommentsScreen> {
       } catch (e) {
         return Future.error(1);
       }
+
+      if (snapshot.get('commentsNum') == 250) {
+        return Future.error(2);
+      }
+      await Firestore.instance.collection('posts').doc(cardData.id).update(
+          {'commentsNum': FieldValue.increment(1), 'lastCommentTime': time});
       var ref = await Firestore.instance
           .collection('posts')
           .doc(cardData.id)
           .collection('comments')
-          .add({'comment': input, 'time': time});
-      await Firestore.instance.collection('posts').doc(cardData.id).update(
-          {'commentsNum': FieldValue.increment(1), 'lastCommentTime': time});
-      await Firestore.instance
-          .collection('users')
-          .doc(GlobalController.get().userDocId)
-          .update({
-        'commented': FieldValue.arrayUnion([cardData.id])
+          .add({
+        'comment': input,
+        'time': time,
+        'uid': GlobalController.get().currentUserUid,
       });
       AnalyticsController.get().postedComment(cardData.id, ref.id);
       sendPushNotification();
@@ -67,8 +127,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
           .where('uid', isEqualTo: cardData.posterId)
           .get();
       DocumentSnapshot userData = userDataa.docs[0];
-      print(userData.exists);
-      print(userData.get('pushToken'));
       if (userData.exists && userData.get('pushToken') != null) {
         GlobalController.get().callOnFcmApiSendPushNotifications(
             [userData.get('pushToken')],
@@ -86,6 +144,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     bool profane = false;
     if (spamFilter.isProfane(inputText) || inputText.trim().length < 15) {
       commentsCallback(cardData, InfoSheet.Profane);
+      return;
     }
     if (!profane) {
       setState(() {
@@ -108,6 +167,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
     }
   }
 
+  void onReply(String poster) {
+    setState(() {
+      inputText = inputText + '#' + poster + '\n';
+      messageTextController.text = inputText;
+    });
+  }
+
   @override
   void dispose() {
     syncTimeAction();
@@ -124,6 +190,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
       commentsCallback = list[1];
       syncTimeAction();
     }
+
     return Scaffold(
       appBar: AppBar(
           iconTheme: IconThemeData(color: Colors.black),
@@ -136,9 +203,15 @@ class _CommentsScreenState extends State<CommentsScreen> {
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               if (!shownErrorMessage) {
-                WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                  commentsCallback(cardData, InfoSheet.Deleted);
-                });
+                if (snapshot.error == 2) {
+                  WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                    commentsCallback(cardData, InfoSheet.PostLimitReached);
+                  });
+                } else {
+                  WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                    commentsCallback(cardData, InfoSheet.Deleted);
+                  });
+                }
                 shownErrorMessage = true;
               }
               return SafeArea(
@@ -220,19 +293,28 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                               constraints: BoxConstraints(
                                                 maxHeight: 300,
                                               ),
-                                              child: TextField(
+                                              child: HashTagTextField(
+                                                key: key,
                                                 decoration: InputDecoration(
+                                                    counterText: "",
                                                     hintStyle:
                                                         disabledUpperBarStyle,
-                                                    hintText: cardData.commented
-                                                        ? 'You already commented here..'
-                                                        : 'Add a comment...'),
+                                                    hintText:
+                                                        'Add a comment...'),
                                                 maxLines: null,
-                                                style: disabledUpperBarStyle,
+                                                basicStyle:
+                                                    disabledUpperBarStyle,
+                                                decoratedStyle:
+                                                    disabledUpperBarStyle
+                                                        .copyWith(
+                                                            color: Colors.red),
+                                                maxLength: 245,
                                                 controller:
                                                     messageTextController,
                                                 onChanged: (value) {
-                                                  inputText = value;
+                                                  setState(() {
+                                                    inputText = value;
+                                                  });
                                                 },
                                               ),
                                             ),
@@ -261,8 +343,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       .collection('posts')
                       .doc(cardData.id)
                       .collection('comments')
-                      .orderBy('time', descending: true)
-                      .limit(100)
+                      .orderBy('time', descending: false)
+                      .limit(250)
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.data == null) {
@@ -363,17 +445,23 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                           BoxConstraints(
                                                         maxHeight: 300,
                                                       ),
-                                                      child: TextField(
+                                                      child: HashTagTextField(
+                                                        key: key,
                                                         decoration: InputDecoration(
+                                                            counterText: "",
                                                             hintStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText: cardData
-                                                                    .commented
-                                                                ? 'You already commented here..'
-                                                                : 'Add a comment...'),
+                                                            hintText:
+                                                                'Add a comment...'),
                                                         maxLines: null,
-                                                        style:
+                                                        basicStyle:
                                                             disabledUpperBarStyle,
+                                                        decoratedStyle:
+                                                            disabledUpperBarStyle
+                                                                .copyWith(
+                                                                    color: Colors
+                                                                        .red),
+                                                        maxLength: 245,
                                                         controller:
                                                             messageTextController,
                                                         onChanged: (value) {
@@ -413,15 +501,51 @@ class _CommentsScreenState extends State<CommentsScreen> {
                             child: Text('There are no comments yet.',
                                 style: disabledUpperBarStyle)));
                       } else {
+                        keyMapping.clear();
+                        idMapping.clear();
+                        Set<String> youPosts = {};
+                        int postCounter = 0;
                         for (var doc in snapshot.data.docs) {
+                          if (doc.get('uid') ==
+                              GlobalController.get().currentUserUid) {
+                            youPosts.add(doc.id);
+                          }
+                        }
+                        for (var doc in snapshot.data.docs) {
+                          List<String> hashtags =
+                              extractHashTags(doc.get('comment'));
+                          bool isReply = false;
+                          for (var commentId in hashtags) {
+                            if (youPosts.contains(commentId.substring(1))) {
+                              isReply = true;
+                            }
+                          }
+                          keyMapping[postCounter] = doc.id;
+                          idMapping[doc.id] = postCounter;
+                          String comment = doc.get('comment');
+                          comment = replaceHashtagsWithIds(comment, idMapping);
                           comments.add(Center(
                               child: Comment(
-                                  comment: doc.get('comment'),
+                                  idMapping: idMapping,
+                                  keyMapping: keyMapping,
+                                  isReply: isReply,
+                                  onReply: onReply,
+                                  uid: doc.get('uid'),
+                                  currentCardData: cardData,
+                                  comment: comment,
                                   timestamp: doc.get('time'),
                                   postId: cardData.id,
-                                  commentId: doc.id)));
+                                  commentId: postCounter.toString())));
+
+                          postCounter = postCounter + 1;
                         }
                       }
+                      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                        _scrollController.animateTo(
+                            _scrollController.position.maxScrollExtent,
+                            duration: Duration(seconds: 1),
+                            curve: Curves.fastOutSlowIn);
+                      });
                       return SafeArea(
                           child: Container(
                               decoration: BoxDecoration(
@@ -485,8 +609,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                     ? noCommentsWidget
                                                     : Center(
                                                         child: ListView(
+                                                            controller:
+                                                                _scrollController,
+                                                            key:
+                                                                listViewGlobalKey,
                                                             shrinkWrap: false,
-                                                            reverse: false,
                                                             children:
                                                                 comments))),
                                           ],
@@ -511,17 +638,23 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                           BoxConstraints(
                                                         maxHeight: 300,
                                                       ),
-                                                      child: TextField(
+                                                      child: HashTagTextField(
+                                                        key: key,
                                                         decoration: InputDecoration(
+                                                            counterText: "",
                                                             hintStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText: cardData
-                                                                    .commented
-                                                                ? 'You already commented here..'
-                                                                : 'Add a comment...'),
+                                                            hintText:
+                                                                'Add a comment...'),
                                                         maxLines: null,
-                                                        style:
+                                                        basicStyle:
                                                             disabledUpperBarStyle,
+                                                        decoratedStyle:
+                                                            disabledUpperBarStyle
+                                                                .copyWith(
+                                                                    color: Colors
+                                                                        .red),
+                                                        maxLength: 245,
                                                         controller:
                                                             messageTextController,
                                                         onChanged: (value) {
@@ -649,23 +782,27 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                           BoxConstraints(
                                                         maxHeight: 300,
                                                       ),
-                                                      child: TextField(
+                                                      child: HashTagTextField(
+                                                        key: key,
                                                         decoration: InputDecoration(
+                                                            counterText: "",
                                                             hintStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText: cardData
-                                                                    .commented
-                                                                ? 'You already commented here..'
-                                                                : 'Add a comment...'),
+                                                            hintText:
+                                                                'Add a comment...'),
                                                         maxLines: null,
-                                                        style:
+                                                        basicStyle:
                                                             disabledUpperBarStyle,
+                                                        decoratedStyle:
+                                                            disabledUpperBarStyle
+                                                                .copyWith(
+                                                                    color: Colors
+                                                                        .red),
+                                                        maxLength: 245,
                                                         controller:
                                                             messageTextController,
                                                         onChanged: (value) {
-                                                          setState(() {
-                                                            inputText = value;
-                                                          });
+                                                          inputText = value;
                                                         },
                                                       ),
                                                     ),
@@ -776,23 +913,27 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                     constraints: BoxConstraints(
                                                       maxHeight: 300,
                                                     ),
-                                                    child: TextField(
+                                                    child: HashTagTextField(
+                                                      key: key,
                                                       decoration: InputDecoration(
+                                                          counterText: "",
                                                           hintStyle:
                                                               disabledUpperBarStyle,
-                                                          hintText: cardData
-                                                                  .commented
-                                                              ? 'You already commented here..'
-                                                              : 'Add a comment...'),
+                                                          hintText:
+                                                              'Add a comment...'),
                                                       maxLines: null,
-                                                      style:
+                                                      basicStyle:
                                                           disabledUpperBarStyle,
+                                                      decoratedStyle:
+                                                          disabledUpperBarStyle
+                                                              .copyWith(
+                                                                  color: Colors
+                                                                      .red),
+                                                      maxLength: 245,
                                                       controller:
                                                           messageTextController,
                                                       onChanged: (value) {
-                                                        setState(() {
-                                                          inputText = value;
-                                                        });
+                                                        inputText = value;
                                                       },
                                                     ),
                                                   ),
@@ -915,15 +1056,22 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                               constraints: BoxConstraints(
                                                 maxHeight: 300,
                                               ),
-                                              child: TextField(
+                                              child: HashTagTextField(
+                                                key: key,
                                                 decoration: InputDecoration(
+                                                    counterText: "",
                                                     hintStyle:
                                                         disabledUpperBarStyle,
-                                                    hintText: cardData.commented
-                                                        ? 'You already commented here..'
-                                                        : 'Add a comment...'),
+                                                    hintText:
+                                                        'Add a comment...'),
                                                 maxLines: null,
-                                                style: disabledUpperBarStyle,
+                                                basicStyle:
+                                                    disabledUpperBarStyle,
+                                                decoratedStyle:
+                                                    disabledUpperBarStyle
+                                                        .copyWith(
+                                                            color: Colors.red),
+                                                maxLength: 245,
                                                 controller:
                                                     messageTextController,
                                                 onChanged: (value) {
@@ -955,7 +1103,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 setState(() {
                   messageTextController.text = '';
                   inputText = '';
-                  cardData.commented = true;
                   postingFuture = null;
                 });
                 commentsCallback(cardData, InfoSheet.Commented);
@@ -965,8 +1112,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       .collection('posts')
                       .doc(cardData.id)
                       .collection('comments')
-                      .orderBy('time', descending: true)
-                      .limit(100)
+                      .orderBy('time', descending: false)
+                      .limit(250)
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.data == null) {
@@ -1067,23 +1214,27 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                           BoxConstraints(
                                                         maxHeight: 300,
                                                       ),
-                                                      child: TextField(
+                                                      child: HashTagTextField(
+                                                        key: key,
                                                         decoration: InputDecoration(
+                                                            counterText: "",
                                                             hintStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText: cardData
-                                                                    .commented
-                                                                ? 'You already commented here..'
-                                                                : 'Add a comment...'),
+                                                            hintText:
+                                                                'Add a comment...'),
                                                         maxLines: null,
-                                                        style:
+                                                        basicStyle:
                                                             disabledUpperBarStyle,
+                                                        decoratedStyle:
+                                                            disabledUpperBarStyle
+                                                                .copyWith(
+                                                                    color: Colors
+                                                                        .red),
+                                                        maxLength: 245,
                                                         controller:
                                                             messageTextController,
                                                         onChanged: (value) {
-                                                          setState(() {
-                                                            inputText = value;
-                                                          });
+                                                          inputText = value;
                                                         },
                                                       ),
                                                     ),
@@ -1117,15 +1268,52 @@ class _CommentsScreenState extends State<CommentsScreen> {
                             child: Center(
                                 child: Text('There are no comments yet!'))));
                       } else {
+                        int postCounter = 0;
+                        keyMapping.clear();
+                        idMapping.clear();
+                        Set<String> youPosts = {};
                         for (var doc in snapshot.data.docs) {
+                          if (doc.get('uid') ==
+                              GlobalController.get().currentUserUid) {
+                            youPosts.add(doc.id);
+                          }
+                        }
+                        for (var doc in snapshot.data.docs) {
+                          List<String> hashtags =
+                              extractHashTags(doc.get('comment'));
+                          bool isReply = false;
+                          for (var commentId in hashtags) {
+                            if (youPosts.contains(commentId.substring(1))) {
+                              isReply = true;
+                            }
+                          }
+                          keyMapping[postCounter] = doc.id;
+                          idMapping[doc.id] = postCounter;
+                          String comment = doc.get('comment');
+                          comment = replaceHashtagsWithIds(comment, idMapping);
                           comments.add(Center(
                               child: Comment(
-                                  comment: doc.get('comment'),
+                                  idMapping: idMapping,
+                                  keyMapping: keyMapping,
+                                  isReply: isReply,
+                                  onReply: onReply,
+                                  uid: doc.get('uid'),
+                                  currentCardData: cardData,
+                                  comment: comment,
                                   timestamp: doc.get('time'),
                                   postId: cardData.id,
-                                  commentId: doc.id)));
+                                  commentId: postCounter.toString())));
+
+                          postCounter = postCounter + 1;
                         }
                       }
+                      WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                        _scrollController.animateTo(
+                            _scrollController.position.maxScrollExtent,
+                            duration: Duration(seconds: 1),
+                            curve: Curves.fastOutSlowIn);
+                      });
+
                       return SafeArea(
                           child: Container(
                               decoration: BoxDecoration(
@@ -1189,8 +1377,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                     ? noCommentsWidget
                                                     : Center(
                                                         child: ListView(
+                                                            controller:
+                                                                _scrollController,
+                                                            key:
+                                                                listViewGlobalKey,
                                                             shrinkWrap: false,
-                                                            reverse: false,
                                                             children:
                                                                 comments))),
                                           ],
@@ -1215,17 +1406,23 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                           BoxConstraints(
                                                         maxHeight: 300,
                                                       ),
-                                                      child: TextField(
+                                                      child: HashTagTextField(
+                                                        key: key,
                                                         decoration: InputDecoration(
+                                                            counterText: "",
                                                             hintStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText: cardData
-                                                                    .commented
-                                                                ? 'You already commented here..'
-                                                                : 'Add a comment...'),
+                                                            hintText:
+                                                                'Add a comment...'),
                                                         maxLines: null,
-                                                        style:
+                                                        basicStyle:
                                                             disabledUpperBarStyle,
+                                                        decoratedStyle:
+                                                            disabledUpperBarStyle
+                                                                .copyWith(
+                                                                    color: Colors
+                                                                        .red),
+                                                        maxLength: 245,
                                                         controller:
                                                             messageTextController,
                                                         onChanged: (value) {
@@ -1347,17 +1544,23 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                           BoxConstraints(
                                                         maxHeight: 300,
                                                       ),
-                                                      child: TextField(
+                                                      child: HashTagTextField(
+                                                        key: key,
                                                         decoration: InputDecoration(
+                                                            counterText: "",
                                                             hintStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText: cardData
-                                                                    .commented
-                                                                ? 'You already commented here..'
-                                                                : 'Add a comment...'),
+                                                            hintText:
+                                                                'Add a comment...'),
                                                         maxLines: null,
-                                                        style:
+                                                        basicStyle:
                                                             disabledUpperBarStyle,
+                                                        decoratedStyle:
+                                                            disabledUpperBarStyle
+                                                                .copyWith(
+                                                                    color: Colors
+                                                                        .red),
+                                                        maxLength: 245,
                                                         controller:
                                                             messageTextController,
                                                         onChanged: (value) {
@@ -1474,17 +1677,23 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                     constraints: BoxConstraints(
                                                       maxHeight: 300,
                                                     ),
-                                                    child: TextField(
+                                                    child: HashTagTextField(
+                                                      key: key,
                                                       decoration: InputDecoration(
+                                                          counterText: "",
                                                           hintStyle:
                                                               disabledUpperBarStyle,
-                                                          hintText: cardData
-                                                                  .commented
-                                                              ? 'You already commented here..'
-                                                              : 'Add a comment...'),
+                                                          hintText:
+                                                              'Add a comment...'),
                                                       maxLines: null,
-                                                      style:
+                                                      basicStyle:
                                                           disabledUpperBarStyle,
+                                                      decoratedStyle:
+                                                          disabledUpperBarStyle
+                                                              .copyWith(
+                                                                  color: Colors
+                                                                      .red),
+                                                      maxLength: 245,
                                                       controller:
                                                           messageTextController,
                                                       onChanged: (value) {
@@ -1528,16 +1737,31 @@ class _CommentsScreenState extends State<CommentsScreen> {
 }
 
 class Comment extends StatefulWidget {
-  Comment({this.comment, this.timestamp, this.postId, this.commentId}) {
+  Comment(
+      {this.isReply,
+      this.onReply,
+      this.comment,
+      this.timestamp,
+      this.postId,
+      this.commentId,
+      this.currentCardData,
+      this.uid,
+      this.keyMapping,
+      this.idMapping}) {
     DateTime time =
         DateTime.fromMillisecondsSinceEpoch((this.timestamp * 1000).toInt());
     date = '${time.day}.${time.month}.${time.year}';
   }
-
+  final bool isReply;
+  final Function onReply;
+  final String uid;
+  final CardData currentCardData;
   final String comment;
   final double timestamp;
   final String postId;
   final String commentId;
+  final Map<int, String> keyMapping;
+  final Map<String, int> idMapping;
   String date;
 
   @override
@@ -1628,21 +1852,181 @@ class _CommentState extends State<Comment> {
             ));
   }
 
+  void reply() {
+    widget.onReply(widget.commentId);
+  }
+
+  void shareCardData() async {
+    if (GlobalController.get().commentShareDisabled) {
+      return;
+    }
+
+    GlobalController.get().commentShareDisabled = true;
+    Widget shareWidget = Material(
+        child: Container(
+      width: 800,
+      height: 800,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+            begin: FractionalOffset.bottomLeft,
+            end: FractionalOffset.topRight,
+            colors: splashScreenColors),
+      ),
+      child: Center(
+          child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: HashTagText(
+                            onTap: null,
+                            textAlign: TextAlign.center,
+                            text: widget.currentCardData.text,
+                            basicStyle:
+                                MAIN_CARD_TEXT_STYLE.copyWith(fontSize: 50),
+                            decoratedStyle: MAIN_CARD_TEXT_STYLE.copyWith(
+                                fontSize: 50, color: Colors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.all(cardthingspadding),
+                    child: Divider(
+                      color: cardThingsTextStyle.color,
+                    ),
+                  ),
+                ],
+              ),
+              Align(
+                alignment: Alignment.topLeft,
+                child: Transform.rotate(
+                    angle: 0,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset('assets/logo.png', width: 150),
+                        Text('Share your idea!', style: cardThingsTextStyle)
+                      ],
+                    )),
+              ),
+              Align(
+                alignment: Alignment.bottomLeft,
+                child: Container(
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                        gradient: LinearGradient(
+                          colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                        )),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Posted on: ' + widget.date,
+                              style: disabledUpperBarStyle.copyWith(
+                                  fontSize: 10, fontStyle: FontStyle.italic)),
+                          SizedBox(height: 20),
+                          Text(widget.comment, style: enabledUpperBarStyle),
+                          SizedBox(height: 20),
+                          DottedLine(dashColor: disabledUpperBarColor),
+                          SizedBox(height: 20),
+                        ],
+                      ),
+                    )),
+              )
+            ],
+          ),
+        ),
+      )),
+    ));
+
+    Uint8List imageData = await createImageFromWidget(shareWidget,
+        logicalSize: Size(800, 800), imageSize: Size(800, 800));
+    try {
+      await WcFlutterShare.share(
+          sharePopupTitle: 'Share',
+          fileName: 'spark.png',
+          mimeType: 'image/png',
+          bytesOfFile: imageData);
+    } catch (e) {
+      print(e);
+    }
+    GlobalController.get().commentShareDisabled = false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
         child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Posted on: ' + widget.date,
-            style: disabledUpperBarStyle.copyWith(
-                fontSize: 10, fontStyle: FontStyle.italic)),
+        Row(
+          children: [
+            Text('Posted on: ' + widget.date,
+                style: disabledUpperBarStyle.copyWith(
+                    fontSize: 10, fontStyle: FontStyle.italic)),
+            SizedBox(width: 20),
+            Text('Comment id: ' + widget.commentId,
+                style: disabledUpperBarStyle.copyWith(
+                    fontSize: 10, fontStyle: FontStyle.italic))
+          ],
+        ),
+        widget.isReply
+            ? Text('Replying to you!',
+                style: disabledUpperBarStyle.copyWith(
+                    fontSize: 10,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.red))
+            : SizedBox(),
         SizedBox(height: 20),
-        Text(widget.comment, style: enabledUpperBarStyle),
+        HashTagText(
+            text: widget.comment,
+            basicStyle: enabledUpperBarStyle,
+            decoratedStyle: enabledUpperBarStyle.copyWith(color: Colors.red),
+            onTap: (id) {
+              String idConverted =
+                  replaceIdsWithHashtags(id, widget.keyMapping);
+              var idConvertedList = extractHashTags(idConverted);
+              print(idConvertedList);
+
+              showDialog(
+                  context: context,
+                  builder: (_) {
+                    return CommentPopup(
+                        commentId: idConvertedList[0].substring(1),
+                        commentIdSeen: id,
+                        postId: widget.postId,
+                        idMapping: widget.idMapping);
+                  });
+            }),
         SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
+            FlatButton(
+                onPressed: reply,
+                child: Center(
+                    child: Text('Reply',
+                        style: disabledUpperBarStyle.copyWith(fontSize: 10)))),
+            FlatButton(
+                onPressed: shareCardData,
+                child: Center(
+                    child: Text('Share',
+                        style: disabledUpperBarStyle.copyWith(fontSize: 10)))),
             FlatButton(
                 onPressed: openReportScreen,
                 child: Center(

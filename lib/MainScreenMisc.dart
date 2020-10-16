@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:social_share/social_share.dart';
-import 'dart:ui' as ui;
-import 'package:path_provider/path_provider.dart';
 import 'package:flutter/rendering.dart';
-import 'dart:io';
-import 'package:social_share/social_share.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'dart:typed_data';
 import 'package:ideashack/Const.dart';
-import 'Analytics.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:hashtagable/hashtagable.dart';
+import 'package:dotted_line/dotted_line.dart';
 
 class DislikeIndicator extends StatelessWidget {
   DislikeIndicator(this.animationProgress, this.didSwipe, this.opacity);
@@ -276,138 +271,85 @@ class _ReportPopupState extends State<ReportPopup> {
   }
 }
 
-class SharePopup extends StatefulWidget {
-  SharePopup(this.repaint, this.text);
-  RenderRepaintBoundary repaint;
-  String text;
+class CommentPopup extends StatefulWidget {
+  CommentPopup(
+      {this.postId, this.commentId, this.commentIdSeen, this.idMapping});
+  final String postId;
+  final String commentId;
+  final String commentIdSeen;
+  final Map<String, int> idMapping;
   @override
-  _SharePopupState createState() => _SharePopupState();
+  _CommentPopupState createState() => _CommentPopupState();
 }
 
-class _SharePopupState extends State<SharePopup> {
-  Future<void> imageConstructFuture;
-  ui.Image image;
-  ByteData byteData;
-  String pathStr;
-
-  Future<void> getImageBytes() async {
-    image = await widget.repaint.toImage();
-    byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-    Directory path = await getApplicationDocumentsDirectory();
-    pathStr = path.path + '/share.png';
-    new File(pathStr).writeAsBytes(byteData.buffer
-        .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
-    print(pathStr);
-  }
-
-  @override
-  void initState() {
-    imageConstructFuture = getImageBytes();
-    super.initState();
-  }
-
+class _CommentPopupState extends State<CommentPopup> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Center(child: Text('Share')),
+      title: Text('Comment'),
       content: FutureBuilder(
-        future: imageConstructFuture,
+        future: Firestore.instance
+            .collection('posts')
+            .doc(widget.postId)
+            .collection('comments')
+            .doc(widget.commentId)
+            .get(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.active ||
-              snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            print(widget.commentId);
+            DocumentSnapshot docSnap = snapshot.data;
+            if (!docSnap.exists) {
+              return Container(
+                  width: 200,
+                  height: 200,
+                  child: Center(child: Text('Comment does not exist!')));
+            }
+            DateTime time = DateTime.fromMillisecondsSinceEpoch(
+                (docSnap.get('time') * 1000).toInt());
+            String date = '${time.day}.${time.month}.${time.year}';
+            String text = replaceHashtagsWithIds(
+                docSnap.get('comment'), widget.idMapping);
             return Container(
-                width: 200,
-                height: 200,
-                child: SpinKitThreeBounce(color: Colors.white));
-          }
-          if (image == null) {
-            image = snapshot.data;
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                  colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                )),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text('Posted on: ' + date,
+                            style: disabledUpperBarStyle.copyWith(
+                                fontSize: 10, fontStyle: FontStyle.italic)),
+                        SizedBox(width: 20),
+                        Text('Comment id: ' + widget.commentIdSeen,
+                            style: disabledUpperBarStyle.copyWith(
+                                fontSize: 10, fontStyle: FontStyle.italic))
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    HashTagText(
+                      text: text,
+                      basicStyle: enabledUpperBarStyle,
+                      decoratedStyle:
+                          enabledUpperBarStyle.copyWith(color: Colors.red),
+                    ),
+                    SizedBox(height: 20),
+                    DottedLine(dashColor: disabledUpperBarColor),
+                    SizedBox(height: 20),
+                  ],
+                ));
           }
           return Container(
-              width: 200,
-              height: 350,
-              child: Column(
-                children: [
-                  Image.memory(byteData.buffer.asUint8List(), height: 100),
-                  SizedBox(height: 20),
-                  InkWell(
-                    onTap: () {
-                      Platform.isAndroid
-                          ? SocialShare.shareFacebookStory(
-                              pathStr,
-                              "#ffffff",
-                              "#000000",
-                              "https://www.google.com",
-                              appId: '240400507128183',
-                            )
-                          : SocialShare.shareFacebookStory(
-                              pathStr,
-                              "#ffffff",
-                              "#000000",
-                              "https://www.google.com",
-                            );
-                      AnalyticsController.get().shareTabClicked('facebook');
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Share on facebook'),
-                        Icon(FontAwesomeIcons.facebookSquare)
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 30),
-                  InkWell(
-                    onTap: () {
-                      SocialShare.shareTwitter('${widget.text}',
-                          hashtags: ['spark', 'idea', 'changetheworld'],
-                          url: 'http://test.com',
-                          trailingText:
-                              'download Spark for more brilliant ideas');
-                      AnalyticsController.get().shareTabClicked('twitter');
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Share on twitter'),
-                        Icon(FontAwesomeIcons.twitterSquare)
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 30),
-                  InkWell(
-                    onTap: () {
-                      SocialShare.shareInstagramStory(pathStr, "#ffffff",
-                          "#000000", "https://deep-link-url");
-                      AnalyticsController.get().shareTabClicked('instagram');
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Share on instagram'),
-                        Icon(FontAwesomeIcons.instagramSquare)
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 30),
-                  InkWell(
-                    onTap: () {
-                      SocialShare.shareSms(
-                          '${widget.text} - download Spark for more brilliant ideas',
-                          url: "",
-                          trailingText: "");
-                      AnalyticsController.get().shareTabClicked('sms');
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Share via SMS'),
-                        Icon(FontAwesomeIcons.sms)
-                      ],
-                    ),
-                  )
-                ],
-              ));
+            width: 200,
+            height: 200,
+            child: Center(
+                child: SpinKitThreeBounce(color: Colors.white, size: 50)),
+          );
         },
       ),
     );

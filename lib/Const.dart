@@ -3,9 +3,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bad_words/bad_words.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/rendering.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:ntp/ntp.dart';
+import 'dart:ui' as ui;
+import 'dart:typed_data';
+import 'package:hashtagable/hashtagable.dart';
 
 //GLOBAL LIFECYCLE VARIABLES, I KNOW ITS SHIT I JUST STARTED USING FLUTTER
 
@@ -87,6 +91,7 @@ enum InfoSheet {
   Commented,
   Profane,
   Deleted,
+  PostLimitReached,
 }
 
 enum UpvotedStatus { DidntVote, Upvoted, Downvoted }
@@ -99,7 +104,7 @@ class CardData {
       @required this.id,
       this.comments,
       this.status,
-      this.commented,
+      this.commented = false,
       this.posterId,
       this.isAd = false,
       this.reported = false,
@@ -137,6 +142,7 @@ class GlobalController {
     return _instance;
   }
 
+  bool commentShareDisabled = false;
   bool initedTime = false;
   int timeOffset = 0;
   int canMessage = 0;
@@ -365,3 +371,82 @@ String truncateWithEllipsis(int cutoff, String myString) {
 }
 
 enum SelectTab { Trending, New, Custom }
+
+Future<ByteData> getImageBytes(RenderRepaintBoundary image) async {
+  var imageConverted = await image.toImage();
+  return await imageConverted.toByteData(format: ui.ImageByteFormat.png);
+}
+
+Future<Uint8List> createImageFromWidget(Widget widget,
+    {Duration wait, Size logicalSize, Size imageSize}) async {
+  final RenderRepaintBoundary repaintBoundary = RenderRepaintBoundary();
+
+  logicalSize ??= ui.window.physicalSize / ui.window.devicePixelRatio;
+  imageSize ??= ui.window.physicalSize;
+
+  assert(logicalSize.aspectRatio == imageSize.aspectRatio);
+
+  final RenderView renderView = RenderView(
+    window: null,
+    child: RenderPositionedBox(
+        alignment: Alignment.center, child: repaintBoundary),
+    configuration: ViewConfiguration(
+      size: logicalSize,
+      devicePixelRatio: 1.0,
+    ),
+  );
+
+  final PipelineOwner pipelineOwner = PipelineOwner();
+  final BuildOwner buildOwner = BuildOwner();
+
+  pipelineOwner.rootNode = renderView;
+  renderView.prepareInitialFrame();
+
+  final RenderObjectToWidgetElement<RenderBox> rootElement =
+      RenderObjectToWidgetAdapter<RenderBox>(
+    container: repaintBoundary,
+    child: widget,
+  ).attachToRenderTree(buildOwner);
+
+  buildOwner.buildScope(rootElement);
+
+  if (wait != null) {
+    await Future.delayed(wait);
+  }
+
+  buildOwner.buildScope(rootElement);
+  buildOwner.finalizeTree();
+
+  pipelineOwner.flushLayout();
+  pipelineOwner.flushCompositingBits();
+  pipelineOwner.flushPaint();
+
+  final ui.Image image = await repaintBoundary.toImage(
+      pixelRatio: imageSize.width / logicalSize.width);
+  final ByteData byteData =
+      await image.toByteData(format: ui.ImageByteFormat.png);
+
+  return byteData.buffer.asUint8List();
+}
+
+String replaceHashtagsWithIds(String comment, Map<String, int> idMapping) {
+  List<String> hashtags = extractHashTags(comment);
+  for (var hashtag in hashtags) {
+    comment = comment.replaceAll(
+        hashtag, "#" + idMapping[hashtag.substring(1)].toString());
+  }
+  return comment;
+}
+
+String replaceIdsWithHashtags(String comment, Map<int, String> keyMapping) {
+  List<String> hashtags = extractHashTags(comment);
+  for (var hashtag in hashtags) {
+    int tag = int.tryParse(hashtag.substring(1));
+    if (tag != null && keyMapping.containsKey(tag)) {
+      comment = comment.replaceAll(hashtag, '#' + keyMapping[tag]);
+    } else {
+      comment = comment.replaceAll(hashtag, '@invalid');
+    }
+  }
+  return comment;
+}

@@ -45,8 +45,6 @@ class CardList {
       userCardsData.clear();
       int i = 0;
       for (var doc in snapshot.docs) {
-        bool commented =
-            userDataSnapshot.get('commented').toSet().contains(doc.id);
         userCardsData.add(CardData(
             id: doc.id,
             author: doc.get('author'),
@@ -54,7 +52,6 @@ class CardList {
             text: doc.get('body'),
             comments: doc.get('commentsNum'),
             posterId: doc.get('userid'),
-            commented: commented,
             time: doc.get('postTime')));
       }
     } catch (e) {
@@ -105,7 +102,6 @@ class CardList {
           upvoteStatus = UpvotedStatus.DidntVote;
           var upvoted = false;
           var downvoted = false;
-          var commented = false;
           bool skipPost = false;
           if (upvoted) {
             upvoteStatus = UpvotedStatus.Upvoted;
@@ -121,7 +117,6 @@ class CardList {
                 text: doc.get('body'),
                 status: upvoteStatus,
                 comments: doc.get('commentsNum'),
-                commented: commented,
                 time: doc.get('postTime')));
           }
         }
@@ -139,7 +134,6 @@ class CardList {
         await doTimecheck(userDataSnapshot);
         var upvotedSet = userDataSnapshot.get('upvoted').toSet();
         var downvotedSet = userDataSnapshot.get('downvoted').toSet();
-        var commentedSet = userDataSnapshot.get('commented').toSet();
         var reportedSet = userDataSnapshot.get('reportedPosts').toSet();
 
         QuerySnapshot snapshot;
@@ -172,7 +166,6 @@ class CardList {
           upvoteStatus = UpvotedStatus.DidntVote;
           var upvoted = upvotedSet.contains(doc.id);
           var downvoted = downvotedSet.contains(doc.id);
-          var commented = commentedSet.contains(doc.id);
           var reported = reportedSet.contains(doc.id);
           bool skipPost = false;
           if (upvoted) {
@@ -189,7 +182,6 @@ class CardList {
                 text: doc.get('body'),
                 status: upvoteStatus,
                 comments: doc.get('commentsNum'),
-                commented: commented,
                 reported: reported,
                 time: doc.get('postTime')));
           }
@@ -216,7 +208,6 @@ class CardList {
 
       var upvotedSet = userDataSnapshot.get('upvoted').toSet();
       var downvotedSet = userDataSnapshot.get('downvoted').toSet();
-      var commentedSet = userDataSnapshot.get('commented').toSet();
       var reportedSet = userDataSnapshot.get('reportedPosts').toSet();
       DocumentSnapshot snapshot;
       UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
@@ -224,7 +215,6 @@ class CardList {
       upvoteStatus = UpvotedStatus.DidntVote;
       var upvoted = upvotedSet.contains(postID);
       var downvoted = downvotedSet.contains(postID);
-      var commented = commentedSet.contains(postID);
       var reported = reportedSet.contains(postID);
       if (upvoted) {
         upvoteStatus = UpvotedStatus.Upvoted;
@@ -234,7 +224,6 @@ class CardList {
       return CardData(
         status: upvoteStatus,
         comments: snapshot.get('commentsNum'),
-        commented: commented,
         reported: reported,
         text: snapshot.get('body'),
         score: snapshot.get('score'),
@@ -244,13 +233,12 @@ class CardList {
       );
     } catch (e) {
       return CardData(
-        text: "",
+        text: "Post has been deleted.",
         score: 0,
         author: "",
         id: "",
         comments: 0,
         status: UpvotedStatus.DidntVote,
-        commented: true,
         posterId: "",
         isAd: false,
         reported: false,
@@ -365,7 +353,6 @@ class CardList {
           upvoteStatus = UpvotedStatus.DidntVote;
           var upvoted = false;
           var downvoted = false;
-          var commented = false;
           var reported = false;
           if (upvoted) {
             upvoteStatus = UpvotedStatus.Upvoted;
@@ -380,7 +367,6 @@ class CardList {
               text: doc.get('body'),
               status: upvoteStatus,
               comments: doc.get('commentsNum'),
-              commented: commented,
               reported: reported,
               time: doc.get('postTime')));
         }
@@ -399,7 +385,6 @@ class CardList {
         await doTimecheck(userDataSnapshot);
         var upvotedSet = userDataSnapshot.get('upvoted').toSet();
         var downvotedSet = userDataSnapshot.get('downvoted').toSet();
-        var commentedSet = userDataSnapshot.get('commented').toSet();
         var reportedSet = userDataSnapshot.get('reportedPosts').toSet();
         QuerySnapshot snapshot;
         UpvotedStatus upvoteStatus = UpvotedStatus.DidntVote;
@@ -448,7 +433,6 @@ class CardList {
           upvoteStatus = UpvotedStatus.DidntVote;
           var upvoted = upvotedSet.contains(doc.id);
           var downvoted = downvotedSet.contains(doc.id);
-          var commented = commentedSet.contains(doc.id);
           var reported = reportedSet.contains(doc.id);
           if (upvoted) {
             upvoteStatus = UpvotedStatus.Upvoted;
@@ -463,7 +447,6 @@ class CardList {
               text: doc.get('body'),
               status: upvoteStatus,
               comments: doc.get('commentsNum'),
-              commented: commented,
               reported: reported,
               time: doc.get('postTime')));
         }

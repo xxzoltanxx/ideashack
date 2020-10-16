@@ -541,10 +541,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         }
                       }
                       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                        _scrollController.animateTo(
-                            _scrollController.position.maxScrollExtent,
-                            duration: Duration(seconds: 1),
-                            curve: Curves.fastOutSlowIn);
+                        if (_scrollController.offset == 0)
+                          _scrollController.animateTo(
+                              _scrollController.position.maxScrollExtent,
+                              duration: Duration(seconds: 1),
+                              curve: Curves.fastOutSlowIn);
                       });
                       return SafeArea(
                           child: Container(
@@ -1308,10 +1309,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         }
                       }
                       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                        _scrollController.animateTo(
-                            _scrollController.position.maxScrollExtent,
-                            duration: Duration(seconds: 1),
-                            curve: Curves.fastOutSlowIn);
+                        if (_scrollController.offset == 0)
+                          _scrollController.animateTo(
+                              _scrollController.position.maxScrollExtent,
+                              duration: Duration(seconds: 1),
+                              curve: Curves.fastOutSlowIn);
                       });
 
                       return SafeArea(

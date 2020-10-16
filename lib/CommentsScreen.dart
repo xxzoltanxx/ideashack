@@ -28,6 +28,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
   Map<String, int> idMapping = {};
   GlobalKey listViewGlobalKey = GlobalKey();
   final _scrollController = ScrollController();
+  Set repliedToAlready = {};
 
   @override
   void initState() {
@@ -45,6 +46,10 @@ class _CommentsScreenState extends State<CommentsScreen> {
           .get();
       print(repliedTo.data());
       String uid = repliedTo.get('uid');
+      if (repliedToAlready.contains(uid)) {
+        return;
+      }
+      repliedToAlready.add(uid);
       QuerySnapshot userDataa = await Firestore.instance
           .collection('users')
           .where('uid', isEqualTo: uid)
@@ -81,13 +86,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
   Future<void> postComment(String inputText) async {
     try {
       FocusScope.of(context).requestFocus(new FocusNode());
-      inputText = replaceIdsWithHashtags(inputText, keyMapping);
-      List<String> commentIds = extractHashTags(inputText);
+      var inputTextTransformed = replaceIdsWithHashtags(inputText, keyMapping);
+      List<String> commentIds = extractHashTags(inputTextTransformed);
+      repliedToAlready.clear();
       for (String commentId in commentIds) {
         sendNotificationReplied(commentId.substring(1), inputText);
       }
       double time = await getCurrentTimestampServer();
-      String input = inputText;
+      String input = inputTextTransformed;
       DocumentSnapshot snapshot;
       try {
         snapshot =

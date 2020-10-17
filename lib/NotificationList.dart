@@ -7,6 +7,7 @@ import 'package:ideashack/CardList.dart';
 import 'Analytics.dart';
 import 'RegistrationScreen.dart';
 import 'package:hashtagable/hashtagable.dart';
+import 'CustomPainters.dart';
 
 class NotificationList extends StatefulWidget {
   @override
@@ -15,6 +16,7 @@ class NotificationList extends StatefulWidget {
 
 class _NotificationListState extends State<NotificationList> {
   Stream<QuerySnapshot> grabDMSnapshots;
+  String lastText = "No messages.";
   @override
   void initState() {
     super.initState();
@@ -144,23 +146,28 @@ class _NotificationListState extends State<NotificationList> {
     super.dispose();
   }
 
+  void setLastText(String text) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      setState(() {
+        lastText = text;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
             iconTheme: IconThemeData(color: Colors.black),
-            backgroundColor: Colors.white,
+            backgroundColor: Colors.orange,
             elevation: 5.0,
             title: Text('Your notifications',
                 style: TextStyle(color: Colors.black))),
         body: SafeArea(
             child: Container(
           decoration: BoxDecoration(
-              gradient: LinearGradient(
-            colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-          )),
+            color: Colors.white,
+          ),
           child: StreamBuilder(
               stream: grabDMSnapshots,
               builder: (context, snapshot) {
@@ -168,11 +175,31 @@ class _NotificationListState extends State<NotificationList> {
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Container(
-                        child:
-                            Center(child: Text('Fetching notifications...'))),
+                        child: Center(
+                            child: Text('Fetching notifications...',
+                                style: enabledUpperBarStyle))),
                   );
                 } else {
                   List<Widget> chatWidgets = [];
+                  chatWidgets.add(Container(
+                      height: 200,
+                      child: CustomPaint(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text('NEWEST',
+                                    style: cardThingsBelowTextStyle.copyWith(
+                                        fontSize: 12)),
+                                Expanded(child: Center(child: Text(lastText)))
+                              ],
+                            ),
+                          ),
+                          painter: CustomBlockPainter(
+                              gradientColors: splashScreenColors),
+                          size: Size.infinite)));
+                  bool first = true;
                   for (var post in snapshot.data.docs) {
                     var dmID = post.id;
                     Stream<DocumentSnapshot> lastMessageFirstListStream =
@@ -182,31 +209,12 @@ class _NotificationListState extends State<NotificationList> {
                             .collection('notifications')
                             .doc(dmID)
                             .snapshots();
-
-                    chatWidgets.add(Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: StreamBuilder(
-                          stream: lastMessageFirstListStream,
-                          builder: (context, snapshot) {
-                            if (snapshot.data == null) {
-                              return FetchingBubble();
-                            } else {
-                              int shouldHighlight =
-                                  snapshot.data.get('clicked');
-
-                              var lastMessage = snapshot.data.get('text');
-                              return NotificationBubble(
-                                  notificationDocId: snapshot.data.id,
-                                  lastMessage: lastMessage,
-                                  shouldHighlight: shouldHighlight.isEven,
-                                  postId: snapshot.data.get('postId'),
-                                  lastMessageTimestamp:
-                                      snapshot.data.get('time'),
-                                  notificationCommentsCallback:
-                                      notificationCommentsCallback);
-                            }
-                          }),
-                    ));
+                    chatWidgets.add(NotificationBubbleFuture(
+                        lastMessageFirstListStream: lastMessageFirstListStream,
+                        notificationCommentsCallback:
+                            notificationCommentsCallback,
+                        callback: first ? setLastText : null));
+                    first = false;
                   }
                   return ListView(children: chatWidgets);
                 }
@@ -218,25 +226,39 @@ class _NotificationListState extends State<NotificationList> {
 class FetchingBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    String typeShown = "Comment Reply";
+    Widget icon =
+        Image.asset('assets/comments.png', width: 20, color: Colors.grey);
     return Container(
         child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(height: 10),
+        SizedBox(height: 20),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(width: 30),
-            Text('unknown', style: enabledUpperBarStyle),
+            SizedBox(width: 20),
+            icon,
+            SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Text(typeShown, style: enabledUpperBarStyle),
+                    ],
+                  ),
+                  SizedBox(height: 15),
+                  Text("Fetching...", style: disabledUpperBarStyle),
+                  SizedBox(height: 20),
+                ],
+              ),
+            ),
+            SizedBox(width: 20),
           ],
         ),
-        SizedBox(height: 10),
-        Text('Fetching message...',
-            style: disabledUpperBarStyle, overflow: TextOverflow.ellipsis),
-        Text('unknown',
-            style: disabledUpperBarStyle.copyWith(
-                fontSize: 10, fontStyle: FontStyle.italic)),
-        SizedBox(height: 10),
-        DottedLine(dashColor: disabledUpperBarColor),
+        Divider(color: Colors.grey)
       ],
     ));
   }
@@ -244,7 +266,8 @@ class FetchingBubble extends StatelessWidget {
 
 class NotificationBubble extends StatelessWidget {
   NotificationBubble(
-      {this.postId,
+      {this.type,
+      this.postId,
       this.lastMessage,
       this.lastMessageTimestamp,
       this.shouldHighlight,
@@ -252,9 +275,11 @@ class NotificationBubble extends StatelessWidget {
       this.notificationDocId}) {
     DateTime time = DateTime.fromMillisecondsSinceEpoch(
         (lastMessageTimestamp * 1000).toInt());
+
     date = '${time.day}.${time.month}.${time.year}';
   }
 
+  String type;
   String notificationDocId;
   String date;
   String postId;
@@ -264,41 +289,100 @@ class NotificationBubble extends StatelessWidget {
   Function notificationCommentsCallback;
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () async {
-        Firestore.instance
-            .collection('users')
-            .doc(GlobalController.get().userDocId)
-            .collection('notifications')
-            .doc(notificationDocId)
-            .update({'clicked': 1});
+    Function notificationFunction = null;
+    String typeShown = "";
+    Widget icon;
+    if (type == 'reply') {
+      notificationFunction = () async {
         CardData data = await CardList.get().getCardDataForPost(postId);
         Navigator.pushNamed(context, '/comments',
             arguments: <dynamic>[data, notificationCommentsCallback]);
-      },
-      child: Container(
-          child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 10),
-          Text('Someone replied to you!',
-              style: shouldHighlight
-                  ? enabledUpperBarStyle
-                  : disabledUpperBarStyle,
-              overflow: TextOverflow.ellipsis),
-          SizedBox(height: 10),
-          Text(lastMessage,
-              style: shouldHighlight
-                  ? enabledUpperBarStyle
-                  : disabledUpperBarStyle,
-              overflow: TextOverflow.ellipsis),
-          Text(date,
-              style: disabledUpperBarStyle.copyWith(
-                  fontSize: 10, fontStyle: FontStyle.italic)),
-          SizedBox(height: 10),
-          DottedLine(dashColor: disabledUpperBarColor),
-        ],
-      )),
-    );
+      };
+      typeShown = "Comment Reply";
+      icon = Image.asset('assets/comments.png', width: 20, color: Colors.grey);
+    }
+
+    return InkWell(
+        onTap: () async {
+          Firestore.instance
+              .collection('users')
+              .doc(GlobalController.get().userDocId)
+              .collection('notifications')
+              .doc(notificationDocId)
+              .update({'clicked': 1});
+          if (notificationFunction != null) {
+            notificationFunction();
+          }
+        },
+        child: Container(
+            child: Column(
+          children: [
+            SizedBox(height: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 20),
+                icon,
+                SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(typeShown, style: enabledUpperBarStyle),
+                          Text(date, style: disabledUpperBarStyle),
+                        ],
+                      ),
+                      SizedBox(height: 15),
+                      Text(lastMessage,
+                          style: shouldHighlight
+                              ? enabledUpperBarStyle
+                              : disabledUpperBarStyle),
+                      SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 20),
+              ],
+            ),
+            Divider(color: Colors.grey)
+          ],
+        )));
+  }
+}
+
+class NotificationBubbleFuture extends StatelessWidget {
+  NotificationBubbleFuture(
+      {this.lastMessageFirstListStream,
+      this.callback,
+      this.notificationCommentsCallback});
+  final Stream<DocumentSnapshot> lastMessageFirstListStream;
+  final Function callback;
+  final Function notificationCommentsCallback;
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder(
+        stream: lastMessageFirstListStream,
+        builder: (context, snapshot) {
+          if (snapshot.data == null) {
+            return FetchingBubble();
+          } else {
+            int shouldHighlight = snapshot.data.get('clicked');
+            var lastMessage = snapshot.data.get('text');
+            if (callback != null) {
+              callback(lastMessage);
+            }
+            return NotificationBubble(
+                type: snapshot.data.get('type'),
+                notificationDocId: snapshot.data.id,
+                lastMessage: lastMessage,
+                shouldHighlight: shouldHighlight.isEven,
+                postId: snapshot.data.get('postId'),
+                lastMessageTimestamp: snapshot.data.get('time'),
+                notificationCommentsCallback: notificationCommentsCallback);
+          }
+        });
   }
 }

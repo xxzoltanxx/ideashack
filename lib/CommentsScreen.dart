@@ -7,8 +7,10 @@ import 'Const.dart';
 import 'MainScreenMisc.dart';
 import 'Analytics.dart';
 import 'package:hashtagable/hashtagable.dart';
-import 'package:wc_flutter_share/wc_flutter_share.dart';
+import 'package:share/share.dart';
 import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class CommentsScreen extends StatefulWidget {
   @override
@@ -2089,12 +2091,13 @@ class _CommentState extends State<Comment> {
 
     Uint8List imageData = await createImageFromWidget(shareWidget,
         logicalSize: Size(800, 800), imageSize: Size(800, 800));
+    String dir = (await getApplicationDocumentsDirectory()).path;
+    File file = File("$dir/" + 'myimage' + ".png");
+    await file.writeAsBytes(imageData);
     try {
-      await WcFlutterShare.share(
-          sharePopupTitle: 'Share',
-          fileName: 'spark.png',
-          mimeType: 'image/png',
-          bytesOfFile: imageData);
+      await Share.shareFiles([dir + "/myimage.png"],
+          text: 'See more at https://sparkyourimagination.page.link/join',
+          subject: 'A brilliant idea!');
     } catch (e) {
       print(e);
     }

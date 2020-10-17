@@ -6,6 +6,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'Const.dart';
 import 'package:faker/faker.dart';
 import 'Analytics.dart';
+import 'CustomPainters.dart';
 
 class DmScreen extends StatefulWidget {
   @override
@@ -27,6 +28,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   String blockText = "";
   DocumentSnapshot thisDocument = null;
   StreamSubscription snapshotStream = null;
+  String username = "";
 
   Stream<QuerySnapshot> commentsStream;
   Future<void> fetchDmFuture;
@@ -137,6 +139,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
 
   Future<DocumentSnapshot> initialize() async {
     try {
+      username = faker.internet.userName();
       var time = await getCurrentTimestampServer();
       var ref = await Firestore.instance.collection('directMessages').add({
         'initializerId': postInitializer,
@@ -146,7 +149,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
         'lastSeenAuthor': 0.toDouble(),
         'posters': [postAuthor, postInitializer],
         'lastMessage': time,
-        'conversationPartner': faker.internet.userName(),
+        'conversationPartner': username,
         'isBlocked': []
       });
       thisDocument = await ref.get();
@@ -217,12 +220,6 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
     }
     thisDocument = directMessageField.docs[0];
     thisDocumentReference = directMessageField.docs[0].id;
-
-    var res = await Firestore.instance
-        .collection('directMessages')
-        .doc(thisDocumentReference)
-        .collection('messages')
-        .get();
 
     commentsStream = Firestore.instance
         .collection('directMessages')
@@ -316,12 +313,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                 Text('Direct message ', style: TextStyle(color: Colors.black))),
         body: SafeArea(
             child: Container(
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                  colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                )),
+                decoration: BoxDecoration(color: Colors.white),
                 child: FutureBuilder(
                   future: fetchDmFuture,
                   builder: (context, snapshot) {
@@ -353,6 +345,9 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                         style: disabledUpperBarStyle)))),
                         Container(
                             decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(color: Colors.black45, blurRadius: 5)
+                              ],
                               color: Colors.white,
                             ),
                             child: Padding(
@@ -464,6 +459,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                         WidgetsBinding.instance
                             .addPostFrameCallback((timeStamp) {
                           setState(() {
+                            username = thisDocument.get('conversationPartner');
                             firstTimeBuildingStream = false;
                             commentsStream = Firestore.instance
                                 .collection('directMessages')
@@ -527,11 +523,12 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                               List<Widget> messageBubbles = [];
                               for (var doc in messages) {
                                 messageBubbles.add(MessageBubble(
+                                    callsign: username,
                                     sender: (doc.get('senderUid') ==
                                             GlobalController.get()
                                                 .currentUserUid)
-                                        ? 'You'
-                                        : 'Someone',
+                                        ? 'YOU'
+                                        : 'SOMEONE',
                                     text: doc.get('text'),
                                     isMe: doc.get('senderUid') ==
                                         GlobalController.get().currentUserUid));
@@ -541,13 +538,16 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                   child: ListView(
                                     reverse: true,
                                     padding: EdgeInsets.symmetric(
-                                        horizontal: 10.0, vertical: 20.0),
+                                        horizontal: 0.0, vertical: 20.0),
                                     children: messageBubbles,
                                   ));
                             }),
                         Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(color: Colors.black45, blurRadius: 5)
+                              ],
                             ),
                             child: Padding(
                               padding:
@@ -613,53 +613,79 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
 }
 
 class MessageBubble extends StatelessWidget {
-  MessageBubble({this.sender, this.text, this.isMe});
+  MessageBubble({this.callsign, this.sender, this.text, this.isMe});
 
+  final String callsign;
   final String sender;
   final String text;
   final bool isMe;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(10.0),
-      child: Column(
-        crossAxisAlignment:
-            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: <Widget>[
-          Text(
-            sender,
-            style: TextStyle(
-              fontSize: 12.0,
-              color: Colors.black,
-            ),
+    Color backgroundColor = Color.fromARGB(255, callsign.codeUnitAt(0),
+        callsign.codeUnitAt(1), callsign.codeUnitAt(2));
+    String theChar = callsign[0];
+
+    Widget partnerImage = ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          color: backgroundColor,
+          width: 20,
+          height: 20,
+          child: Center(
+            child: Text(theChar,
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           ),
-          Material(
-            borderRadius: isMe
-                ? BorderRadius.only(
-                    topLeft: Radius.circular(30.0),
-                    bottomLeft: Radius.circular(30.0),
-                    bottomRight: Radius.circular(30.0))
-                : BorderRadius.only(
-                    bottomLeft: Radius.circular(30.0),
-                    bottomRight: Radius.circular(30.0),
-                    topRight: Radius.circular(30.0),
+        ));
+
+    return Column(
+      crossAxisAlignment:
+          isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: <Widget>[
+        Container(
+          width: 100,
+          child: isMe
+              ? Text(
+                  sender,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
                   ),
-            elevation: 5.0,
-            color: isMe ? Colors.lightBlueAccent : Colors.white,
+                )
+              : Row(
+                  children: [
+                    SizedBox(width: 5),
+                    partnerImage,
+                    SizedBox(width: 5),
+                    Text('SOMEONE',
+                        style: TextStyle(
+                          fontSize: 12.0,
+                          color: Colors.black,
+                          fontWeight: FontWeight.w700,
+                        ))
+                  ],
+                ),
+        ),
+        CustomPaint(
+          size: Size.infinite,
+          painter: CustomBubble(!isMe),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
+              padding: const EdgeInsets.only(top: 20),
               child: Text(
                 text,
                 style: TextStyle(
-                  color: isMe ? Colors.white : Colors.black54,
+                  color: Colors.black54,
                   fontSize: 15.0,
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

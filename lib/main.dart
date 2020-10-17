@@ -32,8 +32,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:admob_consent/admob_consent.dart';
 import 'Analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:wc_flutter_share/wc_flutter_share.dart';
+import 'package:share/share.dart';
 import 'NotificationList.dart';
+import 'package:path_provider/path_provider.dart';
 
 void initFirebaseMessaging() {
   FirebaseMessaging _firebaseMessaging =
@@ -244,12 +245,14 @@ class _MainPageState extends State<MainPage>
 
     Uint8List imageData = await createImageFromWidget(shareWidget,
         logicalSize: Size(800, 800), imageSize: Size(800, 800));
+    String dir = (await getApplicationDocumentsDirectory()).path;
+    File file = File("$dir/" + 'myimage' + ".png");
+    await file.writeAsBytes(imageData);
     try {
-      await WcFlutterShare.share(
-          sharePopupTitle: 'Share',
-          fileName: 'spark.png',
-          mimeType: 'image/png',
-          bytesOfFile: imageData);
+      await Share.shareFiles([dir + "/myimage.png"],
+          mimeTypes: ['image/png'],
+          text: 'See more at https://sparkyourimagination.page.link/join',
+          subject: 'A brilliant idea!');
     } catch (e) {
       print(e);
     }

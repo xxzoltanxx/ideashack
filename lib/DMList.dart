@@ -25,7 +25,7 @@ class _DMListState extends State<DMList> {
   List<DMData> dmData = [];
   List<DMData> dmDataHighlighted = [];
   Stream<QuerySnapshot> grabDMSnapshots;
-  String lastText = "Fetching messages...";
+  String lastText = "No new messages...";
   @override
   void initState() {
     super.initState();
@@ -71,7 +71,9 @@ class _DMListState extends State<DMList> {
                   return Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Container(
-                        child: Center(child: Text('Fetching messages...'))),
+                        child: Center(
+                            child: Text('Fetching messages...',
+                                style: enabledUpperBarStyle))),
                   );
                 } else {
                   List<Widget> chatWidgets = [];
@@ -181,25 +183,52 @@ class ChatBubbleStream extends StatelessWidget {
 class FetchingBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    Color backgroundColor = Color.fromARGB(255, 125, 125, 125);
+    String theChar = 'F';
+
+    Widget partnerImage = ClipRRect(
+        borderRadius: BorderRadius.circular(50),
+        child: Container(
+          color: backgroundColor,
+          width: 50,
+          height: 50,
+          child: Center(
+            child: Text(theChar,
+                style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold)),
+          ),
+        ));
     return Container(
         child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(height: 10),
         Row(
           children: [
-            SizedBox(width: 30),
-            Text('unknown', style: enabledUpperBarStyle),
+            SizedBox(width: 5),
+            partnerImage,
+            SizedBox(width: 5),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Text("SOMEONE",
+                          style: enabledUpperBarStyle.copyWith(
+                              fontWeight: FontWeight.w700, color: Colors.grey)),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Text("Fetching...",
+                      style: disabledUpperBarStyle,
+                      overflow: TextOverflow.ellipsis),
+                ],
+              ),
+            ),
+            SizedBox(width: 20),
           ],
         ),
-        SizedBox(height: 10),
-        Text('Fetching message...',
-            style: disabledUpperBarStyle, overflow: TextOverflow.ellipsis),
-        Text('unknown',
-            style: disabledUpperBarStyle.copyWith(
-                fontSize: 10, fontStyle: FontStyle.italic)),
-        SizedBox(height: 10),
-        DottedLine(dashColor: disabledUpperBarColor),
+        Divider(color: Colors.grey),
       ],
     ));
   }

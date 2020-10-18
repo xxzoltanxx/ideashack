@@ -529,7 +529,9 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                               for (var doc in messages) {
                                 i = i + 1;
                                 if (i > messages.length - 1) {
-                                  nextIsMe = false;
+                                  nextIsMe =
+                                      GlobalController.get().currentUserUid !=
+                                          doc.get('senderUid');
                                 } else {
                                   nextIsMe = listMessages[i].get('senderUid') ==
                                       GlobalController.get().currentUserUid;

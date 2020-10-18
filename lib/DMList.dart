@@ -131,10 +131,7 @@ class ChatBubbleStream extends StatefulWidget {
   _ChatBubbleStreamState createState() => _ChatBubbleStreamState();
 }
 
-class _ChatBubbleStreamState extends State<ChatBubbleStream>
-    with AutomaticKeepAliveClientMixin {
-  get wantKeepAlive => true;
-
+class _ChatBubbleStreamState extends State<ChatBubbleStream> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(

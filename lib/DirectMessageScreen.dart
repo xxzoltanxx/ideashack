@@ -52,6 +52,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   }
 
   void initialSendButtonCallback() {
+    messageText = messageText.replaceAll("/n", " ");
     if (messageText.trim().length == 0) {
       return;
     }
@@ -62,6 +63,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   }
 
   void sendNormal() async {
+    messageText = messageText.replaceAll("/n", " ");
     if (messageText.trim().length == 0) {
       return;
     }
@@ -689,7 +691,9 @@ class MessageBubble extends StatelessWidget {
         ),
         CustomPaint(
           size: Size.infinite,
-          painter: CustomBubble(!isMe),
+          painter: ((isMe && !nextIsMe) || (!isMe && nextIsMe))
+              ? CustomBubble(!isMe)
+              : null,
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 20.0),
             child: Padding(

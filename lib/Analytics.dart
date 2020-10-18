@@ -1,6 +1,5 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_analytics/observer.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:ideashack/Const.dart';
 import 'dart:ui' as ui;
 

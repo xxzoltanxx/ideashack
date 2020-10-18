@@ -110,14 +110,15 @@ class _DMListState extends State<DMList> {
                         post, setHeaderText, firstMessage));
                     firstMessage = false;
                   }
-                  return ListView(children: chatWidgets);
+                  return ListView(
+                      addAutomaticKeepAlives: true, children: chatWidgets);
                 }
               }),
         )));
   }
 }
 
-class ChatBubbleStream extends StatelessWidget {
+class ChatBubbleStream extends StatefulWidget {
   ChatBubbleStream(this.lastMessageFirstListStream, this.post, this.callback,
       this.firstMessage);
   final DocumentSnapshot post;
@@ -125,10 +126,19 @@ class ChatBubbleStream extends StatelessWidget {
 
   final bool firstMessage;
   final Function callback;
+
+  @override
+  _ChatBubbleStreamState createState() => _ChatBubbleStreamState();
+}
+
+class _ChatBubbleStreamState extends State<ChatBubbleStream>
+    with AutomaticKeepAliveClientMixin {
+  get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-        stream: lastMessageFirstListStream,
+        stream: widget.lastMessageFirstListStream,
         builder: (context, snapshot) {
           if (snapshot.data == null || snapshot.data.docs.length == 0) {
             return FetchingBubble();
@@ -138,29 +148,29 @@ class ChatBubbleStream extends StatelessWidget {
             bool shouldHighlight = false;
 
             bool isInitializer = false;
-            if (post.get('initializerId') ==
+            if (widget.post.get('initializerId') ==
                 GlobalController.get().currentUserUid) {
               isInitializer = true;
             }
             double timestampToCompare;
             if (isInitializer) {
-              timestampToCompare = post.get('lastSeenInitializer');
+              timestampToCompare = widget.post.get('lastSeenInitializer');
             } else {
-              timestampToCompare = post.get('lastSeenAuthor');
+              timestampToCompare = widget.post.get('lastSeenAuthor');
             }
             if (lastMessageFirstList.docs[0].get('time') > timestampToCompare) {
               shouldHighlight = true;
             }
             var lastMessage = lastMessageFirstList.docs[0].get('text');
             DMData data = DMData(
-                post.get('postId'),
-                post.get('initializerId'),
-                post.get('postAuthorId'),
+                widget.post.get('postId'),
+                widget.post.get('initializerId'),
+                widget.post.get('postAuthorId'),
                 lastMessage,
                 shouldHighlight,
-                post.get('conversationPartner'));
-            if (firstMessage) {
-              callback(data.lastMessage);
+                widget.post.get('conversationPartner'));
+            if (widget.firstMessage) {
+              widget.callback(data.lastMessage);
             }
             double lastTimestamp = lastMessageFirstList.docs[0].get('time');
             bool lastMessageIsAnon =

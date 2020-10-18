@@ -216,7 +216,8 @@ class _NotificationListState extends State<NotificationList> {
                         callback: first ? setLastText : null));
                     first = false;
                   }
-                  return ListView(children: chatWidgets);
+                  return ListView(
+                      addAutomaticKeepAlives: true, children: chatWidgets);
                 }
               }),
         )));
@@ -353,7 +354,7 @@ class NotificationBubble extends StatelessWidget {
   }
 }
 
-class NotificationBubbleFuture extends StatelessWidget {
+class NotificationBubbleFuture extends StatefulWidget {
   NotificationBubbleFuture(
       {this.lastMessageFirstListStream,
       this.callback,
@@ -361,18 +362,28 @@ class NotificationBubbleFuture extends StatelessWidget {
   final Stream<DocumentSnapshot> lastMessageFirstListStream;
   final Function callback;
   final Function notificationCommentsCallback;
+
+  @override
+  _NotificationBubbleFutureState createState() =>
+      _NotificationBubbleFutureState();
+}
+
+class _NotificationBubbleFutureState extends State<NotificationBubbleFuture>
+    with AutomaticKeepAliveClientMixin {
+  get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
-        stream: lastMessageFirstListStream,
+        stream: widget.lastMessageFirstListStream,
         builder: (context, snapshot) {
           if (snapshot.data == null) {
             return FetchingBubble();
           } else {
             int shouldHighlight = snapshot.data.get('clicked');
             var lastMessage = snapshot.data.get('text');
-            if (callback != null) {
-              callback(lastMessage);
+            if (widget.callback != null) {
+              widget.callback(lastMessage);
             }
             return NotificationBubble(
                 type: snapshot.data.get('type'),
@@ -381,7 +392,8 @@ class NotificationBubbleFuture extends StatelessWidget {
                 shouldHighlight: shouldHighlight.isEven,
                 postId: snapshot.data.get('postId'),
                 lastMessageTimestamp: snapshot.data.get('time'),
-                notificationCommentsCallback: notificationCommentsCallback);
+                notificationCommentsCallback:
+                    widget.notificationCommentsCallback);
           }
         });
   }

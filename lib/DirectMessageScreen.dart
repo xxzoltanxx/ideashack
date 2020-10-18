@@ -514,15 +514,26 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                             stream: commentsStream,
                             builder: (context, snapshot) {
                               var messages = [].reversed;
+                              var listMessages = [];
                               if (snapshot.data != null) {
                                 List<QueryDocumentSnapshot> messagesReversed =
                                     snapshot.data.docs;
                                 messages = messagesReversed;
+                                listMessages = messages.toList();
                               }
-
+                              bool nextIsMe = false;
                               List<Widget> messageBubbles = [];
+                              int i = 0;
                               for (var doc in messages) {
+                                i = i + 1;
+                                if (i > messages.length - 1) {
+                                  nextIsMe = false;
+                                } else {
+                                  nextIsMe = listMessages[i].get('senderUid') ==
+                                      GlobalController.get().currentUserUid;
+                                }
                                 messageBubbles.add(MessageBubble(
+                                    nextIsMe: nextIsMe,
                                     callsign: username,
                                     sender: (doc.get('senderUid') ==
                                             GlobalController.get()
@@ -613,8 +624,14 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
 }
 
 class MessageBubble extends StatelessWidget {
-  MessageBubble({this.callsign, this.sender, this.text, this.isMe});
+  MessageBubble(
+      {this.callsign,
+      this.sender,
+      this.text,
+      this.isMe,
+      this.nextIsMe = false});
 
+  final bool nextIsMe;
   final String callsign;
   final String sender;
   final String text;
@@ -644,29 +661,31 @@ class MessageBubble extends StatelessWidget {
       children: <Widget>[
         Container(
           width: 100,
-          child: isMe
-              ? Text(
-                  sender,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 12.0,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
-                  ),
-                )
-              : Row(
-                  children: [
-                    SizedBox(width: 5),
-                    partnerImage,
-                    SizedBox(width: 5),
-                    Text('SOMEONE',
-                        style: TextStyle(
-                          fontSize: 12.0,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w700,
-                        ))
-                  ],
-                ),
+          child: ((isMe && !nextIsMe) || (!isMe && nextIsMe))
+              ? (isMe
+                  ? Text(
+                      sender,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12.0,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.black,
+                      ),
+                    )
+                  : Row(
+                      children: [
+                        SizedBox(width: 5),
+                        partnerImage,
+                        SizedBox(width: 5),
+                        Text('SOMEONE',
+                            style: TextStyle(
+                              fontSize: 12.0,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w700,
+                            ))
+                      ],
+                    ))
+              : SizedBox(),
         ),
         CustomPaint(
           size: Size.infinite,

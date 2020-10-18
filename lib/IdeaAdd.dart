@@ -191,22 +191,6 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                           ],
                         ),
                       ),
-                      inputText.length == 0
-                          ? Row(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.green,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                            'Tap the center to begin writing your post!'),
-                                      )),
-                                )
-                              ],
-                            )
-                          : SizedBox(),
                       Expanded(
                         child: Center(
                           child: ConstrainedBox(
@@ -245,6 +229,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                                 ),
                                 cursorColor: Colors.white,
                                 decoration: InputDecoration(
+                                  hintText: 'Tap here to start writing',
                                   focusColor: Colors.white,
                                   border: InputBorder.none,
                                   focusedBorder: InputBorder.none,
@@ -273,8 +258,8 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                               backgroundColor: Colors.white,
                               size: 10,
                               borderRadius: 0,
-                              maxValue: MAX_POST_DAILY_LIMIT.toInt(),
-                              currentValue: GlobalController.get().dailyPosts,
+                              maxValue: 245,
+                              currentValue: inputText.length,
                               progressColor: Colors.yellow,
                               changeProgressColor: Colors.red,
                               direction: Axis.horizontal,

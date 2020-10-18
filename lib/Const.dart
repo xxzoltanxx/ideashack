@@ -70,6 +70,7 @@ const TextStyle cardThingsBelowTextStyle = TextStyle(
 const double cardthingspadding = 8.0;
 
 const Color spinnerColor = Color(0xBFFFFFFF);
+const Color secondarySpinnerColor = Color(0xBEEEEEEE);
 
 const int QUERY_SIZE = 50;
 const List<Color> splashScreenColors = [Color(0xFFED8A00), Color(0xFFF29C03)];

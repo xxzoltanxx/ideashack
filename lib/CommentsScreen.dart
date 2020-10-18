@@ -88,6 +88,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
   Future<void> postComment(String inputText) async {
     try {
       FocusScope.of(context).requestFocus(new FocusNode());
+      inputText = inputText.replaceAll("\n", " ");
       var inputTextTransformed = replaceIdsWithHashtags(inputText, keyMapping);
       List<String> commentIds = extractHashTags(inputTextTransformed);
       repliedToAlready.clear();

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'Const.dart';
 import 'package:faker/faker.dart';
 import 'Analytics.dart';
@@ -52,7 +53,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   }
 
   void initialSendButtonCallback() {
-    messageText = messageText.replaceAll("/n", " ");
+    messageText = messageText.replaceAll("\n", " ");
     if (messageText.trim().length == 0) {
       return;
     }
@@ -63,7 +64,8 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
   }
 
   void sendNormal() async {
-    messageText = messageText.replaceAll("/n", " ");
+    messageText = messageText.replaceAll("\n", " ");
+    print(messageText);
     if (messageText.trim().length == 0) {
       return;
     }
@@ -329,7 +331,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                           Image.asset('assets/logo.png', width: 200),
                           SizedBox(height: 30),
                           SpinKitThreeBounce(
-                            color: spinnerColor,
+                            color: Colors.white,
                             size: 60,
                           ),
                         ],
@@ -505,7 +507,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                             Image.asset('assets/logo.png', width: 200),
                             SizedBox(height: 30),
                             SpinKitThreeBounce(
-                              color: spinnerColor,
+                              color: secondarySpinnerColor,
                               size: 60,
                             ),
                           ],
@@ -617,7 +619,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                         Image.asset('assets/logo.png', width: 200),
                         SizedBox(height: 30),
                         SpinKitThreeBounce(
-                          color: spinnerColor,
+                          color: secondarySpinnerColor,
                           size: 60,
                         ),
                       ],

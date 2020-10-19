@@ -11,6 +11,7 @@ import 'package:share/share.dart';
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:flutter_animation_progress_bar/flutter_animation_progress_bar.dart';
 
 class CommentsScreen extends StatefulWidget {
   @override
@@ -204,18 +205,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
       return Scaffold(
           appBar: AppBar(
               iconTheme: IconThemeData(color: Colors.black),
-              backgroundColor: Colors.white,
+              backgroundColor: Colors.orange,
               elevation: 5.0,
               title: Text('Viewing comments',
                   style: TextStyle(color: Colors.black))),
           body: SafeArea(
               child: Container(
-                  decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                    colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                  )),
+                  decoration: BoxDecoration(color: Colors.white),
                   child: GestureDetector(
                     onTap: () {
                       FocusScope.of(context).requestFocus(new FocusNode());
@@ -223,47 +219,49 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     child: Column(
                       children: [
                         Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Column(
-                              children: [
-                                SizedBox(height: 30),
-                                Row(
-                                  children: [
-                                    Image.asset(
-                                      'assets/score.png',
-                                      width: 40,
-                                      color: Colors.grey,
+                          child: Column(
+                            children: [
+                              Container(
+                                  height: 200,
+                                  decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                          colors: splashScreenColors,
+                                          begin: Alignment.bottomLeft,
+                                          end: Alignment.topRight)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 20, vertical: 20),
+                                    child: Column(
+                                      children: [
+                                        Expanded(
+                                            child: Center(
+                                                child: Text(cardData.text,
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold)))),
+                                        Row(
+                                          children: [
+                                            Image.asset(
+                                              'assets/score.png',
+                                              width: 30,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(width: 10),
+                                            Text(cardData.score.toString(),
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 15))
+                                          ],
+                                        )
+                                      ],
                                     ),
-                                    SizedBox(width: 10),
-                                    Text(cardData.score.toString(),
-                                        style: enabledUpperBarStyle.copyWith(
-                                            color: Colors.grey, fontSize: 25))
-                                  ],
-                                ),
-                                SizedBox(height: 20),
-                                Text(cardData.text,
-                                    style: disabledUpperBarStyle),
-                                SizedBox(height: 20),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('Comments',
-                                        style: enabledUpperBarStyle),
-                                    Icon(Icons.arrow_drop_down,
-                                        color: disabledUpperBarColor),
-                                  ],
-                                ),
-                                Divider(color: disabledUpperBarColor),
-                                SizedBox(height: 20),
-                                Expanded(
-                                    flex: 5,
-                                    child: Center(
-                                        child: Text('Post has been removed!',
-                                            style: disabledUpperBarStyle)))
-                              ],
-                            ),
+                                  )),
+                              Expanded(
+                                  flex: 5,
+                                  child: Center(
+                                      child: Text('Post has been removed!',
+                                          style: disabledUpperBarStyle)))
+                            ],
                           ),
                         ),
                         Container(
@@ -275,6 +273,19 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                   const EdgeInsets.symmetric(horizontal: 20),
                               child: Column(
                                 children: [
+                                  Container(
+                                    child: FAProgressBar(
+                                      backgroundColor: Colors.white,
+                                      size: 6,
+                                      borderRadius: 0,
+                                      maxValue: 245,
+                                      currentValue: inputText.length,
+                                      progressColor: Colors.yellow,
+                                      changeProgressColor: Colors.red,
+                                      direction: Axis.horizontal,
+                                      displayText: '',
+                                    ),
+                                  ),
                                   SizedBox(height: 10),
                                   Row(
                                     children: [
@@ -286,6 +297,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                           child: HashTagTextField(
                                             key: key,
                                             decoration: InputDecoration(
+                                                border: InputBorder.none,
+                                                focusedBorder: InputBorder.none,
+                                                enabledBorder: InputBorder.none,
+                                                disabledBorder:
+                                                    InputBorder.none,
                                                 counterText: "",
                                                 hintStyle:
                                                     disabledUpperBarStyle,
@@ -328,7 +344,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     return Scaffold(
       appBar: AppBar(
           iconTheme: IconThemeData(color: Colors.black),
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.orange,
           elevation: 5.0,
           title:
               Text('Viewing comments', style: TextStyle(color: Colors.black))),
@@ -350,12 +366,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
               }
               return SafeArea(
                   child: Container(
-                      decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                        colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      )),
+                      decoration: BoxDecoration(color: Colors.white),
                       child: GestureDetector(
                         onTap: () {
                           FocusScope.of(context).requestFocus(new FocusNode());
@@ -363,110 +374,138 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         child: Column(
                           children: [
                             Expanded(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                child: Column(
-                                  children: [
-                                    SizedBox(height: 30),
-                                    Row(
-                                      children: [
-                                        Image.asset(
-                                          'assets/score.png',
-                                          width: 40,
-                                          color: Colors.grey,
+                              child: Column(
+                                children: [
+                                  Container(
+                                      height: 200,
+                                      decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                              colors: splashScreenColors,
+                                              begin: Alignment.bottomLeft,
+                                              end: Alignment.topRight)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 20),
+                                        child: Column(
+                                          children: [
+                                            Expanded(
+                                                child: Center(
+                                                    child: Text(cardData.text,
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold)))),
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/score.png',
+                                                  width: 30,
+                                                  color: Colors.white,
+                                                ),
+                                                SizedBox(width: 10),
+                                                Text(cardData.score.toString(),
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        fontSize: 15))
+                                              ],
+                                            )
+                                          ],
                                         ),
-                                        SizedBox(width: 10),
-                                        Text(cardData.score.toString(),
-                                            style:
-                                                enabledUpperBarStyle.copyWith(
-                                                    color: Colors.grey,
-                                                    fontSize: 25))
-                                      ],
-                                    ),
-                                    SizedBox(height: 20),
-                                    Text(cardData.text,
-                                        style: disabledUpperBarStyle),
-                                    SizedBox(height: 20),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text('Comments',
-                                            style: enabledUpperBarStyle),
-                                        Icon(Icons.arrow_drop_down,
-                                            color: disabledUpperBarColor),
-                                      ],
-                                    ),
-                                    Divider(color: disabledUpperBarColor),
-                                    SizedBox(height: 20),
-                                    Expanded(
-                                        flex: 5,
-                                        child: Center(
-                                            child: Text(
-                                                'Post has been removed!',
-                                                style: disabledUpperBarStyle)))
-                                  ],
-                                ),
+                                      )),
+                                  Expanded(
+                                      flex: 5,
+                                      child: Center(
+                                          child: Text('Post has been removed!',
+                                              style: disabledUpperBarStyle)))
+                                ],
                               ),
                             ),
                             Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                 ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20),
-                                  child: Column(
-                                    children: [
-                                      SizedBox(height: 10),
-                                      Row(
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      child: FAProgressBar(
+                                        backgroundColor: Colors.white,
+                                        size: 6,
+                                        borderRadius: 0,
+                                        maxValue: 245,
+                                        currentValue: inputText.length,
+                                        progressColor: Colors.yellow,
+                                        changeProgressColor: Colors.red,
+                                        direction: Axis.horizontal,
+                                        displayText: '',
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20),
+                                      child: Column(
                                         children: [
-                                          Expanded(
-                                            child: ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                maxHeight: 300,
-                                              ),
-                                              child: HashTagTextField(
-                                                key: key,
-                                                decoration: InputDecoration(
-                                                    counterText: "",
-                                                    hintStyle:
+                                          SizedBox(height: 10),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: ConstrainedBox(
+                                                  constraints: BoxConstraints(
+                                                    maxHeight: 300,
+                                                  ),
+                                                  child: HashTagTextField(
+                                                    key: key,
+                                                    decoration: InputDecoration(
+                                                        border:
+                                                            InputBorder.none,
+                                                        focusedBorder:
+                                                            InputBorder.none,
+                                                        enabledBorder:
+                                                            InputBorder.none,
+                                                        disabledBorder:
+                                                            InputBorder.none,
+                                                        counterText: "",
+                                                        hintStyle:
+                                                            disabledUpperBarStyle,
+                                                        hintText:
+                                                            'Add a comment...'),
+                                                    maxLines: null,
+                                                    basicStyle:
                                                         disabledUpperBarStyle,
-                                                    hintText:
-                                                        'Add a comment...'),
-                                                maxLines: null,
-                                                basicStyle:
-                                                    disabledUpperBarStyle,
-                                                decoratedStyle:
-                                                    disabledUpperBarStyle
-                                                        .copyWith(
-                                                            color: Colors.red),
-                                                maxLength: 245,
-                                                controller:
-                                                    messageTextController,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    inputText = value;
-                                                  });
-                                                },
+                                                    decoratedStyle:
+                                                        disabledUpperBarStyle
+                                                            .copyWith(
+                                                                color:
+                                                                    Colors.red),
+                                                    maxLength: 245,
+                                                    controller:
+                                                        messageTextController,
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        inputText = value;
+                                                      });
+                                                    },
+                                                  ),
+                                                ),
                                               ),
-                                            ),
+                                              FlatButton(
+                                                  disabledColor:
+                                                      Colors.transparent,
+                                                  color: Colors.transparent,
+                                                  child: Center(
+                                                      child: Text('Post',
+                                                          style: TextStyle(
+                                                              color: Colors
+                                                                  .grey))),
+                                                  onPressed: null)
+                                            ],
                                           ),
-                                          FlatButton(
-                                              disabledColor: Colors.transparent,
-                                              color: Colors.transparent,
-                                              child: Center(
-                                                  child: Text('Post',
-                                                      style: TextStyle(
-                                                          color: Colors.grey))),
-                                              onPressed: null)
+                                          Divider(color: Colors.black),
+                                          SizedBox(height: 10),
                                         ],
                                       ),
-                                      Divider(color: Colors.black),
-                                      SizedBox(height: 10),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 )),
                           ],
                         ),
@@ -484,12 +523,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     if (snapshot.data == null) {
                       return SafeArea(
                           child: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              )),
+                              decoration: BoxDecoration(color: Colors.white),
                               child: GestureDetector(
                                 onTap: () {
                                   FocusScope.of(context)
@@ -498,131 +532,170 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 child: Column(
                                   children: [
                                     Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        child: Column(
-                                          children: [
-                                            SizedBox(height: 30),
-                                            Row(
-                                              children: [
-                                                Image.asset(
-                                                  'assets/score.png',
-                                                  width: 40,
-                                                  color: Colors.grey,
-                                                ),
-                                                SizedBox(width: 10),
-                                                Text(cardData.score.toString(),
-                                                    style: enabledUpperBarStyle
-                                                        .copyWith(
-                                                            color: Colors.grey,
-                                                            fontSize: 25))
-                                              ],
-                                            ),
-                                            SizedBox(height: 20),
-                                            Text(cardData.text,
-                                                style: disabledUpperBarStyle),
-                                            SizedBox(height: 20),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text('Comments',
-                                                    style:
-                                                        enabledUpperBarStyle),
-                                                Icon(Icons.arrow_drop_down,
-                                                    color:
-                                                        disabledUpperBarColor),
-                                              ],
-                                            ),
-                                            Divider(
-                                                color: disabledUpperBarColor),
-                                            SizedBox(height: 20),
-                                            Expanded(
-                                                flex: 5,
-                                                child: Container(
-                                                    child: Center(
-                                                        child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                              height: 200,
+                                              decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                      colors:
+                                                          splashScreenColors,
+                                                      begin:
+                                                          Alignment.bottomLeft,
+                                                      end: Alignment.topRight)),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 20,
+                                                        vertical: 20),
+                                                child: Column(
                                                   children: [
-                                                    Image.asset(
-                                                        'assets/logo.png',
-                                                        width: 200),
-                                                    SizedBox(height: 30),
-                                                    SpinKitThreeBounce(
-                                                      color: spinnerColor,
-                                                      size: 60,
-                                                    ),
+                                                    Expanded(
+                                                        child: Center(
+                                                            child: Text(
+                                                                cardData.text,
+                                                                style: TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)))),
+                                                    Row(
+                                                      children: [
+                                                        Image.asset(
+                                                          'assets/score.png',
+                                                          width: 30,
+                                                          color: Colors.white,
+                                                        ),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                            cardData.score
+                                                                .toString(),
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                fontSize: 15))
+                                                      ],
+                                                    )
                                                   ],
-                                                ))))
-                                          ],
-                                        ),
+                                                ),
+                                              )),
+                                          SizedBox(height: 30),
+                                          Expanded(
+                                              flex: 5,
+                                              child: Container(
+                                                  child: Center(
+                                                      child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Image.asset('assets/logo.png',
+                                                      width: 200),
+                                                  SizedBox(height: 30),
+                                                  SpinKitThreeBounce(
+                                                    color:
+                                                        secondarySpinnerColor,
+                                                    size: 60,
+                                                  ),
+                                                ],
+                                              ))))
+                                        ],
                                       ),
                                     ),
                                     Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                         ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 20),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(height: 10),
-                                              Row(
+                                        child: Column(
+                                          children: [
+                                            Container(
+                                              child: FAProgressBar(
+                                                backgroundColor: Colors.white,
+                                                size: 6,
+                                                borderRadius: 0,
+                                                maxValue: 245,
+                                                currentValue: inputText.length,
+                                                progressColor: Colors.yellow,
+                                                changeProgressColor: Colors.red,
+                                                direction: Axis.horizontal,
+                                                displayText: '',
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20),
+                                              child: Column(
                                                 children: [
-                                                  Expanded(
-                                                    child: ConstrainedBox(
-                                                      constraints:
-                                                          BoxConstraints(
-                                                        maxHeight: 300,
-                                                      ),
-                                                      child: HashTagTextField(
-                                                        key: key,
-                                                        decoration: InputDecoration(
-                                                            counterText: "",
-                                                            hintStyle:
+                                                  SizedBox(height: 10),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                            maxHeight: 300,
+                                                          ),
+                                                          child:
+                                                              HashTagTextField(
+                                                            key: key,
+                                                            decoration: InputDecoration(
+                                                                border:
+                                                                    InputBorder
+                                                                        .none,
+                                                                focusedBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                enabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                disabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                counterText: "",
+                                                                hintStyle:
+                                                                    disabledUpperBarStyle,
+                                                                hintText:
+                                                                    'Add a comment...'),
+                                                            maxLines: null,
+                                                            basicStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText:
-                                                                'Add a comment...'),
-                                                        maxLines: null,
-                                                        basicStyle:
-                                                            disabledUpperBarStyle,
-                                                        decoratedStyle:
-                                                            disabledUpperBarStyle
-                                                                .copyWith(
-                                                                    color: Colors
-                                                                        .red),
-                                                        maxLength: 245,
-                                                        controller:
-                                                            messageTextController,
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            inputText = value;
-                                                          });
-                                                        },
+                                                            decoratedStyle:
+                                                                disabledUpperBarStyle
+                                                                    .copyWith(
+                                                                        color: Colors
+                                                                            .red),
+                                                            maxLength: 245,
+                                                            controller:
+                                                                messageTextController,
+                                                            onChanged: (value) {
+                                                              setState(() {
+                                                                inputText =
+                                                                    value;
+                                                              });
+                                                            },
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
+                                                      FlatButton(
+                                                        disabledColor:
+                                                            Colors.transparent,
+                                                        color:
+                                                            Colors.transparent,
+                                                        child: Center(
+                                                            child: Text('Post',
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .grey))),
+                                                        onPressed: null,
+                                                      )
+                                                    ],
                                                   ),
-                                                  FlatButton(
-                                                    disabledColor:
-                                                        Colors.transparent,
-                                                    color: Colors.transparent,
-                                                    child: Center(
-                                                        child: Text('Post',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .grey))),
-                                                    onPressed: null,
-                                                  )
+                                                  Divider(color: Colors.black),
+                                                  SizedBox(height: 10),
                                                 ],
                                               ),
-                                              Divider(color: Colors.black),
-                                              SizedBox(height: 10),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         )),
                                   ],
                                 ),
@@ -675,7 +748,8 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         }
                       }
                       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                        if (_scrollController.offset == 0)
+                        if (_scrollController.positions.isNotEmpty &&
+                            _scrollController.offset == 0)
                           _scrollController.animateTo(
                               _scrollController.position.maxScrollExtent,
                               duration: Duration(seconds: 1),
@@ -683,12 +757,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       });
                       return SafeArea(
                           child: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              )),
+                              color: Colors.white,
                               child: GestureDetector(
                                 onTap: () {
                                   FocusScope.of(context)
@@ -697,136 +766,174 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 child: Column(
                                   children: [
                                     Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        child: Column(
-                                          children: [
-                                            SizedBox(height: 30),
-                                            Row(
-                                              children: [
-                                                Image.asset(
-                                                  'assets/score.png',
-                                                  width: 40,
-                                                  color: Colors.grey,
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                              height: 200,
+                                              decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                      colors:
+                                                          splashScreenColors,
+                                                      begin:
+                                                          Alignment.bottomLeft,
+                                                      end: Alignment.topRight)),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 20,
+                                                        vertical: 20),
+                                                child: Column(
+                                                  children: [
+                                                    Expanded(
+                                                        child: Center(
+                                                            child: Text(
+                                                                cardData.text,
+                                                                style: TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)))),
+                                                    Row(
+                                                      children: [
+                                                        Image.asset(
+                                                          'assets/score.png',
+                                                          width: 30,
+                                                          color: Colors.white,
+                                                        ),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                            cardData.score
+                                                                .toString(),
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                fontSize: 15))
+                                                      ],
+                                                    )
+                                                  ],
                                                 ),
-                                                SizedBox(width: 10),
-                                                Text(cardData.score.toString(),
-                                                    style: enabledUpperBarStyle
-                                                        .copyWith(
-                                                            color: Colors.grey,
-                                                            fontSize: 25))
-                                              ],
-                                            ),
-                                            SizedBox(height: 20),
-                                            Text(cardData.text,
-                                                style: disabledUpperBarStyle),
-                                            SizedBox(height: 20),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text('Comments',
-                                                    style:
-                                                        enabledUpperBarStyle),
-                                                Icon(Icons.arrow_drop_down,
-                                                    color:
-                                                        disabledUpperBarColor),
-                                              ],
-                                            ),
-                                            Divider(
-                                                color: disabledUpperBarColor),
-                                            SizedBox(height: 20),
-                                            Expanded(
-                                                flex: 5,
-                                                child: noCommentsWidget != null
-                                                    ? noCommentsWidget
-                                                    : Center(
-                                                        child: ListView(
-                                                            controller:
-                                                                _scrollController,
-                                                            key:
-                                                                listViewGlobalKey,
-                                                            shrinkWrap: false,
-                                                            children:
-                                                                comments))),
-                                          ],
-                                        ),
+                                              )),
+                                          Expanded(
+                                              flex: 5,
+                                              child: noCommentsWidget != null
+                                                  ? noCommentsWidget
+                                                  : Center(
+                                                      child: ListView(
+                                                          controller:
+                                                              _scrollController,
+                                                          key:
+                                                              listViewGlobalKey,
+                                                          shrinkWrap: false,
+                                                          children: comments))),
+                                        ],
                                       ),
                                     ),
                                     Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                         ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 20),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(height: 10),
-                                              Row(
+                                        child: Column(
+                                          children: [
+                                            Container(
+                                              child: FAProgressBar(
+                                                backgroundColor: Colors.white,
+                                                size: 6,
+                                                borderRadius: 0,
+                                                maxValue: 245,
+                                                currentValue: inputText.length,
+                                                progressColor: Colors.yellow,
+                                                changeProgressColor: Colors.red,
+                                                direction: Axis.horizontal,
+                                                displayText: '',
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20),
+                                              child: Column(
                                                 children: [
-                                                  Expanded(
-                                                    child: ConstrainedBox(
-                                                      constraints:
-                                                          BoxConstraints(
-                                                        maxHeight: 300,
-                                                      ),
-                                                      child: HashTagTextField(
-                                                        key: key,
-                                                        decoration: InputDecoration(
-                                                            counterText: "",
-                                                            hintStyle:
+                                                  SizedBox(height: 10),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                            maxHeight: 300,
+                                                          ),
+                                                          child:
+                                                              HashTagTextField(
+                                                            key: key,
+                                                            decoration: InputDecoration(
+                                                                border:
+                                                                    InputBorder
+                                                                        .none,
+                                                                focusedBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                enabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                disabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                counterText: "",
+                                                                hintStyle:
+                                                                    disabledUpperBarStyle,
+                                                                hintText:
+                                                                    'Add a comment...'),
+                                                            maxLines: null,
+                                                            basicStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText:
-                                                                'Add a comment...'),
-                                                        maxLines: null,
-                                                        basicStyle:
-                                                            disabledUpperBarStyle,
-                                                        decoratedStyle:
-                                                            disabledUpperBarStyle
-                                                                .copyWith(
-                                                                    color: Colors
-                                                                        .red),
-                                                        maxLength: 245,
-                                                        controller:
-                                                            messageTextController,
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            inputText = value;
-                                                          });
-                                                        },
+                                                            decoratedStyle:
+                                                                disabledUpperBarStyle
+                                                                    .copyWith(
+                                                                        color: Colors
+                                                                            .red),
+                                                            maxLength: 245,
+                                                            controller:
+                                                                messageTextController,
+                                                            onChanged: (value) {
+                                                              setState(() {
+                                                                inputText =
+                                                                    value;
+                                                              });
+                                                            },
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
+                                                      FlatButton(
+                                                          disabledColor: Colors
+                                                              .transparent,
+                                                          color: Colors
+                                                              .transparent,
+                                                          child: Center(
+                                                              child: Text(
+                                                                  'Post',
+                                                                  style: TextStyle(
+                                                                      color: (cardData.commented ||
+                                                                              inputText.length <
+                                                                                  15)
+                                                                          ? Colors
+                                                                              .grey
+                                                                          : Colors
+                                                                              .blue))),
+                                                          onPressed: (cardData
+                                                                      .commented ||
+                                                                  inputText
+                                                                          .length <
+                                                                      15)
+                                                              ? null
+                                                              : buttonCallback)
+                                                    ],
                                                   ),
-                                                  FlatButton(
-                                                      disabledColor:
-                                                          Colors.transparent,
-                                                      color: Colors.transparent,
-                                                      child: Center(
-                                                          child: Text('Post',
-                                                              style: TextStyle(
-                                                                  color: (cardData
-                                                                              .commented ||
-                                                                          inputText.length <
-                                                                              15)
-                                                                      ? Colors
-                                                                          .grey
-                                                                      : Colors
-                                                                          .blue))),
-                                                      onPressed: (cardData
-                                                                  .commented ||
-                                                              inputText.length <
-                                                                  15)
-                                                          ? null
-                                                          : buttonCallback)
+                                                  Divider(color: Colors.black),
+                                                  SizedBox(height: 10),
                                                 ],
                                               ),
-                                              Divider(color: Colors.black),
-                                              SizedBox(height: 10),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         )),
                                   ],
                                 ),
@@ -834,12 +941,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     } else if (snapshot.hasError) {
                       return SafeArea(
                           child: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              )),
+                              color: Colors.white,
                               child: GestureDetector(
                                 onTap: () {
                                   FocusScope.of(context)
@@ -848,121 +950,152 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 child: Column(
                                   children: [
                                     Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        child: Column(
-                                          children: [
-                                            SizedBox(height: 30),
-                                            Row(
-                                              children: [
-                                                Image.asset(
-                                                  'assets/score.png',
-                                                  width: 40,
-                                                  color: Colors.grey,
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                              height: 200,
+                                              decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                      colors:
+                                                          splashScreenColors,
+                                                      begin:
+                                                          Alignment.bottomLeft,
+                                                      end: Alignment.topRight)),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 20,
+                                                        vertical: 20),
+                                                child: Column(
+                                                  children: [
+                                                    Expanded(
+                                                        child: Center(
+                                                            child: Text(
+                                                                cardData.text,
+                                                                style: TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)))),
+                                                    Row(
+                                                      children: [
+                                                        Image.asset(
+                                                          'assets/score.png',
+                                                          width: 30,
+                                                          color: Colors.white,
+                                                        ),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                            cardData.score
+                                                                .toString(),
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                fontSize: 15))
+                                                      ],
+                                                    )
+                                                  ],
                                                 ),
-                                                SizedBox(width: 10),
-                                                Text(cardData.score.toString(),
-                                                    style: enabledUpperBarStyle
-                                                        .copyWith(
-                                                            color: Colors.grey,
-                                                            fontSize: 25))
-                                              ],
-                                            ),
-                                            SizedBox(height: 20),
-                                            Text(cardData.text,
-                                                style: disabledUpperBarStyle),
-                                            SizedBox(height: 20),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text('Comments',
-                                                    style:
-                                                        enabledUpperBarStyle),
-                                                Icon(Icons.arrow_drop_down,
-                                                    color:
-                                                        disabledUpperBarColor),
-                                              ],
-                                            ),
-                                            Divider(
-                                                color: disabledUpperBarColor),
-                                            SizedBox(height: 20),
-                                            Expanded(
-                                                child: Center(
-                                                    child: Text(
-                                                        'Something went wrong with fetching the comments...',
-                                                        style:
-                                                            disabledUpperBarStyle)))
-                                          ],
-                                        ),
+                                              )),
+                                          Expanded(
+                                              child: Center(
+                                                  child: Text(
+                                                      'Something went wrong with fetching the comments...')))
+                                        ],
                                       ),
                                     ),
                                     Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                         ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 20),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(height: 10),
-                                              Row(
+                                        child: Column(
+                                          children: [
+                                            Container(
+                                              child: FAProgressBar(
+                                                backgroundColor: Colors.white,
+                                                size: 6,
+                                                borderRadius: 0,
+                                                maxValue: 245,
+                                                currentValue: inputText.length,
+                                                progressColor: Colors.yellow,
+                                                changeProgressColor: Colors.red,
+                                                direction: Axis.horizontal,
+                                                displayText: '',
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20),
+                                              child: Column(
                                                 children: [
-                                                  Expanded(
-                                                    child: ConstrainedBox(
-                                                      constraints:
-                                                          BoxConstraints(
-                                                        maxHeight: 300,
-                                                      ),
-                                                      child: HashTagTextField(
-                                                        key: key,
-                                                        decoration: InputDecoration(
-                                                            counterText: "",
-                                                            hintStyle:
+                                                  SizedBox(height: 10),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                            maxHeight: 300,
+                                                          ),
+                                                          child:
+                                                              HashTagTextField(
+                                                            key: key,
+                                                            decoration: InputDecoration(
+                                                                border:
+                                                                    InputBorder
+                                                                        .none,
+                                                                focusedBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                enabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                disabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                counterText: "",
+                                                                hintStyle:
+                                                                    disabledUpperBarStyle,
+                                                                hintText:
+                                                                    'Add a comment...'),
+                                                            maxLines: null,
+                                                            basicStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText:
-                                                                'Add a comment...'),
-                                                        maxLines: null,
-                                                        basicStyle:
-                                                            disabledUpperBarStyle,
-                                                        decoratedStyle:
-                                                            disabledUpperBarStyle
-                                                                .copyWith(
-                                                                    color: Colors
-                                                                        .red),
-                                                        maxLength: 245,
-                                                        controller:
-                                                            messageTextController,
-                                                        onChanged: (value) {
-                                                          inputText = value;
-                                                        },
+                                                            decoratedStyle:
+                                                                disabledUpperBarStyle
+                                                                    .copyWith(
+                                                                        color: Colors
+                                                                            .red),
+                                                            maxLength: 245,
+                                                            controller:
+                                                                messageTextController,
+                                                            onChanged: (value) {
+                                                              inputText = value;
+                                                            },
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
+                                                      FlatButton(
+                                                          disabledColor: Colors
+                                                              .transparent,
+                                                          color: Colors
+                                                              .transparent,
+                                                          child: Center(
+                                                              child: Text(
+                                                                  'Post',
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .grey))),
+                                                          onPressed: null)
+                                                    ],
                                                   ),
-                                                  FlatButton(
-                                                      disabledColor:
-                                                          Colors.transparent,
-                                                      color: Colors.transparent,
-                                                      child: Center(
-                                                          child: Text('Post',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .blue))),
-                                                      onPressed: (cardData
-                                                                  .commented ||
-                                                              inputText.length <
-                                                                  15)
-                                                          ? null
-                                                          : buttonCallback)
+                                                  Divider(color: Colors.black),
+                                                  SizedBox(height: 10),
                                                 ],
                                               ),
-                                              Divider(color: Colors.black),
-                                              SizedBox(height: 10),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         )),
                                   ],
                                 ),
@@ -970,12 +1103,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     }
                     return SafeArea(
                         child: Container(
-                            decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                              colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                            )),
+                            color: Colors.white,
                             child: GestureDetector(
                               onTap: () {
                                 FocusScope.of(context)
@@ -984,116 +1112,147 @@ class _CommentsScreenState extends State<CommentsScreen> {
                               child: Column(
                                 children: [
                                   Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 20),
-                                      child: Column(
-                                        children: [
-                                          SizedBox(height: 30),
-                                          Row(
-                                            children: [
-                                              Image.asset(
-                                                'assets/score.png',
-                                                width: 40,
-                                                color: Colors.grey,
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                            height: 200,
+                                            decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                    colors: splashScreenColors,
+                                                    begin: Alignment.bottomLeft,
+                                                    end: Alignment.topRight)),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 20),
+                                              child: Column(
+                                                children: [
+                                                  Expanded(
+                                                      child: Center(
+                                                          child: Text(
+                                                              cardData.text,
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold)))),
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        'assets/score.png',
+                                                        width: 30,
+                                                        color: Colors.white,
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                      Text(
+                                                          cardData.score
+                                                              .toString(),
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w700,
+                                                              fontSize: 15))
+                                                    ],
+                                                  )
+                                                ],
                                               ),
-                                              SizedBox(width: 10),
-                                              Text(cardData.score.toString(),
-                                                  style: enabledUpperBarStyle
-                                                      .copyWith(
-                                                          color: Colors.grey,
-                                                          fontSize: 25))
-                                            ],
-                                          ),
-                                          SizedBox(height: 20),
-                                          Text(cardData.text,
-                                              style: disabledUpperBarStyle),
-                                          SizedBox(height: 20),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text('Comments',
-                                                  style: enabledUpperBarStyle),
-                                              Icon(Icons.arrow_drop_down,
-                                                  color: disabledUpperBarColor),
-                                            ],
-                                          ),
-                                          Divider(color: disabledUpperBarColor),
-                                          SizedBox(height: 20),
-                                          Expanded(
-                                              child: Center(
-                                                  child: Text(
-                                                      'Something went wrong with fetching the comments...',
-                                                      style:
-                                                          disabledUpperBarStyle)))
-                                        ],
-                                      ),
+                                            )),
+                                        Expanded(
+                                            child: Center(
+                                                child: Text(
+                                                    'Something went wrong with fetching the comments...')))
+                                      ],
                                     ),
                                   ),
                                   Container(
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                       ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        child: Column(
-                                          children: [
-                                            SizedBox(height: 10),
-                                            Row(
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            child: FAProgressBar(
+                                              backgroundColor: Colors.white,
+                                              size: 6,
+                                              borderRadius: 0,
+                                              maxValue: 245,
+                                              currentValue: inputText.length,
+                                              progressColor: Colors.yellow,
+                                              changeProgressColor: Colors.red,
+                                              direction: Axis.horizontal,
+                                              displayText: '',
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 20),
+                                            child: Column(
                                               children: [
-                                                Expanded(
-                                                  child: ConstrainedBox(
-                                                    constraints: BoxConstraints(
-                                                      maxHeight: 300,
-                                                    ),
-                                                    child: HashTagTextField(
-                                                      key: key,
-                                                      decoration: InputDecoration(
-                                                          counterText: "",
-                                                          hintStyle:
+                                                SizedBox(height: 10),
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: ConstrainedBox(
+                                                        constraints:
+                                                            BoxConstraints(
+                                                          maxHeight: 300,
+                                                        ),
+                                                        child: HashTagTextField(
+                                                          key: key,
+                                                          decoration: InputDecoration(
+                                                              border:
+                                                                  InputBorder
+                                                                      .none,
+                                                              focusedBorder:
+                                                                  InputBorder
+                                                                      .none,
+                                                              enabledBorder:
+                                                                  InputBorder
+                                                                      .none,
+                                                              disabledBorder:
+                                                                  InputBorder
+                                                                      .none,
+                                                              counterText: "",
+                                                              hintStyle:
+                                                                  disabledUpperBarStyle,
+                                                              hintText:
+                                                                  'Add a comment...'),
+                                                          maxLines: null,
+                                                          basicStyle:
                                                               disabledUpperBarStyle,
-                                                          hintText:
-                                                              'Add a comment...'),
-                                                      maxLines: null,
-                                                      basicStyle:
-                                                          disabledUpperBarStyle,
-                                                      decoratedStyle:
-                                                          disabledUpperBarStyle
-                                                              .copyWith(
-                                                                  color: Colors
-                                                                      .red),
-                                                      maxLength: 245,
-                                                      controller:
-                                                          messageTextController,
-                                                      onChanged: (value) {
-                                                        inputText = value;
-                                                      },
+                                                          decoratedStyle:
+                                                              disabledUpperBarStyle
+                                                                  .copyWith(
+                                                                      color: Colors
+                                                                          .red),
+                                                          maxLength: 245,
+                                                          controller:
+                                                              messageTextController,
+                                                          onChanged: (value) {
+                                                            inputText = value;
+                                                          },
+                                                        ),
+                                                      ),
                                                     ),
-                                                  ),
+                                                    FlatButton(
+                                                        disabledColor:
+                                                            Colors.transparent,
+                                                        color:
+                                                            Colors.transparent,
+                                                        child: Center(
+                                                            child: Text('Post',
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .grey))),
+                                                        onPressed: null)
+                                                  ],
                                                 ),
-                                                FlatButton(
-                                                    disabledColor:
-                                                        Colors.transparent,
-                                                    color: Colors.transparent,
-                                                    child: Center(
-                                                        child: Text('Post',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .blue))),
-                                                    onPressed: (cardData
-                                                                .commented ||
-                                                            inputText.length <
-                                                                15)
-                                                        ? null
-                                                        : buttonCallback)
+                                                Divider(color: Colors.black),
+                                                SizedBox(height: 10),
                                               ],
                                             ),
-                                            Divider(color: Colors.black),
-                                            SizedBox(height: 10),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       )),
                                 ],
                               ),
@@ -1104,12 +1263,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 snapshot.connectionState == ConnectionState.active) {
               return SafeArea(
                   child: Container(
-                      decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                        colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      )),
+                      decoration: BoxDecoration(color: Colors.white),
                       child: GestureDetector(
                         onTap: () {
                           FocusScope.of(context).requestFocus(new FocusNode());
@@ -1117,118 +1271,152 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         child: Column(
                           children: [
                             Expanded(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                child: Column(
-                                  children: [
-                                    SizedBox(height: 30),
-                                    Row(
-                                      children: [
-                                        Image.asset(
-                                          'assets/score.png',
-                                          width: 40,
-                                          color: Colors.grey,
-                                        ),
-                                        SizedBox(width: 10),
-                                        Text(cardData.score.toString(),
-                                            style:
-                                                enabledUpperBarStyle.copyWith(
-                                                    color: Colors.grey,
-                                                    fontSize: 25))
-                                      ],
-                                    ),
-                                    SizedBox(height: 20),
-                                    Text(cardData.text,
-                                        style: disabledUpperBarStyle),
-                                    SizedBox(height: 20),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text('Comments',
-                                            style: enabledUpperBarStyle),
-                                        Icon(Icons.arrow_drop_down,
-                                            color: disabledUpperBarColor),
-                                      ],
-                                    ),
-                                    Divider(color: disabledUpperBarColor),
-                                    SizedBox(height: 20),
-                                    Expanded(
-                                        flex: 5,
-                                        child: Center(
-                                            child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
+                              child: Column(
+                                children: [
+                                  Container(
+                                      height: 200,
+                                      decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                              colors: splashScreenColors,
+                                              begin: Alignment.bottomLeft,
+                                              end: Alignment.topRight)),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 20, vertical: 20),
+                                        child: Column(
                                           children: [
-                                            Image.asset('assets/logo.png',
-                                                width: 200),
-                                            SizedBox(height: 30),
-                                            SpinKitThreeBounce(
-                                              color: spinnerColor,
-                                              size: 60,
-                                            ),
+                                            Expanded(
+                                                child: Center(
+                                                    child: Text(cardData.text,
+                                                        style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold)))),
+                                            Row(
+                                              children: [
+                                                Image.asset(
+                                                  'assets/score.png',
+                                                  width: 30,
+                                                  color: Colors.white,
+                                                ),
+                                                SizedBox(width: 10),
+                                                Text(cardData.score.toString(),
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        fontSize: 15))
+                                              ],
+                                            )
                                           ],
-                                        )))
-                                  ],
-                                ),
+                                        ),
+                                      )),
+                                  SizedBox(height: 30),
+                                  Expanded(
+                                      flex: 5,
+                                      child: Container(
+                                          child: Center(
+                                              child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Image.asset('assets/logo.png',
+                                              width: 200),
+                                          SizedBox(height: 30),
+                                          SpinKitThreeBounce(
+                                            color: secondarySpinnerColor,
+                                            size: 60,
+                                          ),
+                                        ],
+                                      ))))
+                                ],
                               ),
                             ),
                             Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                 ),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20),
-                                  child: Column(
-                                    children: [
-                                      SizedBox(height: 10),
-                                      Row(
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      child: FAProgressBar(
+                                        backgroundColor: Colors.white,
+                                        size: 6,
+                                        borderRadius: 0,
+                                        maxValue: 245,
+                                        currentValue: inputText.length,
+                                        progressColor: Colors.yellow,
+                                        changeProgressColor: Colors.red,
+                                        direction: Axis.horizontal,
+                                        displayText: '',
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 20),
+                                      child: Column(
                                         children: [
-                                          Expanded(
-                                            child: ConstrainedBox(
-                                              constraints: BoxConstraints(
-                                                maxHeight: 300,
-                                              ),
-                                              child: HashTagTextField(
-                                                key: key,
-                                                decoration: InputDecoration(
-                                                    counterText: "",
-                                                    hintStyle:
+                                          SizedBox(height: 10),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: ConstrainedBox(
+                                                  constraints: BoxConstraints(
+                                                    maxHeight: 300,
+                                                  ),
+                                                  child: HashTagTextField(
+                                                    key: key,
+                                                    decoration: InputDecoration(
+                                                        border:
+                                                            InputBorder.none,
+                                                        focusedBorder:
+                                                            InputBorder.none,
+                                                        enabledBorder:
+                                                            InputBorder.none,
+                                                        disabledBorder:
+                                                            InputBorder.none,
+                                                        counterText: "",
+                                                        hintStyle:
+                                                            disabledUpperBarStyle,
+                                                        hintText:
+                                                            'Add a comment...'),
+                                                    maxLines: null,
+                                                    basicStyle:
                                                         disabledUpperBarStyle,
-                                                    hintText:
-                                                        'Add a comment...'),
-                                                maxLines: null,
-                                                basicStyle:
-                                                    disabledUpperBarStyle,
-                                                decoratedStyle:
-                                                    disabledUpperBarStyle
-                                                        .copyWith(
-                                                            color: Colors.red),
-                                                maxLength: 245,
-                                                controller:
-                                                    messageTextController,
-                                                onChanged: (value) {
-                                                  inputText = value;
-                                                },
+                                                    decoratedStyle:
+                                                        disabledUpperBarStyle
+                                                            .copyWith(
+                                                                color:
+                                                                    Colors.red),
+                                                    maxLength: 245,
+                                                    controller:
+                                                        messageTextController,
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        inputText = value;
+                                                      });
+                                                    },
+                                                  ),
+                                                ),
                                               ),
-                                            ),
+                                              FlatButton(
+                                                disabledColor:
+                                                    Colors.transparent,
+                                                color: Colors.transparent,
+                                                child: Center(
+                                                    child: Text('Post',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.grey))),
+                                                onPressed: null,
+                                              )
+                                            ],
                                           ),
-                                          FlatButton(
-                                              disabledColor: Colors.transparent,
-                                              color: Colors.transparent,
-                                              child: Center(
-                                                  child: Text('Post',
-                                                      style: TextStyle(
-                                                          color: Colors.grey))),
-                                              onPressed: null)
+                                          Divider(color: Colors.black),
+                                          SizedBox(height: 10),
                                         ],
                                       ),
-                                      Divider(color: Colors.black),
-                                      SizedBox(height: 10),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 )),
                           ],
                         ),
@@ -1254,12 +1442,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     if (snapshot.data == null) {
                       return SafeArea(
                           child: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              )),
+                              decoration: BoxDecoration(color: Colors.white),
                               child: GestureDetector(
                                 onTap: () {
                                   FocusScope.of(context)
@@ -1268,129 +1451,170 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 child: Column(
                                   children: [
                                     Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        child: Column(
-                                          children: [
-                                            SizedBox(height: 30),
-                                            Row(
-                                              children: [
-                                                Image.asset(
-                                                  'assets/score.png',
-                                                  width: 40,
-                                                  color: Colors.grey,
-                                                ),
-                                                SizedBox(width: 10),
-                                                Text(cardData.score.toString(),
-                                                    style: enabledUpperBarStyle
-                                                        .copyWith(
-                                                            color: Colors.grey,
-                                                            fontSize: 25))
-                                              ],
-                                            ),
-                                            SizedBox(height: 20),
-                                            Text(cardData.text,
-                                                style: disabledUpperBarStyle),
-                                            SizedBox(height: 20),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text('Comments',
-                                                    style:
-                                                        enabledUpperBarStyle),
-                                                Icon(Icons.arrow_drop_down,
-                                                    color:
-                                                        disabledUpperBarColor),
-                                              ],
-                                            ),
-                                            Divider(
-                                                color: disabledUpperBarColor),
-                                            SizedBox(height: 20),
-                                            Expanded(
-                                                flex: 5,
-                                                child: Container(
-                                                    child: Center(
-                                                        child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.center,
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                              height: 200,
+                                              decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                      colors:
+                                                          splashScreenColors,
+                                                      begin:
+                                                          Alignment.bottomLeft,
+                                                      end: Alignment.topRight)),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 20,
+                                                        vertical: 20),
+                                                child: Column(
                                                   children: [
-                                                    Image.asset(
-                                                        'assets/logo.png',
-                                                        width: 200),
-                                                    SizedBox(height: 30),
-                                                    SpinKitThreeBounce(
-                                                      color: spinnerColor,
-                                                      size: 60,
-                                                    ),
+                                                    Expanded(
+                                                        child: Center(
+                                                            child: Text(
+                                                                cardData.text,
+                                                                style: TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)))),
+                                                    Row(
+                                                      children: [
+                                                        Image.asset(
+                                                          'assets/score.png',
+                                                          width: 30,
+                                                          color: Colors.white,
+                                                        ),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                            cardData.score
+                                                                .toString(),
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                fontSize: 15))
+                                                      ],
+                                                    )
                                                   ],
-                                                ))))
-                                          ],
-                                        ),
+                                                ),
+                                              )),
+                                          SizedBox(height: 30),
+                                          Expanded(
+                                              flex: 5,
+                                              child: Container(
+                                                  child: Center(
+                                                      child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  Image.asset('assets/logo.png',
+                                                      width: 200),
+                                                  SizedBox(height: 30),
+                                                  SpinKitThreeBounce(
+                                                    color:
+                                                        secondarySpinnerColor,
+                                                    size: 60,
+                                                  ),
+                                                ],
+                                              ))))
+                                        ],
                                       ),
                                     ),
                                     Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                         ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 20),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(height: 10),
-                                              Row(
+                                        child: Column(
+                                          children: [
+                                            Container(
+                                              child: FAProgressBar(
+                                                backgroundColor: Colors.white,
+                                                size: 6,
+                                                borderRadius: 0,
+                                                maxValue: 245,
+                                                currentValue: inputText.length,
+                                                progressColor: Colors.yellow,
+                                                changeProgressColor: Colors.red,
+                                                direction: Axis.horizontal,
+                                                displayText: '',
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20),
+                                              child: Column(
                                                 children: [
-                                                  Expanded(
-                                                    child: ConstrainedBox(
-                                                      constraints:
-                                                          BoxConstraints(
-                                                        maxHeight: 300,
-                                                      ),
-                                                      child: HashTagTextField(
-                                                        key: key,
-                                                        decoration: InputDecoration(
-                                                            counterText: "",
-                                                            hintStyle:
+                                                  SizedBox(height: 10),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                            maxHeight: 300,
+                                                          ),
+                                                          child:
+                                                              HashTagTextField(
+                                                            key: key,
+                                                            decoration: InputDecoration(
+                                                                border:
+                                                                    InputBorder
+                                                                        .none,
+                                                                focusedBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                enabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                disabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                counterText: "",
+                                                                hintStyle:
+                                                                    disabledUpperBarStyle,
+                                                                hintText:
+                                                                    'Add a comment...'),
+                                                            maxLines: null,
+                                                            basicStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText:
-                                                                'Add a comment...'),
-                                                        maxLines: null,
-                                                        basicStyle:
-                                                            disabledUpperBarStyle,
-                                                        decoratedStyle:
-                                                            disabledUpperBarStyle
-                                                                .copyWith(
-                                                                    color: Colors
-                                                                        .red),
-                                                        maxLength: 245,
-                                                        controller:
-                                                            messageTextController,
-                                                        onChanged: (value) {
-                                                          inputText = value;
-                                                        },
+                                                            decoratedStyle:
+                                                                disabledUpperBarStyle
+                                                                    .copyWith(
+                                                                        color: Colors
+                                                                            .red),
+                                                            maxLength: 245,
+                                                            controller:
+                                                                messageTextController,
+                                                            onChanged: (value) {
+                                                              setState(() {
+                                                                inputText =
+                                                                    value;
+                                                              });
+                                                            },
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
+                                                      FlatButton(
+                                                        disabledColor:
+                                                            Colors.transparent,
+                                                        color:
+                                                            Colors.transparent,
+                                                        child: Center(
+                                                            child: Text('Post',
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .grey))),
+                                                        onPressed: null,
+                                                      )
+                                                    ],
                                                   ),
-                                                  FlatButton(
-                                                    disabledColor:
-                                                        Colors.transparent,
-                                                    color: Colors.transparent,
-                                                    child: Center(
-                                                        child: Text('Post',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .grey))),
-                                                    onPressed: null,
-                                                  )
+                                                  Divider(color: Colors.black),
+                                                  SizedBox(height: 10),
                                                 ],
                                               ),
-                                              Divider(color: Colors.black),
-                                              SizedBox(height: 10),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         )),
                                   ],
                                 ),
@@ -1400,13 +1624,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       Widget noCommentsWidget;
                       if (snapshot.data.docs.length == 0) {
                         noCommentsWidget = (Center(
-                            child: Center(
-                                child: Text('There are no comments yet!'))));
+                            child: Text('There are no comments yet.',
+                                style: disabledUpperBarStyle)));
                       } else {
-                        int postCounter = 0;
                         keyMapping.clear();
                         idMapping.clear();
                         Set<String> youPosts = {};
+                        int postCounter = 0;
                         for (var doc in snapshot.data.docs) {
                           if (doc.get('uid') ==
                               GlobalController.get().currentUserUid) {
@@ -1443,21 +1667,16 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         }
                       }
                       WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-                        if (_scrollController.offset == 0)
+                        if (_scrollController.positions.isNotEmpty &&
+                            _scrollController.offset == 0)
                           _scrollController.animateTo(
                               _scrollController.position.maxScrollExtent,
                               duration: Duration(seconds: 1),
                               curve: Curves.fastOutSlowIn);
                       });
-
                       return SafeArea(
                           child: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              )),
+                              color: Colors.white,
                               child: GestureDetector(
                                 onTap: () {
                                   FocusScope.of(context)
@@ -1466,130 +1685,174 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 child: Column(
                                   children: [
                                     Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        child: Column(
-                                          children: [
-                                            SizedBox(height: 30),
-                                            Row(
-                                              children: [
-                                                Image.asset(
-                                                  'assets/score.png',
-                                                  width: 40,
-                                                  color: Colors.grey,
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                              height: 200,
+                                              decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                      colors:
+                                                          splashScreenColors,
+                                                      begin:
+                                                          Alignment.bottomLeft,
+                                                      end: Alignment.topRight)),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 20,
+                                                        vertical: 20),
+                                                child: Column(
+                                                  children: [
+                                                    Expanded(
+                                                        child: Center(
+                                                            child: Text(
+                                                                cardData.text,
+                                                                style: TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)))),
+                                                    Row(
+                                                      children: [
+                                                        Image.asset(
+                                                          'assets/score.png',
+                                                          width: 30,
+                                                          color: Colors.white,
+                                                        ),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                            cardData.score
+                                                                .toString(),
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                fontSize: 15))
+                                                      ],
+                                                    )
+                                                  ],
                                                 ),
-                                                SizedBox(width: 10),
-                                                Text(cardData.score.toString(),
-                                                    style: enabledUpperBarStyle
-                                                        .copyWith(
-                                                            color: Colors.grey,
-                                                            fontSize: 25))
-                                              ],
-                                            ),
-                                            SizedBox(height: 20),
-                                            Text(cardData.text,
-                                                style: disabledUpperBarStyle),
-                                            SizedBox(height: 20),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text('Comments',
-                                                    style:
-                                                        enabledUpperBarStyle),
-                                                Icon(Icons.arrow_drop_down,
-                                                    color:
-                                                        disabledUpperBarColor),
-                                              ],
-                                            ),
-                                            Divider(
-                                                color: disabledUpperBarColor),
-                                            SizedBox(height: 20),
-                                            Expanded(
-                                                flex: 5,
-                                                child: noCommentsWidget != null
-                                                    ? noCommentsWidget
-                                                    : Center(
-                                                        child: ListView(
-                                                            controller:
-                                                                _scrollController,
-                                                            key:
-                                                                listViewGlobalKey,
-                                                            shrinkWrap: false,
-                                                            children:
-                                                                comments))),
-                                          ],
-                                        ),
+                                              )),
+                                          Expanded(
+                                              flex: 5,
+                                              child: noCommentsWidget != null
+                                                  ? noCommentsWidget
+                                                  : Center(
+                                                      child: ListView(
+                                                          controller:
+                                                              _scrollController,
+                                                          key:
+                                                              listViewGlobalKey,
+                                                          shrinkWrap: false,
+                                                          children: comments))),
+                                        ],
                                       ),
                                     ),
                                     Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                         ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 20),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(height: 10),
-                                              Row(
+                                        child: Column(
+                                          children: [
+                                            Container(
+                                              child: FAProgressBar(
+                                                backgroundColor: Colors.white,
+                                                size: 6,
+                                                borderRadius: 0,
+                                                maxValue: 245,
+                                                currentValue: inputText.length,
+                                                progressColor: Colors.yellow,
+                                                changeProgressColor: Colors.red,
+                                                direction: Axis.horizontal,
+                                                displayText: '',
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20),
+                                              child: Column(
                                                 children: [
-                                                  Expanded(
-                                                    child: ConstrainedBox(
-                                                      constraints:
-                                                          BoxConstraints(
-                                                        maxHeight: 300,
-                                                      ),
-                                                      child: HashTagTextField(
-                                                        key: key,
-                                                        decoration: InputDecoration(
-                                                            counterText: "",
-                                                            hintStyle:
+                                                  SizedBox(height: 10),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                            maxHeight: 300,
+                                                          ),
+                                                          child:
+                                                              HashTagTextField(
+                                                            key: key,
+                                                            decoration: InputDecoration(
+                                                                border:
+                                                                    InputBorder
+                                                                        .none,
+                                                                focusedBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                enabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                disabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                counterText: "",
+                                                                hintStyle:
+                                                                    disabledUpperBarStyle,
+                                                                hintText:
+                                                                    'Add a comment...'),
+                                                            maxLines: null,
+                                                            basicStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText:
-                                                                'Add a comment...'),
-                                                        maxLines: null,
-                                                        basicStyle:
-                                                            disabledUpperBarStyle,
-                                                        decoratedStyle:
-                                                            disabledUpperBarStyle
-                                                                .copyWith(
-                                                                    color: Colors
-                                                                        .red),
-                                                        maxLength: 245,
-                                                        controller:
-                                                            messageTextController,
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            inputText = value;
-                                                          });
-                                                        },
+                                                            decoratedStyle:
+                                                                disabledUpperBarStyle
+                                                                    .copyWith(
+                                                                        color: Colors
+                                                                            .red),
+                                                            maxLength: 245,
+                                                            controller:
+                                                                messageTextController,
+                                                            onChanged: (value) {
+                                                              setState(() {
+                                                                inputText =
+                                                                    value;
+                                                              });
+                                                            },
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
+                                                      FlatButton(
+                                                          disabledColor: Colors
+                                                              .transparent,
+                                                          color: Colors
+                                                              .transparent,
+                                                          child: Center(
+                                                              child: Text(
+                                                                  'Post',
+                                                                  style: TextStyle(
+                                                                      color: (cardData.commented ||
+                                                                              inputText.length <
+                                                                                  15)
+                                                                          ? Colors
+                                                                              .grey
+                                                                          : Colors
+                                                                              .blue))),
+                                                          onPressed: (cardData
+                                                                      .commented ||
+                                                                  inputText
+                                                                          .length <
+                                                                      15)
+                                                              ? null
+                                                              : buttonCallback)
+                                                    ],
                                                   ),
-                                                  FlatButton(
-                                                      disabledColor:
-                                                          Colors.transparent,
-                                                      color: Colors.transparent,
-                                                      child: Center(
-                                                          child: Text('Post',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .blue))),
-                                                      onPressed: (cardData
-                                                                  .commented ||
-                                                              inputText.length <
-                                                                  15)
-                                                          ? null
-                                                          : buttonCallback)
+                                                  Divider(color: Colors.black),
+                                                  SizedBox(height: 10),
                                                 ],
                                               ),
-                                              Divider(color: Colors.black),
-                                              SizedBox(height: 10),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         )),
                                   ],
                                 ),
@@ -1597,12 +1860,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     } else if (snapshot.hasError) {
                       return SafeArea(
                           child: Container(
-                              decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                                begin: Alignment.bottomCenter,
-                                end: Alignment.topCenter,
-                              )),
+                              color: Colors.white,
                               child: GestureDetector(
                                 onTap: () {
                                   FocusScope.of(context)
@@ -1611,123 +1869,152 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                 child: Column(
                                   children: [
                                     Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        child: Column(
-                                          children: [
-                                            SizedBox(height: 30),
-                                            Row(
-                                              children: [
-                                                Image.asset(
-                                                  'assets/score.png',
-                                                  width: 40,
-                                                  color: Colors.grey,
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                              height: 200,
+                                              decoration: BoxDecoration(
+                                                  gradient: LinearGradient(
+                                                      colors:
+                                                          splashScreenColors,
+                                                      begin:
+                                                          Alignment.bottomLeft,
+                                                      end: Alignment.topRight)),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 20,
+                                                        vertical: 20),
+                                                child: Column(
+                                                  children: [
+                                                    Expanded(
+                                                        child: Center(
+                                                            child: Text(
+                                                                cardData.text,
+                                                                style: TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold)))),
+                                                    Row(
+                                                      children: [
+                                                        Image.asset(
+                                                          'assets/score.png',
+                                                          width: 30,
+                                                          color: Colors.white,
+                                                        ),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                            cardData.score
+                                                                .toString(),
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                fontSize: 15))
+                                                      ],
+                                                    )
+                                                  ],
                                                 ),
-                                                SizedBox(width: 10),
-                                                Text(cardData.score.toString(),
-                                                    style: enabledUpperBarStyle
-                                                        .copyWith(
-                                                            color: Colors.grey,
-                                                            fontSize: 25))
-                                              ],
-                                            ),
-                                            SizedBox(height: 20),
-                                            Text(cardData.text,
-                                                style: disabledUpperBarStyle),
-                                            SizedBox(height: 20),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text('Comments',
-                                                    style:
-                                                        enabledUpperBarStyle),
-                                                Icon(Icons.arrow_drop_down,
-                                                    color:
-                                                        disabledUpperBarColor),
-                                              ],
-                                            ),
-                                            Divider(
-                                                color: disabledUpperBarColor),
-                                            SizedBox(height: 20),
-                                            Expanded(
-                                                child: Center(
-                                                    child: Text(
-                                                        'Something went wrong with fetching the comments...',
-                                                        style:
-                                                            disabledUpperBarStyle)))
-                                          ],
-                                        ),
+                                              )),
+                                          Expanded(
+                                              child: Center(
+                                                  child: Text(
+                                                      'Something went wrong with fetching the comments...')))
+                                        ],
                                       ),
                                     ),
                                     Container(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                         ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 20),
-                                          child: Column(
-                                            children: [
-                                              SizedBox(height: 10),
-                                              Row(
+                                        child: Column(
+                                          children: [
+                                            Container(
+                                              child: FAProgressBar(
+                                                backgroundColor: Colors.white,
+                                                size: 6,
+                                                borderRadius: 0,
+                                                maxValue: 245,
+                                                currentValue: inputText.length,
+                                                progressColor: Colors.yellow,
+                                                changeProgressColor: Colors.red,
+                                                direction: Axis.horizontal,
+                                                displayText: '',
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20),
+                                              child: Column(
                                                 children: [
-                                                  Expanded(
-                                                    child: ConstrainedBox(
-                                                      constraints:
-                                                          BoxConstraints(
-                                                        maxHeight: 300,
-                                                      ),
-                                                      child: HashTagTextField(
-                                                        key: key,
-                                                        decoration: InputDecoration(
-                                                            counterText: "",
-                                                            hintStyle:
+                                                  SizedBox(height: 10),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: ConstrainedBox(
+                                                          constraints:
+                                                              BoxConstraints(
+                                                            maxHeight: 300,
+                                                          ),
+                                                          child:
+                                                              HashTagTextField(
+                                                            key: key,
+                                                            decoration: InputDecoration(
+                                                                border:
+                                                                    InputBorder
+                                                                        .none,
+                                                                focusedBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                enabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                disabledBorder:
+                                                                    InputBorder
+                                                                        .none,
+                                                                counterText: "",
+                                                                hintStyle:
+                                                                    disabledUpperBarStyle,
+                                                                hintText:
+                                                                    'Add a comment...'),
+                                                            maxLines: null,
+                                                            basicStyle:
                                                                 disabledUpperBarStyle,
-                                                            hintText:
-                                                                'Add a comment...'),
-                                                        maxLines: null,
-                                                        basicStyle:
-                                                            disabledUpperBarStyle,
-                                                        decoratedStyle:
-                                                            disabledUpperBarStyle
-                                                                .copyWith(
-                                                                    color: Colors
-                                                                        .red),
-                                                        maxLength: 245,
-                                                        controller:
-                                                            messageTextController,
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            inputText = value;
-                                                          });
-                                                        },
+                                                            decoratedStyle:
+                                                                disabledUpperBarStyle
+                                                                    .copyWith(
+                                                                        color: Colors
+                                                                            .red),
+                                                            maxLength: 245,
+                                                            controller:
+                                                                messageTextController,
+                                                            onChanged: (value) {
+                                                              inputText = value;
+                                                            },
+                                                          ),
+                                                        ),
                                                       ),
-                                                    ),
+                                                      FlatButton(
+                                                          disabledColor: Colors
+                                                              .transparent,
+                                                          color: Colors
+                                                              .transparent,
+                                                          child: Center(
+                                                              child: Text(
+                                                                  'Post',
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .grey))),
+                                                          onPressed: null)
+                                                    ],
                                                   ),
-                                                  FlatButton(
-                                                      disabledColor:
-                                                          Colors.transparent,
-                                                      color: Colors.transparent,
-                                                      child: Center(
-                                                          child: Text('Post',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .blue))),
-                                                      onPressed: (cardData
-                                                                  .commented ||
-                                                              inputText.length <
-                                                                  15)
-                                                          ? null
-                                                          : buttonCallback)
+                                                  Divider(color: Colors.black),
+                                                  SizedBox(height: 10),
                                                 ],
                                               ),
-                                              Divider(color: Colors.black),
-                                              SizedBox(height: 10),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         )),
                                   ],
                                 ),
@@ -1735,12 +2022,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     }
                     return SafeArea(
                         child: Container(
-                            decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                              colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                            )),
+                            color: Colors.white,
                             child: GestureDetector(
                               onTap: () {
                                 FocusScope.of(context)
@@ -1749,118 +2031,147 @@ class _CommentsScreenState extends State<CommentsScreen> {
                               child: Column(
                                 children: [
                                   Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 20),
-                                      child: Column(
-                                        children: [
-                                          SizedBox(height: 30),
-                                          Row(
-                                            children: [
-                                              Image.asset(
-                                                'assets/score.png',
-                                                width: 40,
-                                                color: Colors.grey,
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                            height: 200,
+                                            decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                    colors: splashScreenColors,
+                                                    begin: Alignment.bottomLeft,
+                                                    end: Alignment.topRight)),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 20),
+                                              child: Column(
+                                                children: [
+                                                  Expanded(
+                                                      child: Center(
+                                                          child: Text(
+                                                              cardData.text,
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold)))),
+                                                  Row(
+                                                    children: [
+                                                      Image.asset(
+                                                        'assets/score.png',
+                                                        width: 30,
+                                                        color: Colors.white,
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                      Text(
+                                                          cardData.score
+                                                              .toString(),
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w700,
+                                                              fontSize: 15))
+                                                    ],
+                                                  )
+                                                ],
                                               ),
-                                              SizedBox(width: 10),
-                                              Text(cardData.score.toString(),
-                                                  style: enabledUpperBarStyle
-                                                      .copyWith(
-                                                          color: Colors.grey,
-                                                          fontSize: 25))
-                                            ],
-                                          ),
-                                          SizedBox(height: 20),
-                                          Text(cardData.text,
-                                              style: disabledUpperBarStyle),
-                                          SizedBox(height: 20),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text('Comments',
-                                                  style: enabledUpperBarStyle),
-                                              Icon(Icons.arrow_drop_down,
-                                                  color: disabledUpperBarColor),
-                                            ],
-                                          ),
-                                          Divider(color: disabledUpperBarColor),
-                                          SizedBox(height: 20),
-                                          Expanded(
-                                              child: Center(
-                                                  child: Text(
-                                                      'Something went wrong with fetching the comments...',
-                                                      style:
-                                                          disabledUpperBarStyle)))
-                                        ],
-                                      ),
+                                            )),
+                                        Expanded(
+                                            child: Center(
+                                                child: Text(
+                                                    'Something went wrong with fetching the comments...')))
+                                      ],
                                     ),
                                   ),
                                   Container(
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                       ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 20),
-                                        child: Column(
-                                          children: [
-                                            SizedBox(height: 10),
-                                            Row(
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            child: FAProgressBar(
+                                              backgroundColor: Colors.white,
+                                              size: 6,
+                                              borderRadius: 0,
+                                              maxValue: 245,
+                                              currentValue: inputText.length,
+                                              progressColor: Colors.yellow,
+                                              changeProgressColor: Colors.red,
+                                              direction: Axis.horizontal,
+                                              displayText: '',
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 20),
+                                            child: Column(
                                               children: [
-                                                Expanded(
-                                                  child: ConstrainedBox(
-                                                    constraints: BoxConstraints(
-                                                      maxHeight: 300,
-                                                    ),
-                                                    child: HashTagTextField(
-                                                      key: key,
-                                                      decoration: InputDecoration(
-                                                          counterText: "",
-                                                          hintStyle:
+                                                SizedBox(height: 10),
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: ConstrainedBox(
+                                                        constraints:
+                                                            BoxConstraints(
+                                                          maxHeight: 300,
+                                                        ),
+                                                        child: HashTagTextField(
+                                                          key: key,
+                                                          decoration: InputDecoration(
+                                                              border:
+                                                                  InputBorder
+                                                                      .none,
+                                                              focusedBorder:
+                                                                  InputBorder
+                                                                      .none,
+                                                              enabledBorder:
+                                                                  InputBorder
+                                                                      .none,
+                                                              disabledBorder:
+                                                                  InputBorder
+                                                                      .none,
+                                                              counterText: "",
+                                                              hintStyle:
+                                                                  disabledUpperBarStyle,
+                                                              hintText:
+                                                                  'Add a comment...'),
+                                                          maxLines: null,
+                                                          basicStyle:
                                                               disabledUpperBarStyle,
-                                                          hintText:
-                                                              'Add a comment...'),
-                                                      maxLines: null,
-                                                      basicStyle:
-                                                          disabledUpperBarStyle,
-                                                      decoratedStyle:
-                                                          disabledUpperBarStyle
-                                                              .copyWith(
-                                                                  color: Colors
-                                                                      .red),
-                                                      maxLength: 245,
-                                                      controller:
-                                                          messageTextController,
-                                                      onChanged: (value) {
-                                                        setState(() {
-                                                          inputText = value;
-                                                        });
-                                                      },
+                                                          decoratedStyle:
+                                                              disabledUpperBarStyle
+                                                                  .copyWith(
+                                                                      color: Colors
+                                                                          .red),
+                                                          maxLength: 245,
+                                                          controller:
+                                                              messageTextController,
+                                                          onChanged: (value) {
+                                                            inputText = value;
+                                                          },
+                                                        ),
+                                                      ),
                                                     ),
-                                                  ),
+                                                    FlatButton(
+                                                        disabledColor:
+                                                            Colors.transparent,
+                                                        color:
+                                                            Colors.transparent,
+                                                        child: Center(
+                                                            child: Text('Post',
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .grey))),
+                                                        onPressed: null)
+                                                  ],
                                                 ),
-                                                FlatButton(
-                                                    disabledColor:
-                                                        Colors.transparent,
-                                                    color: Colors.transparent,
-                                                    child: Center(
-                                                        child: Text('Post',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .blue))),
-                                                    onPressed: (cardData
-                                                                .commented ||
-                                                            inputText.length <
-                                                                15)
-                                                        ? null
-                                                        : buttonCallback)
+                                                Divider(color: Colors.black),
+                                                SizedBox(height: 10),
                                               ],
                                             ),
-                                            Divider(color: Colors.black),
-                                            SizedBox(height: 10),
-                                          ],
-                                        ),
+                                          ),
+                                        ],
                                       )),
                                 ],
                               ),
@@ -2109,71 +2420,84 @@ class _CommentState extends State<Comment> {
   Widget build(BuildContext context) {
     return Container(
         child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text('Posted on: ' + widget.date,
-                style: disabledUpperBarStyle.copyWith(
-                    fontSize: 10, fontStyle: FontStyle.italic)),
-            SizedBox(width: 20),
-            Text('Comment id: ' + widget.commentId,
-                style: disabledUpperBarStyle.copyWith(
-                    fontSize: 10, fontStyle: FontStyle.italic))
-          ],
-        ),
-        widget.isReply
-            ? Text('Replying to you!',
-                style: disabledUpperBarStyle.copyWith(
-                    fontSize: 10,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.red))
-            : SizedBox(),
-        SizedBox(height: 20),
-        HashTagText(
-            text: widget.comment,
-            basicStyle: enabledUpperBarStyle,
-            decoratedStyle: enabledUpperBarStyle.copyWith(color: Colors.red),
-            onTap: (id) {
-              String idConverted =
-                  replaceIdsWithHashtags(id, widget.keyMapping);
-              var idConvertedList = extractHashTags(idConverted);
-              print(idConvertedList);
+        SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Comment id: ' + widget.commentId,
+                      style: disabledUpperBarStyle.copyWith(
+                          fontSize: 10, fontStyle: FontStyle.italic)),
+                  Text('Posted on: ' + widget.date,
+                      style: disabledUpperBarStyle.copyWith(
+                          fontSize: 10, fontStyle: FontStyle.italic)),
+                ],
+              ),
+              widget.isReply
+                  ? Text('Replying to you!',
+                      style: disabledUpperBarStyle.copyWith(
+                          fontSize: 10,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.red))
+                  : SizedBox(),
+              SizedBox(height: 20),
+              HashTagText(
+                  text: widget.comment,
+                  basicStyle: disabledUpperBarStyle,
+                  decoratedStyle:
+                      disabledUpperBarStyle.copyWith(color: Colors.red),
+                  onTap: (id) {
+                    String idConverted =
+                        replaceIdsWithHashtags(id, widget.keyMapping);
+                    var idConvertedList = extractHashTags(idConverted);
+                    print(idConvertedList);
 
-              showDialog(
-                  context: context,
-                  builder: (_) {
-                    return CommentPopup(
-                        keyMapping: widget.keyMapping,
-                        commentId: idConvertedList[0].substring(1),
-                        commentIdSeen: id,
-                        postId: widget.postId,
-                        idMapping: widget.idMapping);
-                  });
-            }),
-        SizedBox(height: 20),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FlatButton(
-                onPressed: reply,
-                child: Center(
-                    child: Text('Reply',
-                        style: disabledUpperBarStyle.copyWith(fontSize: 10)))),
-            FlatButton(
-                onPressed: shareCardData,
-                child: Center(
-                    child: Text('Share',
-                        style: disabledUpperBarStyle.copyWith(fontSize: 10)))),
-            FlatButton(
-                onPressed: openReportScreen,
-                child: Center(
-                    child: Text('Report',
-                        style: disabledUpperBarStyle.copyWith(fontSize: 10))))
-          ],
+                    showDialog(
+                        context: context,
+                        builder: (_) {
+                          return CommentPopup(
+                              keyMapping: widget.keyMapping,
+                              commentId: idConvertedList[0].substring(1),
+                              commentIdSeen: id,
+                              postId: widget.postId,
+                              idMapping: widget.idMapping);
+                        });
+                  }),
+              SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  InkWell(
+                      onTap: reply,
+                      child: Center(
+                          child: Text('Reply',
+                              style: disabledUpperBarStyle.copyWith(
+                                  fontSize: 12)))),
+                  SizedBox(width: 20),
+                  InkWell(
+                      onTap: shareCardData,
+                      child: Center(
+                          child: Text('Share',
+                              style: disabledUpperBarStyle.copyWith(
+                                  fontSize: 12)))),
+                  SizedBox(width: 20),
+                  InkWell(
+                      onTap: openReportScreen,
+                      child: Center(
+                          child: Text('Report',
+                              style: disabledUpperBarStyle.copyWith(
+                                  fontSize: 12))))
+                ],
+              ),
+            ],
+          ),
         ),
-        DottedLine(dashColor: disabledUpperBarColor),
-        SizedBox(height: 20),
+        Divider(color: Colors.grey)
       ],
     ));
   }

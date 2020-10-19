@@ -370,6 +370,11 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                           child: TextField(
                                             maxLength: 245,
                                             decoration: InputDecoration(
+                                                border: InputBorder.none,
+                                                focusedBorder: InputBorder.none,
+                                                enabledBorder: InputBorder.none,
+                                                disabledBorder:
+                                                    InputBorder.none,
                                                 counterText: "",
                                                 hintStyle:
                                                     disabledUpperBarStyle),
@@ -429,6 +434,11 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                           child: TextField(
                                             maxLength: 245,
                                             decoration: InputDecoration(
+                                                border: InputBorder.none,
+                                                focusedBorder: InputBorder.none,
+                                                enabledBorder: InputBorder.none,
+                                                disabledBorder:
+                                                    InputBorder.none,
                                                 counterText: "",
                                                 hintStyle:
                                                     disabledUpperBarStyle),
@@ -582,6 +592,11 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
                                           child: TextField(
                                             maxLength: 245,
                                             decoration: InputDecoration(
+                                                border: InputBorder.none,
+                                                focusedBorder: InputBorder.none,
+                                                enabledBorder: InputBorder.none,
+                                                disabledBorder:
+                                                    InputBorder.none,
                                                 counterText: "",
                                                 hintStyle:
                                                     disabledUpperBarStyle),

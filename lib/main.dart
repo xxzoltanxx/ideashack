@@ -58,7 +58,6 @@ void initFirebaseMessaging() {
     },
     onResume: (Map<String, dynamic> message) async {
       GlobalController.get().openFromNotification = true;
-      print(message['data']);
       if (message['data'].containsKey('initializer')) {
         GlobalController.get().notificationData = NotificationData(
             message['data']['postid'],
@@ -382,12 +381,15 @@ class _MainPageState extends State<MainPage>
       GlobalController.get().openFromNotification = false;
       NotificationData data = GlobalController.get().notificationData;
       if (data.postInitializer != null) {
+        Navigator.popUntil(context, (route) => route.settings.name == '/main');
+
         Navigator.pushNamed(context, '/message', arguments: <dynamic>[
           data.postId,
           data.postInitializer,
           data.postAuthor
         ]);
       } else {
+        Navigator.popUntil(context, (route) => route.settings.name == '/main');
         setState(() {
           isFetchindComment = true;
         });

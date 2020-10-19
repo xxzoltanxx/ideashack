@@ -205,7 +205,7 @@ class _DmScreenState extends State<DmScreen> with WidgetsBindingObserver {
           'New direct message!',
           'New chat message from $callsign',
           GlobalController.get().currentUserUid,
-          NotificationData(postId, postInitializer, postAuthor));
+          NotificationData('message', postId, postInitializer, postAuthor));
     } catch (e) {
       print('could not send push');
     }

@@ -295,16 +295,31 @@ class NotificationBubble extends StatelessWidget {
     Widget icon;
     if (type == 'reply') {
       notificationFunction = () async {
+        GlobalController.get().openingNotification = true;
         CardData data = await CardList.get().getCardDataForPost(postId);
         Navigator.pushNamed(context, '/comments',
             arguments: <dynamic>[data, notificationCommentsCallback]);
+        GlobalController.get().openingNotification = false;
       };
       typeShown = "Comment Reply";
       icon = Image.asset('assets/comments.png', width: 20, color: Colors.grey);
+    } else if (type == 'like') {
+      notificationFunction = () async {
+        GlobalController.get().openingNotification = true;
+        CardData data = await CardList.get().getCardDataForPost(postId);
+        Navigator.pushNamed(context, '/comments',
+            arguments: <dynamic>[data, notificationCommentsCallback]);
+        GlobalController.get().openingNotification = false;
+      };
+      typeShown = "Your idea is on fire!";
+      icon = Image.asset('assets/score.png', width: 20, color: Colors.grey);
     }
 
     return InkWell(
         onTap: () async {
+          if (GlobalController.get().openingNotification == true) {
+            return;
+          }
           Firestore.instance
               .collection('users')
               .doc(GlobalController.get().userDocId)

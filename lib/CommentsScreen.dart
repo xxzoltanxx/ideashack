@@ -79,7 +79,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
             'New reply to your comment',
             'Someone replied to your comment!',
             'comment',
-            NotificationData(cardData.id, null, null));
+            NotificationData('comment', cardData.id, null, null));
       }
     } catch (e) {
       print(e);
@@ -143,7 +143,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
             'New comment on your idea!',
             'Someone posted a new comment on your idea!',
             'comment',
-            NotificationData(cardData.id, null, null));
+            NotificationData('comment', cardData.id, null, null));
       }
     } catch (e) {
       print(e);

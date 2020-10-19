@@ -48,24 +48,36 @@ void initFirebaseMessaging() {
       print("onLaunch: $message");
       if (message['data'].containsKey('initializer')) {
         GlobalController.get().notificationData = NotificationData(
+            'message',
             message['data']['postid'],
             message['data']['initializer'],
             message['data']['author']);
-      } else {
-        GlobalController.get().notificationData =
-            NotificationData(message['data']['postid'], null, null);
+      } else if (message['data'].containsKey('type')) {
+        if (message['data']['type'] == "comment") {
+          GlobalController.get().notificationData = NotificationData(
+              'comment', message['data']['postid'], null, null);
+        } else if (message['data']['type'] == 'like') {
+          GlobalController.get().notificationData =
+              NotificationData('like', message['data']['postid'], null, null);
+        }
       }
     },
     onResume: (Map<String, dynamic> message) async {
       GlobalController.get().openFromNotification = true;
       if (message['data'].containsKey('initializer')) {
         GlobalController.get().notificationData = NotificationData(
+            'message',
             message['data']['postid'],
             message['data']['initializer'],
             message['data']['author']);
-      } else {
-        GlobalController.get().notificationData =
-            NotificationData(message['data']['postid'], null, null);
+      } else if (message['data'].containsKey('type')) {
+        if (message['data']['type'] == "comment") {
+          GlobalController.get().notificationData = NotificationData(
+              'comment', message['data']['postid'], null, null);
+        } else if (message['data']['type'] == 'like') {
+          GlobalController.get().notificationData =
+              NotificationData('like', message['data']['postid'], null, null);
+        }
       }
     },
   );
@@ -388,7 +400,7 @@ class _MainPageState extends State<MainPage>
           data.postInitializer,
           data.postAuthor
         ]);
-      } else {
+      } else if (data.type == 'comment') {
         Navigator.popUntil(context, (route) => route.settings.name == '/main');
         setState(() {
           isFetchindComment = true;
@@ -699,7 +711,7 @@ class _MainPageState extends State<MainPage>
             if (currentCardData.status == UpvotedStatus.DidntVote) {
               if (frontCardRot > 10) {
                 if (!GlobalController.get().currentUser.isAnonymous) {
-                  upvote();
+                  upvote(currentCardData.score);
                 }
               } else {
                 if (!GlobalController.get().currentUser.isAnonymous) {
@@ -718,7 +730,7 @@ class _MainPageState extends State<MainPage>
     }
   }
 
-  void upvote() async {
+  void upvote(int score) async {
     try {
       String id = currentCardData.id;
       await Firestore.instance
@@ -730,7 +742,44 @@ class _MainPageState extends State<MainPage>
       await Firestore.instance.collection('posts').doc(id).update({
         'score': FieldValue.increment(1),
       });
+      sendNotificationForLikesIfEligible(score, id);
       AnalyticsController.get().upvoted(currentCardData.id);
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void sendNotificationForLikesIfEligible(int score, String id) async {
+    try {
+      int realScore = score + 1;
+      var time = await getCurrentTimestampServer();
+      if (likeMilestones.contains(realScore)) {
+        var postDoc =
+            await Firestore.instance.collection('posts').doc(id).get();
+        String userId = postDoc.get('userid');
+        var userDocList = await Firestore.instance
+            .collection('users')
+            .where('uid', isEqualTo: userId)
+            .get();
+        var userDoc = userDocList.docs[0];
+        GlobalController.get().callOnFcmApiSendPushNotifications(
+            [userDoc.get('pushToken')],
+            "Your idea got " + realScore.toString() + " likes!",
+            "Nice job, people like your idea!",
+            postDoc.id + "Like",
+            NotificationData('like', postDoc.id, null, null));
+        await Firestore.instance
+            .collection('users')
+            .doc(userDoc.id)
+            .collection('notifications')
+            .add({
+          'clicked': 0,
+          'postId': postDoc.id,
+          'text': 'Your idea got ${realScore} likes!',
+          'time': time,
+          'type': 'like'
+        });
+      }
     } catch (e) {
       print(e);
     }
@@ -952,7 +1001,7 @@ class _MainPageState extends State<MainPage>
             data.postInitializer,
             data.postAuthor
           ]);
-        } else {
+        } else if (data.type == 'comment') {
           isFetchindComment = true;
           fetchComment(data.postId);
         }

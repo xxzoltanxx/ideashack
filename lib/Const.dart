@@ -74,6 +74,7 @@ const Color secondarySpinnerColor = Color(0xBEEEEEEE);
 
 const int QUERY_SIZE = 50;
 const List<Color> splashScreenColors = [Color(0xFFED8A00), Color(0xFFF29C03)];
+const Set<int> likeMilestones = {10, 50, 100, 300, 700, 1000, 2000};
 String formatedNumberString(int num) {
   if (num > 1000000) {
     return '${(num / 1000000)}m';
@@ -126,7 +127,9 @@ class CardData {
 }
 
 class NotificationData {
-  NotificationData(this.postId, this.postInitializer, this.postAuthor);
+  NotificationData(
+      this.type, this.postId, this.postInitializer, this.postAuthor);
+  String type;
   String postId;
   String postInitializer;
   String postAuthor;
@@ -145,6 +148,7 @@ class GlobalController {
     return _instance;
   }
 
+  bool openingNotification = false;
   bool commentShareDisabled = false;
   bool initedTime = false;
   int timeOffset = 0;
@@ -192,6 +196,7 @@ class GlobalController {
         "registration_ids": userToken,
         "collapse_key": "type_a",
         "data": {
+          "type": notifData.type,
           "click_action": "FLUTTER_NOTIFICATION_CLICK",
           "author": notifData.postAuthor,
           "postid": notifData.postId,
@@ -210,6 +215,7 @@ class GlobalController {
         "registration_ids": userToken,
         "collapse_key": "type_a",
         "data": {
+          "type": notifData.type,
           "click_action": "FLUTTER_NOTIFICATION_CLICK",
           "postid": notifData.postId,
         },

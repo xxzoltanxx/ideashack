@@ -302,83 +302,93 @@ class _CommentPopupState extends State<CommentPopup> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Comment'),
-      content: FutureBuilder(
-        future: Firestore.instance
-            .collection('posts')
-            .doc(postId)
-            .collection('comments')
-            .doc(commentId)
-            .get(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.done) {
-            DocumentSnapshot docSnap = snapshot.data;
-            if (!docSnap.exists) {
-              return Container(
-                  width: 200,
+        contentPadding: EdgeInsets.all(0),
+        insetPadding: EdgeInsets.all(0),
+        content: Builder(
+          builder: (context) {
+            var width = MediaQuery.of(context).size.width;
+            print(width);
+            return FutureBuilder(
+              future: Firestore.instance
+                  .collection('posts')
+                  .doc(postId)
+                  .collection('comments')
+                  .doc(commentId)
+                  .get(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.done) {
+                  DocumentSnapshot docSnap = snapshot.data;
+                  if (!docSnap.exists) {
+                    return Container(
+                        decoration: BoxDecoration(color: Colors.white),
+                        width: width,
+                        height: 200,
+                        child: Center(
+                            child: Text('Comment does not exist!',
+                                style: enabledUpperBarStyle)));
+                  }
+                  DateTime time = DateTime.fromMillisecondsSinceEpoch(
+                      (docSnap.get('time') * 1000).toInt());
+                  String date = '${time.day}.${time.month}.${time.year}';
+                  String text = replaceHashtagsWithIds(
+                      docSnap.get('comment'), widget.idMapping);
+                  return Container(
+                      width: width,
+                      decoration: BoxDecoration(color: Colors.white),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text('Posted on: ' + date,
+                                    style: disabledUpperBarStyle.copyWith(
+                                        fontSize: 10,
+                                        fontStyle: FontStyle.italic)),
+                                SizedBox(width: 20),
+                                Text('Comment id: ' + commentIdSeen,
+                                    style: disabledUpperBarStyle.copyWith(
+                                        fontSize: 10,
+                                        fontStyle: FontStyle.italic))
+                              ],
+                            ),
+                            SizedBox(height: 20),
+                            HashTagText(
+                              text: text,
+                              basicStyle: enabledUpperBarStyle,
+                              decoratedStyle: enabledUpperBarStyle.copyWith(
+                                  color: Colors.red),
+                              onTap: (id) {
+                                String idConverted = replaceIdsWithHashtags(
+                                    id, widget.keyMapping);
+                                var idConvertedList =
+                                    extractHashTags(idConverted);
+                                setState(() {
+                                  commentId = idConvertedList[0].substring(1);
+                                  commentIdSeen = id;
+                                });
+                              },
+                            ),
+                            SizedBox(height: 20),
+                            DottedLine(dashColor: disabledUpperBarColor),
+                            SizedBox(height: 20),
+                          ],
+                        ),
+                      ));
+                }
+                return Container(
+                  width: width,
                   height: 200,
-                  child: Center(child: Text('Comment does not exist!')));
-            }
-            DateTime time = DateTime.fromMillisecondsSinceEpoch(
-                (docSnap.get('time') * 1000).toInt());
-            String date = '${time.day}.${time.month}.${time.year}';
-            String text = replaceHashtagsWithIds(
-                docSnap.get('comment'), widget.idMapping);
-            return Container(
-                decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                  colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                )),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text('Posted on: ' + date,
-                              style: disabledUpperBarStyle.copyWith(
-                                  fontSize: 10, fontStyle: FontStyle.italic)),
-                          SizedBox(width: 20),
-                          Text('Comment id: ' + commentIdSeen,
-                              style: disabledUpperBarStyle.copyWith(
-                                  fontSize: 10, fontStyle: FontStyle.italic))
-                        ],
-                      ),
-                      SizedBox(height: 20),
-                      HashTagText(
-                        text: text,
-                        basicStyle: enabledUpperBarStyle,
-                        decoratedStyle:
-                            enabledUpperBarStyle.copyWith(color: Colors.red),
-                        onTap: (id) {
-                          String idConverted =
-                              replaceIdsWithHashtags(id, widget.keyMapping);
-                          var idConvertedList = extractHashTags(idConverted);
-                          setState(() {
-                            commentId = idConvertedList[0].substring(1);
-                            commentIdSeen = id;
-                          });
-                        },
-                      ),
-                      SizedBox(height: 20),
-                      DottedLine(dashColor: disabledUpperBarColor),
-                      SizedBox(height: 20),
-                    ],
-                  ),
-                ));
-          }
-          return Container(
-            width: 200,
-            height: 200,
-            child: Center(
-                child: SpinKitThreeBounce(color: Colors.white, size: 50)),
-          );
-        },
-      ),
-    );
+                  decoration: BoxDecoration(color: Colors.white),
+                  child: Center(
+                      child: SpinKitThreeBounce(
+                          color: secondarySpinnerColor, size: 50)),
+                );
+              },
+            );
+          },
+        ));
   }
 }

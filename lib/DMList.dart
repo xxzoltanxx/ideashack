@@ -46,9 +46,11 @@ class _DMListState extends State<DMList> {
 
   void setHeaderText(String text) {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      setState(() {
-        lastText = text;
-      });
+      if (lastText != text) {
+        setState(() {
+          lastText = text;
+        });
+      }
     });
   }
 
@@ -241,7 +243,7 @@ class FetchingBubble extends StatelessWidget {
   }
 }
 
-class DMBubble extends StatelessWidget {
+class DMBubble extends StatefulWidget {
   DMBubble(
       {this.firstMessage,
       this.initializerID,
@@ -267,11 +269,17 @@ class DMBubble extends StatelessWidget {
   double lastMessageTimestamp;
   bool lastMessageAnon;
   bool shouldHighlight;
+
+  @override
+  _DMBubbleState createState() => _DMBubbleState();
+}
+
+class _DMBubbleState extends State<DMBubble> {
   @override
   Widget build(BuildContext context) {
-    Color backgroundColor = Color.fromARGB(255, callsign.codeUnitAt(0),
-        callsign.codeUnitAt(1), callsign.codeUnitAt(2));
-    String theChar = callsign[0];
+    Color backgroundColor = Color.fromARGB(255, widget.callsign.codeUnitAt(0),
+        widget.callsign.codeUnitAt(1), widget.callsign.codeUnitAt(2));
+    String theChar = widget.callsign[0];
 
     Widget partnerImage = ClipRRect(
         borderRadius: BorderRadius.circular(50),
@@ -287,8 +295,11 @@ class DMBubble extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(context, '/message',
-            arguments: <dynamic>[postId, initializerID, authorId]);
+        Navigator.pushNamed(context, '/message', arguments: <dynamic>[
+          widget.postId,
+          widget.initializerID,
+          widget.authorId
+        ]);
       },
       child: Container(
           child: Column(
@@ -306,7 +317,7 @@ class DMBubble extends StatelessWidget {
                     SizedBox(height: 10),
                     Row(
                       children: [
-                        Text(callsign.toUpperCase(),
+                        Text(widget.callsign.toUpperCase(),
                             style: enabledUpperBarStyle.copyWith(
                                 fontWeight: FontWeight.w700,
                                 color: Colors.grey)),
@@ -314,17 +325,17 @@ class DMBubble extends StatelessWidget {
                     ),
                     SizedBox(height: 10),
                     Text(
-                        lastMessageAnon
-                            ? 'Somebody: ' + lastMessage
-                            : 'You: ' + lastMessage,
-                        style: shouldHighlight
+                        widget.lastMessageAnon
+                            ? 'Somebody: ' + widget.lastMessage
+                            : 'You: ' + widget.lastMessage,
+                        style: widget.shouldHighlight
                             ? enabledUpperBarStyle
                             : disabledUpperBarStyle,
                         overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
-              Text(date,
+              Text(widget.date,
                   style: disabledUpperBarStyle.copyWith(
                       fontSize: 10, fontStyle: FontStyle.italic)),
               SizedBox(width: 20),

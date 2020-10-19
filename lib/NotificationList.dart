@@ -148,9 +148,11 @@ class _NotificationListState extends State<NotificationList> {
 
   void setLastText(String text) {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      setState(() {
-        lastText = text;
-      });
+      if (lastText != text) {
+        setState(() {
+          lastText = text;
+        });
+      }
     });
   }
 

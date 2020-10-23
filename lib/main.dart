@@ -930,9 +930,93 @@ class _MainPageState extends State<MainPage>
     });
   }
 
+  void dontDeleteAccount() async {
+    try {
+      await Firestore.instance
+          .collection('users')
+          .doc(GlobalController.get().userDocId)
+          .update({'scheduledForDeletion': 0});
+      setState(() {
+        GlobalController.get().scheduledForDeletion = 0;
+      });
+    } catch (e) {
+      print(e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (isOffline) {
+    if (GlobalController.get().scheduledForDeletion == 1) {
+      bodyWidget = Container(
+          child: Center(
+              child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Center(
+              child: Text(
+                'Account is scheduled for deletion which should occur in the timeframe of 48 hours!',
+                textAlign: TextAlign.center,
+              ),
+            ),
+            SizedBox(height: 20),
+            RaisedButton(
+              child: Text('Reconsider?'),
+              onPressed: dontDeleteAccount,
+            )
+          ],
+        ),
+      )));
+      return Scaffold(
+          bottomNavigationBar: BottomNavigationBar(
+            currentIndex: GlobalController.get().selectedIndex,
+            onTap: (number) {
+              if (number == GlobalController.get().selectedIndex) {
+                return;
+              } else {
+                if ((number == 0 &&
+                    GlobalController.get().currentUser.isAnonymous)) {
+                  _settingModalBottomSheet(context, InfoSheet.Register);
+                  return;
+                }
+                if (number == 1) {
+                  setState(() {
+                    fetchNum = 0;
+                  });
+                }
+                if (number == 0) {
+                  setState(() {
+                    GlobalController.get().fetchingDailyPosts = true;
+                  });
+                  GlobalController.get().checkLastTimestampsAndUpdateCounters(
+                      onFetchUserTimestampsCallback);
+                }
+                setState(() {
+                  GlobalController.get().selectedIndex = number;
+                });
+              }
+            },
+            items: [
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.add), title: Text('Share Idea')),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.lightbulb_outline),
+                  title: Text('Browse Ideas')),
+              BottomNavigationBarItem(
+                  icon: Icon(Icons.person), title: Text('User Panel'))
+            ],
+          ),
+          body: SafeArea(
+            child: Container(
+                decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                        colors: splashScreenColors,
+                        begin: Alignment.bottomLeft,
+                        end: Alignment.topRight)),
+                child: bodyWidget),
+          ));
+    } else if (isOffline) {
       bodyWidget = Container(child: Center(child: Text('You\'re offline!')));
       return Scaffold(
           bottomNavigationBar: BottomNavigationBar(

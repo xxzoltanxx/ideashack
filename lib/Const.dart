@@ -148,6 +148,7 @@ class GlobalController {
     return _instance;
   }
 
+  int scheduledForDeletion = 0;
   bool openingNotification = false;
   bool commentShareDisabled = false;
   bool initedTime = false;

@@ -96,6 +96,9 @@ class _LoginScreenState extends State<LoginScreen> {
             .collection('users')
             .doc(docId)
             .update({'uid': user.uid, 'pushToken': pushToken});
+
+        GlobalController.get().scheduledForDeletion =
+            possibleUser.docs[0].get('isScheduledForDeletion');
         GlobalController.get().userDocId = docId;
         return;
       }
@@ -110,7 +113,8 @@ class _LoginScreenState extends State<LoginScreen> {
           'downvoted': [],
           'commented': [],
           'reportedPosts': [],
-          'canInitializeMessage': 1
+          'canInitializeMessage': 1,
+          'isScheduledForDeletion': 0
         });
         GlobalController.get().userDocId = snapshot.id;
       }

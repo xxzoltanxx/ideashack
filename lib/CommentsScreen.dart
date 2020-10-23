@@ -2219,6 +2219,7 @@ class _CommentState extends State<Comment> {
   Future<void> reportPost(
       String reason, String reporterId, String objection) async {
     try {
+      print(widget.keyMapping);
       User user = GlobalController.get().currentUser;
       var docs = await Firestore.instance
           .collection('reportedPosts')
@@ -2237,7 +2238,8 @@ class _CommentState extends State<Comment> {
           .collection('reportedPosts')
           .doc(postDocId)
           .collection('comments')
-          .where('commentId', isEqualTo: widget.commentId)
+          .where('commentId',
+              isEqualTo: widget.keyMapping[int.parse(widget.commentId)])
           .get();
 
       String commentDocId;
@@ -2249,7 +2251,7 @@ class _CommentState extends State<Comment> {
               .doc(postDocId)
               .collection('comments')
               .add({
-            'commentId': widget.commentId,
+            'commentId': widget.keyMapping[int.parse(widget.commentId)],
             'anonReports': 1,
             'reports': 0
           });
@@ -2259,7 +2261,7 @@ class _CommentState extends State<Comment> {
               .doc(postDocId)
               .collection('comments')
               .add({
-            'commentId': widget.commentId,
+            'commentId': widget.keyMapping[int.parse(widget.commentId)],
             'anonReports': 0,
             'reports': 1
           });
@@ -2269,6 +2271,12 @@ class _CommentState extends State<Comment> {
         commentDocId = commentReported.docs[0].id;
       }
       if (!user.isAnonymous) {
+        await Firestore.instance
+            .collection('reportedPosts')
+            .doc(postDocId)
+            .collection('comments')
+            .doc(commentDocId)
+            .update({'reports': FieldValue.increment(1)});
         await Firestore.instance
             .collection('reportedPosts')
             .doc(postDocId)
@@ -2288,8 +2296,8 @@ class _CommentState extends State<Comment> {
   }
 
   void openReportScreen() {
-    AnalyticsController.get()
-        .reportTappedComment(widget.postId, widget.commentId);
+    AnalyticsController.get().reportTappedComment(
+        widget.postId, widget.keyMapping[int.parse(widget.commentId)]);
     showDialog(
         context: context,
         builder: (_) => ReportPopup(

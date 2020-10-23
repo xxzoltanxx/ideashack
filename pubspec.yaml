@@ -83,6 +83,8 @@ flutter:
     - assets/mail-active.png
     - assets/mail-inactive.png
     - assets/userpanel.png
+    - assets/commentsPanel.png
+    - assets/commentsPanelActive.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

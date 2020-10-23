@@ -6,11 +6,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'RegistrationScreen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:dotted_line/dotted_line.dart';
 import 'package:ideashack/MainScreenMisc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:ideashack/FeedOverlay.dart';
 import 'Analytics.dart';
+import 'package:share/share.dart';
+import 'package:hashtagable/hashtagable.dart';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class UserCard extends StatefulWidget {
   UserCard(this.modalFunction);
@@ -25,6 +29,7 @@ class _UserCardState extends State<UserCard> {
   bool fetched = true;
   GoogleSignInAccount account;
   User user;
+  bool signingOut = false;
 
   @override
   void initState() {
@@ -53,6 +58,22 @@ class _UserCardState extends State<UserCard> {
     });
   }
 
+  void deleteAccount() async {
+    await Firestore.instance
+        .collection('users')
+        .doc(GlobalController.get().userDocId)
+        .update({'isScheduledForDeletion': 1});
+    Navigator.pop(context);
+    Navigator.pushNamed(context, '/auth');
+  }
+
+  void deleteAccountCallback() {
+    setState(() {
+      signingOut = true;
+    });
+    deleteAccount();
+  }
+
   void cardCallback() {
     setState(() {
       fetched = false;
@@ -63,10 +84,27 @@ class _UserCardState extends State<UserCard> {
     });
   }
 
+  void signOut() async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pop(context);
+    Navigator.pushNamed(context, '/auth');
+  }
+
+  void signOutButtonCallback() {
+    setState(() {
+      signingOut = true;
+    });
+    signOut();
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget widgetToEmbed;
-    if (GlobalController.get().currentUser.isAnonymous) {
+
+    if (signingOut) {
+      widgetToEmbed =
+          Center(child: Text('Signing out...', style: disabledUpperBarStyle));
+    } else if (GlobalController.get().currentUser.isAnonymous) {
       widgetToEmbed = Center(
           child: Padding(
         padding: const EdgeInsets.all(20.0),
@@ -130,7 +168,7 @@ class _UserCardState extends State<UserCard> {
           Image.asset('assets/logo.png', width: 200),
           SizedBox(height: 30),
           SpinKitThreeBounce(
-            color: spinnerColor,
+            color: secondarySpinnerColor,
             size: 60,
           ),
         ],
@@ -139,54 +177,86 @@ class _UserCardState extends State<UserCard> {
 
     return SafeArea(
         child: Container(
-            decoration: BoxDecoration(
-                gradient: LinearGradient(
-              colors: [Color(0xFFDBDBDB), Color(0xFFFFFFFF)],
-              begin: Alignment.bottomCenter,
-              end: Alignment.topCenter,
-            )),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Column(
-                children: [
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            decoration: BoxDecoration(color: Colors.white),
+            child: Column(
+              children: [
+                Container(
+                    height: 240,
+                    decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                            colors: splashScreenColors,
+                            begin: Alignment.bottomLeft,
+                            end: Alignment.topRight)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 20),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset('assets/userpanel.png', width: 100),
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('User panel',
+                                  style: enabledUpperBarStyle.copyWith(
+                                      color: Colors.white, fontSize: 30)),
+                            ],
+                          ),
+                          SizedBox(height: 20),
+                          GlobalController.get().currentUser.isAnonymous
+                              ? SizedBox()
+                              : Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        signOutButtonCallback();
+                                      },
+                                      child: Text('Log out',
+                                          style: disabledUpperBarStyle.copyWith(
+                                              color: Colors.white,
+                                              fontSize: 15)),
+                                    ),
+                                    InkWell(
+                                      onTap: deleteAccountCallback,
+                                      child: Text('Delete account',
+                                          style: disabledUpperBarStyle.copyWith(
+                                              color: Colors.white,
+                                              fontSize: 15)),
+                                    ),
+                                  ],
+                                ),
+                          Divider(color: Colors.white)
+                        ],
+                      ),
+                    )),
+                Expanded(
+                  child: Column(
                     children: [
-                      Image.asset('assets/userpanel.png', width: 100),
+                      SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text('Your Ideas',
+                                style: enabledUpperBarStyle.copyWith(
+                                    color: disabledUpperBarColor,
+                                    fontSize: 20)),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      Expanded(flex: 5, child: widgetToEmbed),
                     ],
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('User panel',
-                          style: enabledUpperBarStyle.copyWith(
-                              color: disabledUpperBarColor, fontSize: 30)),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text('Delete account',
-                          style: disabledUpperBarStyle.copyWith(fontSize: 15)),
-                    ],
-                  ),
-                  Divider(color: disabledUpperBarColor),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Text('Your Ideas',
-                          style: enabledUpperBarStyle.copyWith(
-                              color: disabledUpperBarColor, fontSize: 20)),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Divider(color: disabledUpperBarColor),
-                  Expanded(flex: 5, child: widgetToEmbed),
-                ],
-              ),
+                ),
+              ],
             )));
   }
 }
@@ -216,56 +286,139 @@ class IdeaUserCard extends StatelessWidget {
         builder: (_) => DeleteIdeaPopup(deleteAsync(), deleteCallback));
   }
 
+  void shareCardData() async {
+    Widget shareWidget = Material(
+        child: Container(
+      width: 800,
+      height: 800,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+            begin: FractionalOffset.bottomLeft,
+            end: FractionalOffset.topRight,
+            colors: splashScreenColors),
+      ),
+      child: Center(
+          child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Directionality(
+          textDirection: TextDirection.ltr,
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: HashTagText(
+                            onTap: null,
+                            textAlign: TextAlign.center,
+                            text: cardData.text,
+                            basicStyle:
+                                MAIN_CARD_TEXT_STYLE.copyWith(fontSize: 50),
+                            decoratedStyle: MAIN_CARD_TEXT_STYLE.copyWith(
+                                fontSize: 50, color: Colors.blue),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.all(cardthingspadding),
+                    child: Divider(
+                      color: cardThingsTextStyle.color,
+                    ),
+                  ),
+                ],
+              ),
+              Align(
+                alignment: Alignment.topLeft,
+                child: Transform.rotate(
+                    angle: 0,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset('assets/logo.png', width: 150),
+                        Text('Share your idea!', style: cardThingsTextStyle)
+                      ],
+                    )),
+              ),
+            ],
+          ),
+        ),
+      )),
+    ));
+
+    Uint8List imageData = await createImageFromWidget(shareWidget,
+        logicalSize: Size(800, 800), imageSize: Size(800, 800));
+    String dir = (await getApplicationDocumentsDirectory()).path;
+    File file = File("$dir/" + 'myimage' + ".png");
+    await file.writeAsBytes(imageData);
+    try {
+      await Share.shareFiles([dir + "/myimage.png"],
+          mimeTypes: ['image/png'],
+          text: 'See more at https://sparkyourimagination.page.link/join',
+          subject: 'A brilliant idea!');
+    } catch (e) {
+      print(e);
+    }
+  }
+
   Widget build(BuildContext context) {
     return Container(
         child: Column(
       children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('Posted on: ' + date,
-              style: disabledUpperBarStyle.copyWith(
-                  fontStyle: FontStyle.italic, fontSize: 10)),
-          Row(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
             children: [
-              Image.asset('assets/score.png', height: 40, color: Colors.grey),
-              SizedBox(width: 10),
-              Text(cardData.score.toString(),
-                  style: enabledUpperBarStyle.copyWith(
-                      color: Colors.grey, fontSize: 25)),
-              SizedBox(width: 30),
-              Image.asset('assets/comments.png',
-                  height: 40, color: Colors.grey),
-              SizedBox(width: 10),
-              Text(cardData.comments.toString(),
-                  style: enabledUpperBarStyle.copyWith(
-                      color: Colors.grey, fontSize: 25)),
-              CommentsOverlay(cardData.id),
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Text('Posted on: ' + date,
+                    style: disabledUpperBarStyle.copyWith(
+                        fontStyle: FontStyle.italic, fontSize: 10)),
+                Row(
+                  children: [
+                    Image.asset('assets/score.png',
+                        height: 30, color: Colors.grey),
+                    Text(formatedNumberString(cardData.score),
+                        style: enabledUpperBarStyle.copyWith(
+                            color: Colors.grey, fontSize: 20)),
+                    SizedBox(width: 5),
+                    InkWell(
+                        onTap: () {
+                          AnalyticsController.get()
+                              .viewCommentsTapped(cardData.id);
+                          Navigator.pushNamed(context, '/comments',
+                              arguments: <dynamic>[cardData, modalFunction]);
+                        },
+                        child: CommentsOverlay(cardData.id)),
+                  ],
+                ),
+              ]),
+              SizedBox(height: 20),
+              Text(cardData.text, style: disabledUpperBarStyle),
+              SizedBox(height: 20),
+              Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                InkWell(
+                    onTap: () {
+                      AnalyticsController.get().deleteIdeaTapped(cardData.id);
+                      deleteIdea(context);
+                    },
+                    child: Text('Delete Idea', style: disabledUpperBarStyle)),
+                SizedBox(width: 20),
+                InkWell(
+                    onTap: () {
+                      shareCardData();
+                    },
+                    child: Text('Share', style: disabledUpperBarStyle))
+              ]),
+              SizedBox(height: 20),
             ],
           ),
-        ]),
-        SizedBox(height: 20),
-        Text(cardData.text, style: disabledUpperBarStyle),
-        SizedBox(height: 20),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          InkWell(
-              onTap: () {
-                AnalyticsController.get().deleteIdeaTapped(cardData.id);
-                deleteIdea(context);
-              },
-              child: Text('Delete Idea',
-                  style: disabledUpperBarStyle.copyWith(
-                      fontWeight: FontWeight.bold))),
-          InkWell(
-              onTap: () {
-                AnalyticsController.get().viewCommentsTapped(cardData.id);
-                Navigator.pushNamed(context, '/comments',
-                    arguments: <dynamic>[cardData, modalFunction]);
-              },
-              child: Text('View Comments',
-                  style: disabledUpperBarStyle.copyWith(
-                      fontWeight: FontWeight.bold)))
-        ]),
-        SizedBox(height: 20),
-        DottedLine(dashColor: disabledUpperBarColor),
+        ),
+        Divider(color: Colors.grey),
         SizedBox(height: 20),
       ],
     ));

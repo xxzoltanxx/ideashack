@@ -75,6 +75,10 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       GlobalController.get().initParameters();
+      bool allowedVersion = await GlobalController.get().checkVersion();
+      if (!allowedVersion) {
+        return Future.error(1);
+      }
       QuerySnapshot possibleUser;
 
       var pushToken;
@@ -141,6 +145,9 @@ class _LoginScreenState extends State<LoginScreen> {
           AnalyticsController.get().setUserId();
           await checkOrSetupNewUser(currentUser);
         } catch (e) {
+          if (e == 1) {
+            return Future.error(1);
+          }
           print(e);
           return Future.error("COULDN'T LOG IN");
         }
@@ -159,6 +166,9 @@ class _LoginScreenState extends State<LoginScreen> {
         AnalyticsController.get().setUserId();
         await checkOrSetupNewUser(currentUser);
       } catch (e) {
+        if (e == 1) {
+          return Future.error(1);
+        }
         print(e);
         return Future.error("COULDN'T LOG IN");
       }
@@ -200,6 +210,9 @@ class _LoginScreenState extends State<LoginScreen> {
       AnalyticsController.get().setUserId();
       await checkOrSetupNewUser(currentUser);
     } catch (e) {
+      if (e == 1) {
+        return Future.error(1);
+      }
       return Future.error("FAILED TO SIGN IN CONVENTIONALLY!");
     }
   }
@@ -341,7 +354,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     return FutureBuilder(
-        // Initialize FlutterFire
         future: initialFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.active ||
@@ -362,6 +374,25 @@ class _LoginScreenState extends State<LoginScreen> {
           }
           // Check for errors
           if (snapshot.hasError) {
+            if (snapshot.error == 1) {
+              return Container(
+                  child: Center(
+                      child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(child: Image.asset('assets/logo.png')),
+                  SizedBox(height: 40),
+                  FadeAnimatedTextKit(
+                      text: splashScreenText,
+                      repeatForever: true,
+                      textStyle: (TextStyle(fontWeight: FontWeight.bold))),
+                  SizedBox(height: 40),
+                  Text("You're using an old version, please update!",
+                      style: TextStyle(
+                          color: Colors.red, fontStyle: FontStyle.italic)),
+                ],
+              )));
+            }
             return Container(
                 child: Center(
                     child: Column(

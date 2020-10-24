@@ -381,10 +381,10 @@ class IdeaUserCard extends StatelessWidget {
                 Row(
                   children: [
                     Image.asset('assets/score.png',
-                        height: 30, color: Colors.grey),
+                        height: 20, color: Colors.grey),
                     Text(formatedNumberString(cardData.score),
                         style: enabledUpperBarStyle.copyWith(
-                            color: Colors.grey, fontSize: 20)),
+                            color: Colors.grey, fontSize: 15)),
                     SizedBox(width: 5),
                     InkWell(
                         onTap: () {

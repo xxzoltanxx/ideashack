@@ -28,10 +28,10 @@ class _CommentsOverlayState extends State<CommentsOverlay> {
             return Row(
               children: [
                 Image.asset('assets/commentsPanel.png',
-                    color: Colors.grey, height: 30),
+                    color: Colors.grey, height: 20),
                 Text(0.toString(),
                     style: enabledUpperBarStyle.copyWith(
-                        color: Colors.grey, fontSize: 20))
+                        color: Colors.grey, fontSize: 15))
               ],
             );
           } else {
@@ -40,20 +40,20 @@ class _CommentsOverlayState extends State<CommentsOverlay> {
               return Row(
                 children: [
                   Image.asset('assets/commentsPanelActive.png',
-                      color: Colors.grey, height: 30),
+                      color: Colors.grey, height: 20),
                   Text(snapshot.data.get('commentsNum').toString(),
                       style: enabledUpperBarStyle.copyWith(
-                          color: Colors.grey, fontSize: 20))
+                          color: Colors.grey, fontSize: 15))
                 ],
               );
             }
             return Row(
               children: [
                 Image.asset('assets/commentsPanel.png',
-                    color: Colors.grey, height: 30),
+                    color: Colors.grey, height: 20),
                 Text(snapshot.data.get('commentsNum').toString(),
                     style: enabledUpperBarStyle.copyWith(
-                        color: Colors.grey, fontSize: 20))
+                        color: Colors.grey, fontSize: 15))
               ],
             );
           }

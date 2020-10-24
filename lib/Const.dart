@@ -9,7 +9,9 @@ import 'dart:convert';
 import 'package:ntp/ntp.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:hashtagable/hashtagable.dart';
+import 'package:package_info/package_info.dart';
 
 //GLOBAL LIFECYCLE VARIABLES, I KNOW ITS SHIT I JUST STARTED USING FLUTTER
 
@@ -148,6 +150,7 @@ class GlobalController {
     return _instance;
   }
 
+  bool oldVersion = false;
   int scheduledForDeletion = 0;
   bool openingNotification = false;
   bool commentShareDisabled = false;
@@ -173,6 +176,7 @@ class GlobalController {
   bool finishedAd = false;
   bool isAdLocked = false;
   bool openFromNotification = false;
+  List<dynamic> allowedVersions = [];
   NotificationData notificationData;
 
   bool shouldShowAd() {
@@ -181,6 +185,21 @@ class GlobalController {
 
   void initParameters() {
     serverKey = parameters.get('serbian');
+    if (Platform.isAndroid) {
+      allowedVersions = parameters.get('allowedVersionsAndroid');
+    } else if (Platform.isIOS) {
+      allowedVersions = parameters.get('allowedVersionsIOS');
+    }
+  }
+
+  Future<bool> checkVersion() async {
+    PackageInfo info = await PackageInfo.fromPlatform();
+    print(allowedVersions);
+    print(info.version);
+    if (allowedVersions.contains(info.version)) {
+      return true;
+    }
+    return false;
   }
 
   String getUserName() {

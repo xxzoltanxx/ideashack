@@ -47,6 +47,7 @@ dependencies:
   admob_consent: ^1.1.0
   firebase_analytics: ^6.0.2
   share: ^0.6.5+3
+  package_info: ^0.4.3
   path_provider:
 
   ntp:

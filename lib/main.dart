@@ -935,7 +935,7 @@ class _MainPageState extends State<MainPage>
       await Firestore.instance
           .collection('users')
           .doc(GlobalController.get().userDocId)
-          .update({'scheduledForDeletion': 0});
+          .update({'isScheduledForDeletion': 0});
       setState(() {
         GlobalController.get().scheduledForDeletion = 0;
       });

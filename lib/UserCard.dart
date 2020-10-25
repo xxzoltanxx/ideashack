@@ -120,7 +120,7 @@ class _UserCardState extends State<UserCard> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                SizedBox(height: 50),
+                SizedBox(height: 10),
                 Center(
                   child: Container(
                     width: 200,
@@ -181,7 +181,7 @@ class _UserCardState extends State<UserCard> {
             child: Column(
               children: [
                 Container(
-                    height: 240,
+                    height: 180,
                     decoration: BoxDecoration(
                         gradient: LinearGradient(
                             colors: splashScreenColors,
@@ -189,13 +189,13 @@ class _UserCardState extends State<UserCard> {
                             end: Alignment.topRight)),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 20),
+                          horizontal: 20, vertical: 10),
                       child: Column(
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Image.asset('assets/userpanel.png', width: 100),
+                              Image.asset('assets/userpanel.png', width: 70),
                             ],
                           ),
                           Row(

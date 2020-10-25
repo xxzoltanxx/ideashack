@@ -222,7 +222,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           child: Column(
                             children: [
                               Container(
-                                  height: 200,
                                   decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                           colors: splashScreenColors,
@@ -233,12 +232,12 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                         horizontal: 20, vertical: 20),
                                     child: Column(
                                       children: [
-                                        Expanded(
-                                            child: Center(
-                                                child: Text(cardData.text,
-                                                    style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold)))),
+                                        Center(
+                                            child: Text(cardData.text,
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold))),
+                                        SizedBox(height: 10),
                                         Row(
                                           children: [
                                             Image.asset(
@@ -377,7 +376,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                               child: Column(
                                 children: [
                                   Container(
-                                      height: 200,
                                       decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                               colors: splashScreenColors,
@@ -388,13 +386,12 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                             horizontal: 20, vertical: 20),
                                         child: Column(
                                           children: [
-                                            Expanded(
-                                                child: Center(
-                                                    child: Text(cardData.text,
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)))),
+                                            Center(
+                                                child: Text(cardData.text,
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold))),
+                                            SizedBox(height: 10),
                                             Row(
                                               children: [
                                                 Image.asset(
@@ -535,7 +532,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                       child: Column(
                                         children: [
                                           Container(
-                                              height: 200,
                                               decoration: BoxDecoration(
                                                   gradient: LinearGradient(
                                                       colors:
@@ -550,14 +546,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                         vertical: 20),
                                                 child: Column(
                                                   children: [
-                                                    Expanded(
-                                                        child: Center(
-                                                            child: Text(
-                                                                cardData.text,
-                                                                style: TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)))),
+                                                    Center(
+                                                        child: Text(
+                                                            cardData.text,
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold))),
+                                                    SizedBox(height: 10),
                                                     Row(
                                                       children: [
                                                         Image.asset(
@@ -769,7 +765,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                       child: Column(
                                         children: [
                                           Container(
-                                              height: 200,
                                               decoration: BoxDecoration(
                                                   gradient: LinearGradient(
                                                       colors:
@@ -784,14 +779,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                         vertical: 20),
                                                 child: Column(
                                                   children: [
-                                                    Expanded(
-                                                        child: Center(
-                                                            child: Text(
-                                                                cardData.text,
-                                                                style: TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)))),
+                                                    Center(
+                                                        child: Text(
+                                                            cardData.text,
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold))),
+                                                    SizedBox(height: 10),
                                                     Row(
                                                       children: [
                                                         Image.asset(
@@ -953,7 +948,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                       child: Column(
                                         children: [
                                           Container(
-                                              height: 200,
                                               decoration: BoxDecoration(
                                                   gradient: LinearGradient(
                                                       colors:
@@ -968,14 +962,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                         vertical: 20),
                                                 child: Column(
                                                   children: [
-                                                    Expanded(
-                                                        child: Center(
-                                                            child: Text(
-                                                                cardData.text,
-                                                                style: TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)))),
+                                                    Center(
+                                                        child: Text(
+                                                            cardData.text,
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold))),
+                                                    SizedBox(height: 10),
                                                     Row(
                                                       children: [
                                                         Image.asset(
@@ -1115,7 +1109,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                     child: Column(
                                       children: [
                                         Container(
-                                            height: 200,
                                             decoration: BoxDecoration(
                                                 gradient: LinearGradient(
                                                     colors: splashScreenColors,
@@ -1128,14 +1121,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                       vertical: 20),
                                               child: Column(
                                                 children: [
-                                                  Expanded(
-                                                      child: Center(
-                                                          child: Text(
-                                                              cardData.text,
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)))),
+                                                  Center(
+                                                      child: Text(cardData.text,
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold))),
+                                                  SizedBox(height: 10),
                                                   Row(
                                                     children: [
                                                       Image.asset(
@@ -1274,7 +1266,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                               child: Column(
                                 children: [
                                   Container(
-                                      height: 200,
                                       decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                               colors: splashScreenColors,
@@ -1285,13 +1276,12 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                             horizontal: 20, vertical: 20),
                                         child: Column(
                                           children: [
-                                            Expanded(
-                                                child: Center(
-                                                    child: Text(cardData.text,
-                                                        style: TextStyle(
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold)))),
+                                            Center(
+                                                child: Text(cardData.text,
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold))),
+                                            SizedBox(height: 10),
                                             Row(
                                               children: [
                                                 Image.asset(
@@ -1454,7 +1444,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                       child: Column(
                                         children: [
                                           Container(
-                                              height: 200,
                                               decoration: BoxDecoration(
                                                   gradient: LinearGradient(
                                                       colors:
@@ -1469,14 +1458,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                         vertical: 20),
                                                 child: Column(
                                                   children: [
-                                                    Expanded(
-                                                        child: Center(
-                                                            child: Text(
-                                                                cardData.text,
-                                                                style: TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)))),
+                                                    Center(
+                                                        child: Text(
+                                                            cardData.text,
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold))),
+                                                    SizedBox(height: 10),
                                                     Row(
                                                       children: [
                                                         Image.asset(
@@ -1688,7 +1677,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                       child: Column(
                                         children: [
                                           Container(
-                                              height: 200,
                                               decoration: BoxDecoration(
                                                   gradient: LinearGradient(
                                                       colors:
@@ -1703,14 +1691,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                         vertical: 20),
                                                 child: Column(
                                                   children: [
-                                                    Expanded(
-                                                        child: Center(
-                                                            child: Text(
-                                                                cardData.text,
-                                                                style: TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)))),
+                                                    Center(
+                                                        child: Text(
+                                                            cardData.text,
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold))),
+                                                    SizedBox(height: 10),
                                                     Row(
                                                       children: [
                                                         Image.asset(
@@ -1872,7 +1860,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                       child: Column(
                                         children: [
                                           Container(
-                                              height: 200,
                                               decoration: BoxDecoration(
                                                   gradient: LinearGradient(
                                                       colors:
@@ -1887,14 +1874,14 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                         vertical: 20),
                                                 child: Column(
                                                   children: [
-                                                    Expanded(
-                                                        child: Center(
-                                                            child: Text(
-                                                                cardData.text,
-                                                                style: TextStyle(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .bold)))),
+                                                    Center(
+                                                        child: Text(
+                                                            cardData.text,
+                                                            style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold))),
+                                                    SizedBox(height: 10),
                                                     Row(
                                                       children: [
                                                         Image.asset(
@@ -2034,7 +2021,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                     child: Column(
                                       children: [
                                         Container(
-                                            height: 200,
                                             decoration: BoxDecoration(
                                                 gradient: LinearGradient(
                                                     colors: splashScreenColors,
@@ -2047,14 +2033,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
                                                       vertical: 20),
                                               child: Column(
                                                 children: [
-                                                  Expanded(
-                                                      child: Center(
-                                                          child: Text(
-                                                              cardData.text,
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)))),
+                                                  Center(
+                                                      child: Text(cardData.text,
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold))),
+                                                  SizedBox(height: 10),
                                                   Row(
                                                     children: [
                                                       Image.asset(

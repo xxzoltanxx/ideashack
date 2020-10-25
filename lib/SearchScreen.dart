@@ -32,10 +32,10 @@ class _SearchScreenState extends State<SearchScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SizedBox(
-                  height: 20,
+                  height: 10,
                 ),
-                Center(child: Image.asset('assets/search.png', width: 100)),
-                SizedBox(height: 20),
+                Center(child: Image.asset('assets/search.png', width: 80)),
+                SizedBox(height: 10),
                 Center(
                   child: Text('Search by tags',
                       style: TextStyle(
@@ -43,9 +43,9 @@ class _SearchScreenState extends State<SearchScreen> {
                           fontWeight: FontWeight.bold,
                           color: disabledUpperBarColor)),
                 ),
-                SizedBox(height: 20),
+                SizedBox(height: 10),
                 SearchBar(widget.callback),
-                SizedBox(height: 50),
+                SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Text('Popular Tags', style: enabledUpperBarStyle),

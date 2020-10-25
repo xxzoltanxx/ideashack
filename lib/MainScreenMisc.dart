@@ -163,111 +163,109 @@ class _ReportPopupState extends State<ReportPopup> {
               ))));
     }
     return AlertDialog(
-        title: Text("Reporting"),
         content: FutureBuilder(
-          future: reportFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.none) {
-              return Container(
-                  height: 300,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Center(child: Text('Reason for report:')),
-                      SizedBox(height: 20),
-                      Center(
-                          child: Text(
-                              'Bear in mind that unnecessary reports will get you banned',
-                              style: TextStyle(fontSize: 10))),
-                      DropdownButton<String>(
-                        value: textReason,
-                        items: <ReportReason>[
-                          ReportReason.Spam,
-                          ReportReason.Advertisment,
-                          ReportReason.IlicitContent,
-                          ReportReason.Other
-                        ].map((ReportReason value) {
-                          var text = "";
-                          switch (value) {
-                            case ReportReason.Advertisment:
-                              text = 'Advertisement';
-                              break;
-                            case ReportReason.Spam:
-                              text = 'Spam';
-                              break;
-                            case ReportReason.IlicitContent:
-                              text = 'Illicit content';
-                              break;
-                            case ReportReason.Other:
-                              text = 'Other';
-                              break;
-                          }
-                          return new DropdownMenuItem<String>(
-                            value: text,
-                            child: new Text(text),
-                          );
-                        }).toList(),
-                        onChanged: (String str) {
-                          setState(() {
-                            this.reason = parseReason(str);
-                            textReason = str;
-                          });
-                        },
-                      ),
-                      TextField(
-                          maxLength: 200,
-                          decoration: InputDecoration(
-                              hintText: 'Explain your reason...'),
-                          onChanged: (String newStr) {
-                            objectification = newStr;
-                          }),
-                      RaisedButton(
-                          onPressed: onSubmit,
-                          child: Center(child: Text('Submit'))),
-                    ],
-                  ));
-            }
-            if (snapshot.connectionState == ConnectionState.waiting ||
-                snapshot.connectionState == ConnectionState.active) {
-              return Container(
-                  width: 200,
-                  height: 200,
-                  child: Center(
-                      child:
-                          SpinKitThreeBounce(size: 50, color: Colors.white)));
-            }
-            if (snapshot.hasError) {
-              return Container(
-                  width: 200,
-                  height: 200,
-                  child: Center(
+      future: reportFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.none) {
+          return Container(
+              height: 300,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Center(child: Text('Reason for report:')),
+                  SizedBox(height: 20),
+                  Center(
                       child: Text(
-                    'Something went wrong, try again!',
-                    textAlign: TextAlign.center,
-                  )));
-            }
-            if (snapshot.connectionState == ConnectionState.done) {
-              String text;
-              if (widget.anonymous == true) {
-                text =
-                    "Report received, bear in mind that anonymous reports don't hold much value";
-              } else {
-                text = "Report received! We'll look into it!";
-              }
-              return Container(
-                  width: 200,
-                  height: 200,
-                  child: Center(
-                      child: Text(
-                    text,
-                    textAlign: TextAlign.center,
-                  )));
-            }
-            return Container(
-                child: Center(
-                    child: SpinKitThreeBounce(size: 50, color: Colors.white)));
-          },
-        ));
+                          'Bear in mind that unnecessary reports will get you banned',
+                          style: TextStyle(fontSize: 10))),
+                  DropdownButton<String>(
+                    value: textReason,
+                    items: <ReportReason>[
+                      ReportReason.Spam,
+                      ReportReason.Advertisment,
+                      ReportReason.IlicitContent,
+                      ReportReason.Other
+                    ].map((ReportReason value) {
+                      var text = "";
+                      switch (value) {
+                        case ReportReason.Advertisment:
+                          text = 'Advertisement';
+                          break;
+                        case ReportReason.Spam:
+                          text = 'Spam';
+                          break;
+                        case ReportReason.IlicitContent:
+                          text = 'Illicit content';
+                          break;
+                        case ReportReason.Other:
+                          text = 'Other';
+                          break;
+                      }
+                      return new DropdownMenuItem<String>(
+                        value: text,
+                        child: new Text(text),
+                      );
+                    }).toList(),
+                    onChanged: (String str) {
+                      setState(() {
+                        this.reason = parseReason(str);
+                        textReason = str;
+                      });
+                    },
+                  ),
+                  TextField(
+                      maxLength: 200,
+                      decoration:
+                          InputDecoration(hintText: 'Explain your reason...'),
+                      onChanged: (String newStr) {
+                        objectification = newStr;
+                      }),
+                  RaisedButton(
+                      onPressed: onSubmit,
+                      child: Center(child: Text('Submit'))),
+                ],
+              ));
+        }
+        if (snapshot.connectionState == ConnectionState.waiting ||
+            snapshot.connectionState == ConnectionState.active) {
+          return Container(
+              width: 200,
+              height: 200,
+              child: Center(
+                  child: SpinKitThreeBounce(size: 50, color: Colors.white)));
+        }
+        if (snapshot.hasError) {
+          return Container(
+              width: 200,
+              height: 200,
+              child: Center(
+                  child: Text(
+                'Something went wrong, try again!',
+                textAlign: TextAlign.center,
+              )));
+        }
+        if (snapshot.connectionState == ConnectionState.done) {
+          String text;
+          if (widget.anonymous == true) {
+            text =
+                "Report received, bear in mind that anonymous reports don't hold much value";
+          } else {
+            text = "Report received! We'll look into it!";
+          }
+          return Container(
+              width: 200,
+              height: 200,
+              child: Center(
+                  child: Text(
+                text,
+                textAlign: TextAlign.center,
+              )));
+        }
+        return Container(
+            child: Center(
+                child: SpinKitThreeBounce(size: 50, color: Colors.white)));
+      },
+    ));
   }
 }
 

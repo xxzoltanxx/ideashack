@@ -309,7 +309,7 @@ class GlobalController {
         }
       }
       if (lastMidnightSeconds > lastSeen) {
-        if (dailyyPosts < BASE_DAILY_POSTS) {
+        if (dailyyPosts <= BASE_DAILY_POSTS) {
           await Firestore.instance.collection('users').doc(userDocId).update({
             'lastSeen': nowseconds,
             'dailyPosts': BASE_DAILY_POSTS,
@@ -324,12 +324,11 @@ class GlobalController {
           });
           canMessage = 1;
         }
-      } else {
-        await Firestore.instance
-            .collection('users')
-            .doc(userDocId)
-            .update({'lastSeen': nowseconds});
       }
+      await Firestore.instance
+          .collection('users')
+          .doc(userDocId)
+          .update({'lastSeen': nowseconds});
       this.canMessage = canMessage;
       dailyPosts = dailyyPosts;
       callback(dailyPosts);

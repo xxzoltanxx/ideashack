@@ -188,6 +188,8 @@ class _MainPageState extends State<MainPage>
   StreamSubscription _connectionChangeStream;
   GlobalKey adKey;
   bool sharing = false;
+  double backgroundScale = 0.8;
+  BackgroundCard lastCard = null;
 
   void shareCardData() async {
     Widget shareWidget = Material(
@@ -520,10 +522,14 @@ class _MainPageState extends State<MainPage>
               frontCardAlign.x +
                   frontCardAlign.x.clamp(-1, 1) * controller.value * 50,
               frontCardAlign.y + controller.value * 100);
+          backgroundScale =
+              (backgroundScale + (controller.value / 5)).clamp(0.8, 1.0);
         } else {
           frontCardAlign = AlignmentSt(
               frontCardAlign.x - frontCardAlign.x * controller.value,
               frontCardAlign.y - frontCardAlign.y * controller.value);
+          backgroundScale =
+              (backgroundScale - (controller.value / 5)).clamp(0.8, 1.0);
         }
         frontCardRot = frontCardRot - frontCardRot * controller.value;
         if (currentCardData != null &&
@@ -546,7 +552,7 @@ class _MainPageState extends State<MainPage>
       }
     });
     buildCards();
-    animation = CurvedAnimation(parent: controller, curve: Curves.linear);
+    animation = CurvedAnimation(parent: controller, curve: Curves.easeOut);
     controller.forward(from: 0);
     super.initState();
   }
@@ -658,13 +664,16 @@ class _MainPageState extends State<MainPage>
   }
 
   void buildCards() {
+    backgroundScale = 0;
     if (currentCardData == null) {
       AnalyticsController.get().browseEndReached();
     }
     stackCards.clear();
     if (currentCardData != null && nextCardData != null) {
       stackCards.add(BackgroundCard(cardData: nextCardData));
+      lastCard = stackCards.last;
     } else {
+      lastCard = null;
       stackCards.add(Container(
           child: Center(
               child: Container(
@@ -694,6 +703,15 @@ class _MainPageState extends State<MainPage>
               frontCardAlign.y +
                   40 * thang.delta.dy / MediaQuery.of(context).size.height);
           frontCardRot = frontCardAlign.x;
+          if (frontCardRot > 0) {
+            backgroundScale = (backgroundScale +
+                    (thang.delta.dx / 8) / MediaQuery.of(context).size.width)
+                .clamp(0.8, 1.0);
+          } else {
+            backgroundScale = (backgroundScale -
+                    (thang.delta.dx / 8) / MediaQuery.of(context).size.width)
+                .clamp(0.8, 1.0);
+          }
           if (currentCardData != null &&
               currentCardData.status == UpvotedStatus.DidntVote) {
             thumbsUpOpacity = (frontCardRot * 20.0).clamp(0.0, 255.0);
@@ -1202,6 +1220,10 @@ class _MainPageState extends State<MainPage>
             });
           });
         }
+        if (lastCard != null) {
+          stackCards[0] = BackgroundCard(
+              cardData: nextCardData, backgroundScale: backgroundScale);
+        }
         stackCards[1] = Container(
           child: Transform.rotate(
             angle: frontCardRot * 3.14 / 180,
@@ -1301,6 +1323,10 @@ class _MainPageState extends State<MainPage>
           ),
         );
       } else {
+        if (lastCard != null) {
+          stackCards[0] = BackgroundCard(
+              cardData: nextCardData, backgroundScale: backgroundScale);
+        }
         stackCards[1] = StreamBuilder(
           stream: Firestore.instance
               .collection('posts')
@@ -1459,133 +1485,115 @@ class _MainPageState extends State<MainPage>
                                 )),
                                 SizedBox(height: 20),
                                 Padding(
-                                  padding:
-                                      const EdgeInsets.all(cardthingspadding),
+                                  padding: const EdgeInsets.all(0),
                                   child: Divider(
                                     color: cardThingsTextStyle.color,
                                   ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: cardthingspadding,
-                                      right: cardthingspadding),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Container(
-                                        width: 90,
-                                        child: Center(
-                                          child: InkWell(
-                                            child: Text('Message',
-                                                style: ((GlobalController.get()
-                                                                .canMessage ==
-                                                            1) &&
-                                                        (currentCardData
-                                                                .posterId !=
-                                                            GlobalController
-                                                                    .get()
-                                                                .currentUserUid))
-                                                    ? cardThingsBelowTextStyle
-                                                    : cardThingsBelowTextStyle
-                                                        .copyWith(
-                                                            color: Color(
-                                                                0x55894100))),
-                                            onTap: GlobalController.get()
-                                                    .currentUser
-                                                    .isAnonymous
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Center(
+                                      child: RaisedButton(
+                                        elevation: 0,
+                                        color: Colors.transparent,
+                                        child: Text('Message',
+                                            style: ((GlobalController.get()
+                                                            .canMessage ==
+                                                        1) &&
+                                                    (currentCardData.posterId !=
+                                                        GlobalController.get()
+                                                            .currentUserUid))
+                                                ? cardThingsBelowTextStyle
+                                                : cardThingsBelowTextStyle
+                                                    .copyWith(
+                                                        color:
+                                                            Color(0x55894100))),
+                                        onPressed: GlobalController.get()
+                                                .currentUser
+                                                .isAnonymous
+                                            ? () {
+                                                AnalyticsController.get()
+                                                    .messageTapped();
+                                                _settingModalBottomSheet(
+                                                    context,
+                                                    InfoSheet.Register);
+                                              }
+                                            : ((GlobalController.get()
+                                                            .canMessage ==
+                                                        1) &&
+                                                    (currentCardData.posterId !=
+                                                        GlobalController.get()
+                                                            .currentUserUid))
                                                 ? () {
                                                     AnalyticsController.get()
                                                         .messageTapped();
-                                                    _settingModalBottomSheet(
-                                                        context,
-                                                        InfoSheet.Register);
-                                                  }
-                                                : ((GlobalController.get()
-                                                                .canMessage ==
-                                                            1) &&
-                                                        (currentCardData
-                                                                .posterId !=
-                                                            GlobalController
-                                                                    .get()
-                                                                .currentUserUid))
-                                                    ? () {
-                                                        AnalyticsController
-                                                                .get()
-                                                            .messageTapped();
-                                                        Navigator.pushNamed(
-                                                            context, '/message',
-                                                            arguments: <
-                                                                dynamic>[
-                                                              currentCardData
-                                                                  .id,
-                                                              GlobalController
-                                                                      .get()
-                                                                  .currentUserUid,
-                                                              currentCardData
-                                                                  .posterId,
-                                                            ]);
-                                                      }
-                                                    : () {
-                                                        _settingModalBottomSheet(
-                                                            context,
-                                                            InfoSheet
-                                                                .OneMessage);
-                                                      },
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        width: 90,
-                                        child: InkWell(
-                                            onTap: GlobalController.get()
-                                                    .currentUser
-                                                    .isAnonymous
-                                                ? () {
-                                                    _settingModalBottomSheet(
-                                                        context,
-                                                        InfoSheet.Register);
-                                                  }
-                                                : () {
                                                     Navigator.pushNamed(
-                                                        context, '/comments',
+                                                        context, '/message',
                                                         arguments: <dynamic>[
-                                                          currentCardData,
-                                                          commentsCallback
+                                                          currentCardData.id,
+                                                          GlobalController.get()
+                                                              .currentUserUid,
+                                                          currentCardData
+                                                              .posterId,
                                                         ]);
-                                                  },
-                                            child: Text(
-                                              'Comment',
-                                              style: cardThingsBelowTextStyle,
-                                              textAlign: TextAlign.center,
-                                            )),
-                                      ),
-                                      Container(
-                                        width: 90,
-                                        child: InkWell(
-                                            onTap: sharing
-                                                ? null
+                                                  }
                                                 : () {
-                                                    setState(() {
-                                                      sharing = true;
-                                                    });
-                                                    AnalyticsController.get()
-                                                        .shareClicked();
-                                                    shareCardData();
+                                                    _settingModalBottomSheet(
+                                                        context,
+                                                        InfoSheet.OneMessage);
                                                   },
-                                            child: Text(
-                                              'Share',
-                                              style: ((!sharing)
-                                                  ? cardThingsBelowTextStyle
-                                                  : cardThingsBelowTextStyle
-                                                      .copyWith(
-                                                          color: Color(
-                                                              0x55894100))),
-                                              textAlign: TextAlign.center,
-                                            )),
-                                      )
-                                    ],
-                                  ),
+                                      ),
+                                    ),
+                                    RaisedButton(
+                                        elevation: 0,
+                                        color: Colors.transparent,
+                                        onPressed: GlobalController.get()
+                                                .currentUser
+                                                .isAnonymous
+                                            ? () {
+                                                _settingModalBottomSheet(
+                                                    context,
+                                                    InfoSheet.Register);
+                                              }
+                                            : () {
+                                                Navigator.pushNamed(
+                                                    context, '/comments',
+                                                    arguments: <dynamic>[
+                                                      currentCardData,
+                                                      commentsCallback
+                                                    ]);
+                                              },
+                                        child: Text(
+                                          'Comment',
+                                          style: cardThingsBelowTextStyle,
+                                          textAlign: TextAlign.center,
+                                        )),
+                                    RaisedButton(
+                                        elevation: 0,
+                                        color: Colors.transparent,
+                                        onPressed: sharing
+                                            ? null
+                                            : () {
+                                                setState(() {
+                                                  sharing = true;
+                                                });
+                                                AnalyticsController.get()
+                                                    .shareClicked();
+                                                shareCardData();
+                                              },
+                                        child: Text(
+                                          'Share',
+                                          style: ((!sharing)
+                                              ? cardThingsBelowTextStyle
+                                              : cardThingsBelowTextStyle
+                                                  .copyWith(
+                                                      color:
+                                                          Color(0x55894100))),
+                                          textAlign: TextAlign.center,
+                                        ))
+                                  ],
                                 )
                               ],
                             ),

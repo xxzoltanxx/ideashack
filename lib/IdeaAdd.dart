@@ -125,7 +125,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
         } else {
           await Firestore.instance.collection('hashtags').add({
             'tag': tag,
-            'popularity': 0,
+            'popularity': 1,
           });
         }
       }
@@ -312,6 +312,23 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                 )),
               );
             }
+            // Once complete, show your application
+            if (snapshot.connectionState == ConnectionState.active ||
+                snapshot.connectionState == ConnectionState.waiting) {
+              return Container(
+                  child: Center(
+                      child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/logo.png', width: 200),
+                  SizedBox(height: 30),
+                  SpinKitThreeBounce(
+                    color: spinnerColor,
+                    size: 60,
+                  ),
+                ],
+              )));
+            }
             if (snapshot.hasError) {
               print(snapshot.error);
               print("ERROR");
@@ -475,7 +492,7 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                 )),
               );
             }
-            // Once complete, show your application
+
             if (snapshot.connectionState == ConnectionState.done) {
               print("ENDED");
               WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -508,7 +525,6 @@ class _IdeaAddState extends State<IdeaAdd> with WidgetsBindingObserver {
                 ),
               ],
             )));
-            ;
           }
 
           // Otherwise, show something whilst waiting for initialization to complete

@@ -20,7 +20,7 @@ const Color OVERLAY_STUFF_COLOR = Colors.white60;
 const Color OVERLAY_STUFF_COLOR_SECONDARY = Color(0x55c2c2c2);
 const int minimumCharactersForPost = 55;
 const TextStyle MAIN_CARD_TEXT_STYLE = TextStyle(
-  fontSize: 25,
+  fontSize: 20,
 );
 const TextStyle AUTHOR_CARD_TEXT_STYLE = TextStyle(
     fontSize: 15, fontWeight: FontWeight.w100, fontStyle: FontStyle.italic);
@@ -68,7 +68,7 @@ const TextStyle disabledUpperBarStyle = TextStyle(
 const TextStyle cardThingsTextStyle =
     TextStyle(color: Color(0xBF894100), fontSize: 20);
 const TextStyle cardThingsBelowTextStyle = TextStyle(
-    color: Color(0xFF894100), fontSize: 20, fontWeight: FontWeight.bold);
+    color: Color(0xFF894100), fontSize: 15, fontWeight: FontWeight.bold);
 const double cardthingspadding = 8.0;
 
 const Color spinnerColor = Color(0xBFFFFFFF);
@@ -76,6 +76,7 @@ const Color secondarySpinnerColor = Color(0xBEEEEEEE);
 
 const int QUERY_SIZE = 50;
 const List<Color> splashScreenColors = [Color(0xFFED8A00), Color(0xFFF29C03)];
+const Color fireBrick = Color(0xFFbd2f07);
 const Set<int> likeMilestones = {10, 50, 100, 300, 700, 1000, 2000};
 String formatedNumberString(int num) {
   if (num > 1000000) {
